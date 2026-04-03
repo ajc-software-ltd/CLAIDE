@@ -1,8 +1,8 @@
-# AGENTS.md — CLIADE NotePad
+# AGENTS.md — CLIADE AI Content Creator
 
 AJC-Software Ltd © 2026
 
-Cross-platform C++23 NotePad application (Linux x64 / Windows x64) using wxWidgets 3.2+.
+AI-powered AIO IDE for code, media creation, and content generation (Linux x64 / Windows x64) using wxWidgets 3.2+.
 
 ---
 
@@ -76,9 +76,11 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON
 ## Architecture Rules
 
 - **UI** (`src/ui/`) — presentation only; no disk IO
-- **Core** (`src/core/`) — Document, Encoding, FileService
+- **Core** (`src/core/`) — Document, Encoding, FileService, MediaService
+- **AI** (`src/ai/`) — AI provider abstraction, media extraction, generation services
 - **App** (`src/app/`) — bootstrap, lifecycle
 - **Platform** (`src/platform/`) — OS-specific paths/config
+- **Python** (`src/python/`) — pybind11 bindings for IDE automation
 - UTF-8 is the internal canonical text representation
 - Safe save: write to temp file → flush → atomic replace
 - RAII throughout; no raw owning pointers
@@ -86,6 +88,9 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON
 - Use `Platform::GetProjectRoot()` for asset paths — never hardcode `/proc/self/exe`
 - Register `wxPNGHandler` once in `Application::OnInit()`
 - Per-tab `Document` tracking for dirty state, encoding, and file paths
+- Every media viewer is a `wxPanel` — dockable, tabbable, consistent behavior
+- `MediaService` is the single source of truth for type detection, metadata, AI extraction
+- All libraries must be commercially viable at zero cost
 
 ---
 
@@ -108,6 +113,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON
 - Background complexity beyond editor needs
 - Repeated `wxImage::AddHandler()` calls — register once at startup
 - Unused dead code in the repository
+- Libraries with restrictive or commercial-use licenses
 
 ---
 
@@ -209,25 +215,22 @@ A valid deliverable should include:
 - Sanitizer support in debug builds
 - Validation CMake targets
 - README with build instructions for Linux and Windows x64
+- All libraries commercially viable at zero cost
 
 ---
 
-## Recommended Implementation Order
-Build in this order unless the user instructs otherwise:
+## Milestone Roadmap
 
-1. project skeleton and CMake
-2. main app bootstrap and empty main window
-3. editor widget integration
-4. document model and dirty tracking
-5. file open/save logic
-6. delete workflow
-7. encoding detection and UTF-8/UTF-16 support
-8. dark theme system
-9. menu actions and shortcuts
-10. logging system integration
-11. tests and validation
-12. code validation tooling (clang-tidy, clang-format, sanitizers)
-13. polish and cleanup
+Development follows the 8-milestone roadmap in `milestones.md`:
+
+1. ✅ **Core IDE Shell** — wxAui docking, text editor, logging, tests
+2. ⏳ **Image Processing** — ImageViewer, MediaService, Python foundation
+3. ⏳ **Video Player** — libmpv playback, scrub bar, frame extraction
+4. ⏳ **Audio Player** — libmpv audio, waveform visualization
+5. ⏳ **3D Model Viewer** — Assimp + OpenGL, orbit camera
+6. ⏳ **AI Integration Layer** — AI provider abstraction, media extraction
+7. ⏳ **AI Content Generation** — Text-to-image/video/model generation
+8. ⏳ **Unified Workspace** — Split workspace, asset browser, full IDE
 
 ---
 
@@ -257,4 +260,4 @@ Any known limitations or follow-up concerns.
 ## Final Directive
 If there is a conflict between simplicity and unnecessary framework complexity, choose simplicity.
 
-The target product is a **reliable, commercial-friendly, cross-platform native NotePad application** in **C++23**, designed for **Linux x64** and **Windows x64**, developed comfortably in **CLion**, with a workflow compatible with **OpenCode + Qwen3.6**.
+The target product is **CLIADE AI Content Creator** — a reliable, commercial-friendly, cross-platform AIO IDE in **C++23**, designed for **Linux x64** and **Windows x64**, developed comfortably in **CLion**, with a workflow compatible with **OpenCode + Qwen3.6**. It combines code editing, media viewing (AVIM Canvas), and AI-powered content generation in one unified workspace.

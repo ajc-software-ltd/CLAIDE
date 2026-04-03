@@ -1,6 +1,6 @@
-# CLIADE NotePad
+# CLIADE AI Content Creator
 
-A cross-platform C++23 desktop text editor built with wxWidgets 3.2+.
+A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content generation.
 
 **AJC-Software Ltd © 2026**
 
@@ -21,6 +21,21 @@ A cross-platform C++23 desktop text editor built with wxWidgets 3.2+.
 - **Custom icon bar** sidebar with folder navigation
 - **Tabbed editor** with per-tab document tracking
 - **Prompt bar** with Send/Clear buttons
+
+---
+
+## AVIM Canvas Roadmap
+
+CLIADE is evolving into a full AIO AI Content Creator with the **AVIM Canvas** — a unified media system for:
+
+| Component | Milestone | Status |
+|-----------|-----------|--------|
+| **A**udio | M4: Audio Player | ⏳ Planned |
+| **V**ideo | M3: Video Player | ⏳ Planned |
+| **I**mage | M2: Image Processing | ⏳ Planned |
+| **M**odel | M5: 3D Model Viewer | ⏳ Planned |
+
+Plus AI integration (M6), content generation (M7), and unified workspace (M8). See `milestones.md` for the full roadmap.
 
 ---
 
@@ -100,6 +115,7 @@ cmake --build build --target validate
 CLIADE/
 ├── CMakeLists.txt                    # C++23, wxWidgets/spdlog/Catch2, sanitizers, format/lint/test/validate targets
 ├── AGENTS.md                         # Agent instructions and code standards
+├── milestones.md                     # 8-milestone roadmap with checkpoint system
 ├── README.md                         # This file
 ├── .gitignore                        # Git ignore rules
 ├── .clang-format                     # LLVM base, 4-space indent, 120 column limit
