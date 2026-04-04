@@ -51,6 +51,7 @@ set(SOURCES
     src/core/MipmapGenerator.cpp
     src/gpu/GPUEngine.cpp
     src/gpu/VulkanValidation.cpp
+    src/render/vulkan/VulkanContext.cpp
     src/ui/Theme.cpp
     src/ui/EditorPanel.cpp
     src/ui/ImageViewer.cpp
