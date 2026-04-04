@@ -241,6 +241,7 @@ void FileBrowserPanel::UpdateLayout() {
 
 void FileBrowserPanel::OnGridPaint([[maybe_unused]] wxPaintEvent& event) {
     wxAutoBufferedPaintDC dc(m_grid);
+    PrepareDC(dc);
     dc.SetBackground(wxBrush(wxColour(30, 30, 30)));
     dc.Clear();
 
@@ -248,24 +249,12 @@ void FileBrowserPanel::OnGridPaint([[maybe_unused]] wxPaintEvent& event) {
     int startY = 4;
     int iconSize = 128;
 
-    int viewStartX = 0, viewStartY = 0;
-    m_grid->GetViewStart(&viewStartX, &viewStartY);
-    int scrollPxX = 0, scrollPxY = 0;
-    m_grid->GetScrollPixelsPerUnit(&scrollPxX, &scrollPxY);
-    int offsetY = viewStartY * scrollPxY;
-
-    wxSize clientSize = m_grid->GetClientSize();
-    int visibleTop = offsetY;
-    int visibleBottom = offsetY + clientSize.GetHeight();
-
     for (int i = 0; i < static_cast<int>(m_items.size()); ++i) {
         int col = i % m_columns;
         int row = i / m_columns;
 
         int x = startX + col * m_cellSize;
         int y = startY + row * m_rowHeight;
-
-        if (y + m_rowHeight < visibleTop || y > visibleBottom) continue;
 
         auto& item = m_items[i];
 
