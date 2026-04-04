@@ -89,6 +89,14 @@ FileBrowserPanel::FileBrowserPanel(wxWindow* parent)
     m_grid->Bind(wxEVT_PAINT, &FileBrowserPanel::OnGridPaint, this);
     m_grid->Bind(wxEVT_SIZE, &FileBrowserPanel::OnGridSize, this);
     m_grid->Bind(wxEVT_LEFT_DCLICK, &FileBrowserPanel::OnGridLeftDClick, this);
+    m_grid->Bind(wxEVT_SCROLLWIN_TOP, &FileBrowserPanel::OnGridScroll, this);
+    m_grid->Bind(wxEVT_SCROLLWIN_BOTTOM, &FileBrowserPanel::OnGridScroll, this);
+    m_grid->Bind(wxEVT_SCROLLWIN_LINEUP, &FileBrowserPanel::OnGridScroll, this);
+    m_grid->Bind(wxEVT_SCROLLWIN_LINEDOWN, &FileBrowserPanel::OnGridScroll, this);
+    m_grid->Bind(wxEVT_SCROLLWIN_PAGEUP, &FileBrowserPanel::OnGridScroll, this);
+    m_grid->Bind(wxEVT_SCROLLWIN_PAGEDOWN, &FileBrowserPanel::OnGridScroll, this);
+    m_grid->Bind(wxEVT_SCROLLWIN_THUMBTRACK, &FileBrowserPanel::OnGridScroll, this);
+    m_grid->Bind(wxEVT_SCROLLWIN_THUMBRELEASE, &FileBrowserPanel::OnGridScroll, this);
 
     m_backBtn->Bind(wxEVT_BUTTON, &FileBrowserPanel::OnBack, this);
     m_forwardBtn->Bind(wxEVT_BUTTON, &FileBrowserPanel::OnForward, this);
@@ -209,6 +217,7 @@ void FileBrowserPanel::LoadDirectory(std::filesystem::path path) {
     }
 
     UpdateLayout();
+    m_grid->Refresh();
 }
 
 void FileBrowserPanel::UpdateLayout() {
@@ -291,6 +300,11 @@ void FileBrowserPanel::OnGridPaint([[maybe_unused]] wxPaintEvent& event) {
 
         dc.DrawText(name, textX, textY);
     }
+}
+
+void FileBrowserPanel::OnGridScroll(wxScrollWinEvent& event) {
+    m_grid->Refresh();
+    event.Skip();
 }
 
 void FileBrowserPanel::OnGridSize(wxSizeEvent& event) {

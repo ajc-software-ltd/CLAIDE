@@ -43,6 +43,7 @@ private:
     void OnFilterChanged(wxCommandEvent& event);
     void OnPathEntered(wxCommandEvent& event);
     void OnGridPaint(wxPaintEvent& event);
+    void OnGridScroll(wxScrollWinEvent& event);
     void OnGridSize(wxSizeEvent& event);
     void OnGridLeftDClick(wxMouseEvent& event);
 
