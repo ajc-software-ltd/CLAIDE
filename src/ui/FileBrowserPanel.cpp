@@ -8,6 +8,7 @@
 
 #include "ui/FileBrowserPanel.hpp"
 
+#include <wx/dcbuffer.h>
 #include <wx/dcclient.h>
 #include <wx/image.h>
 #include <wx/sizer.h>
@@ -91,14 +92,29 @@ FileBrowserPanel::FileBrowserPanel(wxWindow* parent)
 }
 
 void FileBrowserPanel::NavigateTo(const std::filesystem::path& path) {
-    if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
-        return;
-    }
+    try {
+        spdlog::info("FileBrowserPanel: navigating to {}", path.string());
+        
+        std::error_code ec;
+        if (!std::filesystem::exists(path, ec) || ec) {
+            spdlog::warn("FileBrowserPanel: path does not exist: {}", path.string());
+            return;
+        }
+        if (!std::filesystem::is_directory(path, ec) || ec) {
+            spdlog::warn("FileBrowserPanel: path is not a directory: {}", path.string());
+            return;
+        }
 
-    m_backHistory.push_back(m_currentPath);
-    m_forwardHistory.clear();
-    m_currentPath = path;
-    LoadDirectory(path);
+        m_backHistory.push_back(m_currentPath);
+        m_forwardHistory.clear();
+        m_currentPath = path;
+        
+        spdlog::info("FileBrowserPanel: loading directory {}", path.string());
+        LoadDirectory(path);
+        spdlog::info("FileBrowserPanel: navigation complete");
+    } catch (const std::exception& e) {
+        spdlog::error("FileBrowserPanel: navigation failed: {}", e.what());
+    }
 }
 
 void FileBrowserPanel::GoBack() {
@@ -171,23 +187,22 @@ void FileBrowserPanel::LoadDirectory(const std::filesystem::path& path) {
 
 void FileBrowserPanel::UpdateLayout() {
     wxSize clientSize = GetClientSize();
-    int toolbarHeight = 40;
-    int availableWidth = clientSize.GetWidth() - 8;
-    (void)toolbarHeight;
+    if (clientSize.GetWidth() <= 0 || clientSize.GetHeight() <= 0) return;
 
+    int availableWidth = clientSize.GetWidth() - 8;
     m_columns = std::max(1, availableWidth / m_cellSize);
     int rows = (m_items.empty()) ? 1 :
                (static_cast<int>(m_items.size()) + m_columns - 1) / m_columns;
 
-    SetVirtualSize(availableWidth, rows * m_rowHeight + 10);
-    SetScrollRate(1, 1);
+    int totalHeight = rows * m_rowHeight + 60;
+    SetVirtualSize(availableWidth, totalHeight);
+    SetScrollRate(20, 20);
 }
 
-void FileBrowserPanel::OnPaint(wxPaintEvent& event) {
-    wxPaintDC dc(this);
+void FileBrowserPanel::OnPaint([[maybe_unused]] wxPaintEvent& event) {
+    wxAutoBufferedPaintDC dc(this);
     PrepareDC(dc);
     RenderGrid(dc);
-    event.Skip();
 }
 
 void FileBrowserPanel::OnSize(wxSizeEvent& event) {
@@ -197,15 +212,25 @@ void FileBrowserPanel::OnSize(wxSizeEvent& event) {
 }
 
 void FileBrowserPanel::OnLeftDClick(wxMouseEvent& event) {
-    int index = GetIndexAtPosition(event.GetPosition());
-    if (index >= 0 && index < static_cast<int>(m_items.size())) {
-        auto& item = m_items[index];
+    try {
+        int index = GetIndexAtPosition(event.GetPosition());
+        spdlog::debug("FileBrowserPanel: double-click at index {}", index);
+        
+        if (index >= 0 && index < static_cast<int>(m_items.size())) {
+            auto& item = m_items[index];
+            spdlog::info("FileBrowserPanel: double-clicked {}", item.string());
 
-        if (std::filesystem::is_directory(item)) {
-            NavigateTo(item);
-        } else if (m_fileOpenCb) {
-            m_fileOpenCb(item.string());
+            std::error_code ec;
+            if (std::filesystem::is_directory(item, ec) && !ec) {
+                spdlog::info("FileBrowserPanel: navigating to directory");
+                NavigateTo(item);
+            } else if (m_fileOpenCb) {
+                spdlog::info("FileBrowserPanel: opening file");
+                m_fileOpenCb(item.string());
+            }
         }
+    } catch (const std::exception& e) {
+        spdlog::error("FileBrowserPanel: double-click handler failed: {}", e.what());
     }
 
     event.Skip();
@@ -248,6 +273,18 @@ void FileBrowserPanel::RenderGrid(wxDC& dc) {
     int startY = 44;
     int iconSize = 128;
 
+    // Get visible area to only render visible items
+    int viewStartX = 0, viewStartY = 0;
+    GetViewStart(&viewStartX, &viewStartY);
+    int scrollPxX = 0, scrollPxY = 0;
+    GetScrollPixelsPerUnit(&scrollPxX, &scrollPxY);
+    (void)scrollPxX;
+    int offsetY = viewStartY * scrollPxY;
+
+    wxSize clientSize = GetClientSize();
+    int visibleTop = offsetY;
+    int visibleBottom = offsetY + clientSize.GetHeight();
+
     for (int i = 0; i < static_cast<int>(m_items.size()); ++i) {
         int col = i % m_columns;
         int row = i / m_columns;
@@ -255,14 +292,18 @@ void FileBrowserPanel::RenderGrid(wxDC& dc) {
         int x = startX + col * m_cellSize;
         int y = startY + row * m_rowHeight;
 
+        // Skip items outside visible area
+        if (y + m_rowHeight < visibleTop || y > visibleBottom) continue;
+
         auto& item = m_items[i];
-        bool isDir = std::filesystem::is_directory(item);
 
         wxBitmap thumb;
-        if (isDir) {
+        try {
             thumb = m_thumbnailCache.GetThumbnail(item, iconSize);
-        } else {
-            thumb = m_thumbnailCache.GetThumbnail(item, iconSize);
+        } catch (const std::exception& e) {
+            spdlog::warn("FileBrowserPanel: thumbnail error for {}: {}",
+                         item.filename().string(), e.what());
+            thumb = wxBitmap(wxImage(iconSize, iconSize));
         }
 
         if (thumb.IsOk()) {

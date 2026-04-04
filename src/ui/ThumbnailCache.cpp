@@ -125,6 +125,19 @@ wxBitmap ThumbnailCache::GenerateImageThumbnail(const std::filesystem::path& pat
 }
 
 wxBitmap ThumbnailCache::GenerateDefaultThumbnail(const std::string& type, int size) {
+    if (type == "folder") {
+        auto projectRoot = Platform::GetProjectRoot();
+        auto iconPath = projectRoot / "assets" / "icons" / "folder_icon_128x128.png";
+
+        if (std::filesystem::exists(iconPath)) {
+            wxImage img(iconPath.string(), wxBITMAP_TYPE_PNG);
+            if (img.IsOk()) {
+                img.Rescale(size, size, wxIMAGE_QUALITY_HIGH);
+                return wxBitmap(img);
+            }
+        }
+    }
+
     wxImage img(size, size);
 
     if (type == "image") {

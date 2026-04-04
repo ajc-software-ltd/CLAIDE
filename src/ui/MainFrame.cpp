@@ -49,6 +49,7 @@ MainFrame::MainFrame()
     SetMinSize(wxSize(800, 600));
 
     CreateMenuBar();
+    CreateStatusBar(3);
     CreateDockingSystem();
     LoadBackgroundImage();
     LoadAppIcon();
@@ -126,7 +127,7 @@ void MainFrame::CreateDockingSystem() {
                              .Dockable(true)
                              .PaneBorder(false));
 
-    // Sidebar panel (left of center, resizable)
+    // Sidebar panel (left of center, resizable) - hidden by default
     m_sidebar = new SidebarPanel(this);
     m_sidebar->SetFileOpenCallback([this](const std::string& path) {
         auto mediaType = Core::MediaService::DetectMediaType(path);
@@ -169,7 +170,8 @@ void MainFrame::CreateDockingSystem() {
                              .Floatable(true)
                              .Dockable(true)
                              .PinButton(true)
-                             .PaneBorder(false));
+                             .PaneBorder(false)
+                             .Hide());
 
     // Image viewer (center, hidden until image opened)
     m_imageViewer = new ImageViewer(this, "");
