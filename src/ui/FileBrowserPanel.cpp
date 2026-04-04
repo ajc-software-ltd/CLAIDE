@@ -158,27 +158,41 @@ void FileBrowserPanel::GoUp() {
     }
 }
 
-void FileBrowserPanel::LoadDirectory(const std::filesystem::path& path) {
+void FileBrowserPanel::LoadDirectory(std::filesystem::path path) {
     m_items.clear();
 
-    try {
-        for (const auto& entry : std::filesystem::directory_iterator(path)) {
-            const auto& p = entry.path();
-            auto name = p.filename().string();
+    // Copy path to a local string to avoid reference issues during exception handling
+    std::string pathStr = path.string();
 
-            // Skip hidden files
+    try {
+        std::error_code iterEc;
+        auto dirIter = std::filesystem::directory_iterator(
+            path, std::filesystem::directory_options::skip_permission_denied, iterEc);
+        
+        if (iterEc) {
+            spdlog::warn("FileBrowserPanel: cannot iterate {}: {}", pathStr, iterEc.message());
+            return;
+        }
+
+        for (const auto& entry : dirIter) {
+            std::error_code ec;
+            // Copy the path — entry.path() returns a reference that becomes
+            // invalid when the iterator advances
+            std::filesystem::path p = entry.path();
+            
+            std::string name = p.filename().string();
             if (!name.empty() && name[0] == '.') continue;
 
-            std::error_code ec;
             if (entry.is_directory(ec) && !ec) {
-                m_items.push_back(p);
+                m_items.push_back(std::move(p));
             } else if (entry.is_regular_file(ec) && !ec && MatchesFilter(p)) {
-                m_items.push_back(p);
+                m_items.push_back(std::move(p));
             }
         }
     } catch (const std::filesystem::filesystem_error& e) {
-        spdlog::warn("FileBrowserPanel: failed to read {}: {}",
-                     path.string(), e.what());
+        spdlog::warn("FileBrowserPanel: failed to read {}: {}", pathStr, e.what());
+    } catch (const std::exception& e) {
+        spdlog::warn("FileBrowserPanel: unexpected error reading {}: {}", pathStr, e.what());
     }
 
     std::sort(m_items.begin(), m_items.end(),

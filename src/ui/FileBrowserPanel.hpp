@@ -46,7 +46,7 @@ private:
     void OnGridSize(wxSizeEvent& event);
     void OnGridLeftDClick(wxMouseEvent& event);
 
-    void LoadDirectory(const std::filesystem::path& path);
+    void LoadDirectory(std::filesystem::path path);
     void UpdateLayout();
     void RenderGrid(wxDC& dc);
     int GetIndexAtPosition(wxPoint pos) const;
