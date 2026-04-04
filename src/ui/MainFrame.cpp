@@ -128,6 +128,33 @@ void MainFrame::CreateDockingSystem() {
 
     // Sidebar panel (left of center, resizable)
     m_sidebar = new SidebarPanel(this);
+    m_sidebar->SetFileOpenCallback([this](const std::string& path) {
+        auto mediaType = Core::MediaService::DetectMediaType(path);
+        switch (mediaType) {
+        case Core::MediaType::Image:
+            OpenImage(path);
+            break;
+        case Core::MediaType::Text:
+            OpenTextFile(path);
+            break;
+        case Core::MediaType::Video:
+            wxMessageBox("Video player coming in Milestone 5.",
+                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+            break;
+        case Core::MediaType::Audio:
+            wxMessageBox("Audio player coming in Milestone 5.",
+                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+            break;
+        case Core::MediaType::Model:
+            wxMessageBox("3D model viewer coming in Milestone 6.",
+                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+            break;
+        default:
+            wxMessageBox("Unsupported file type: " + path,
+                         "Open Error", wxOK | wxICON_ERROR, this);
+            break;
+        }
+    });
     m_auiManager.AddPane(m_sidebar,
                          wxAuiPaneInfo()
                              .Name("Sidebar")
@@ -277,7 +304,6 @@ void MainFrame::OnActivityModeChanged(ActivityMode mode) {
     // Show/hide sidebar based on mode
     if (mode == ActivityMode::Explorer) {
         m_auiManager.GetPane("Sidebar").Show();
-        m_sidebar->SetMode(mode);
     } else {
         m_auiManager.GetPane("Sidebar").Hide();
     }

@@ -9,25 +9,22 @@
 #pragma once
 
 #include <wx/panel.h>
-#include <wx/generic/dirctrlg.h>
-#include <wx/button.h>
 
-#include "ui/ActivityBar.hpp"
+#include <functional>
+#include <string>
 
 namespace Ui {
+
+class FileBrowserPanel;
 
 class SidebarPanel : public wxPanel {
 public:
     SidebarPanel(wxWindow* parent);
 
-    void SetMode(ActivityMode mode);
+    void SetFileOpenCallback(std::function<void(const std::string&)> cb);
 
 private:
-    void OnOpenFolder(wxCommandEvent& event);
-
-    ActivityMode m_currentMode;
-    wxGenericDirCtrl* m_dirCtrl;
-    wxButton* m_openFolderBtn;
+    FileBrowserPanel* m_browser;
 };
 
 } // namespace Ui
