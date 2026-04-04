@@ -17,20 +17,21 @@ After each milestone is complete:
 | Milestone | Tag | Status |
 |-----------|-----|--------|
 | 1: Core IDE Shell | `v0.0.1-dev` | ✅ Complete |
-| 2: Image Processing | `v0.0.3-dev` | ⏳ In Progress |
-| 3: Video Player | `v0.0.3-dev` | ⏳ Planned |
-| 4: Audio Player | `v0.0.4-dev` | ⏳ Planned |
-| 5: 3D Model Viewer | `v0.0.5-dev` | ⏳ Planned |
-| 6: AI Integration Layer | `v0.0.6-dev` | ⏳ Planned |
-| 7: AI Content Generation | `v0.0.7-dev` | ⏳ Planned |
-| 8: Unified Workspace | `v0.0.8-dev` | ⏳ Planned |
+| 2: Vulkan Canvas | `v0.0.2-dev` | ⏳ Planned |
+| 3: Text Enhancement | `v0.0.3-dev` | ⏳ Planned |
+| 4: Image Processing | `v0.0.4-dev` | ⏳ Planned |
+| 5: Video Player | `v0.0.5-dev` | ⏳ Planned |
+| 6: 3D Model Viewer | `v0.0.6-dev` | ⏳ Planned |
+| 7: Unified Workspace | `v0.0.7-dev` | ⏳ Planned |
+| 8: AI Integration Layer | `v0.0.8-dev` | ⏳ Planned |
+| 9: AI Content Generation | `v0.0.9-dev` | ⏳ Planned |
 
 ---
 
 ## Milestone 1: Core IDE Shell ✅
 
 **Tag:** `v0.0.1-dev`
-**Status:** Complete
+**Status:** Complete (subject to evolution)
 
 ### Deliverables
 - wxAui docking system with floating, pinning, resizable panels
@@ -68,229 +69,237 @@ After each milestone is complete:
 
 ---
 
-## Milestone 2: Image Processing (AVIM: Image)
+## Milestone 2: Vulkan Canvas (Universal Render Layer)
 
-**Tag:** `v0.0.3-dev`
-**Status:** ⏳ In Progress
+**Tag:** `v0.0.2-dev`
+**Status:** Planned
+
+### Vision
+The Vulkan Canvas is the **universal render surface** for all content types in CLIADE. Every piece of content — text, images, video, 3D models — renders through the Canvas. The AI uses Canvas instances programmatically to create, composite, and output content.
 
 ### Deliverables
-- `MediaService` — unified media type detection, metadata extraction, AI-ready extraction stubs
-- `ImageViewer` — `wxScrolledWindow` with zoom (mouse wheel, cursor-centered), pan (drag), fit-to-window, actual size
-- `File > Open` detects all media types and routes to correct viewer
-- Status bar: dimensions, file size, color depth, format name
-- IconBar sidebar with 4 icons: Files, Images, Video, 3D Models
-- File explorer with file selection support (double-click to open)
-- Sidebar mode controls sidebar panels only, center pane persists across mode changes
-- Python foundation: pybind11 integration, Python console panel (stub)
+- `Canvas` — Universal canvas interface with CPU+GPU dual-path rendering
+- `CanvasDocument` — Content state (text, images, video frames, 3D meshes)
+- `CanvasView` — View state (zoom, pan, viewport transform)
+- `VulkanContext` — Vulkan instance, device, queues, validation layers
+- `VulkanSwapchain` — Surface, swapchain, resize-safe recreation
+- `VulkanRenderer` — Render loop, pipelines, frame lifecycle
+- `VulkanTexture` — GPU image upload from decoded pixel buffers
+- `VulkanText` — Glyph atlas, text rendering pipeline
+- `CPURenderer` — Software fallback (identical output to GPU)
+- `CanvasPanel` — wxWidgets dockable panel wrapper
+- Multi-canvas management (AI can create/manage multiple canvases)
+- Picture-in-Picture compositing (layered canvases)
+- Pan/zoom in canvas space
+- Checkerboard transparency background
+- Debug validation layers in Debug builds
+- Clean shutdown without validation errors
 
-### Supported Formats
-- **wxImage native:** PNG, JPEG, BMP, GIF, TIFF, ICO, PCX, PNM, XPM
-- **ImageMagick:** PSD (layered), PSB (large format), WebP
+### Architecture
+```
+src/
+├── render/
+│   ├── Canvas.{hpp,cpp}              # Universal canvas interface
+│   ├── CanvasDocument.{hpp,cpp}      # Content state
+│   ├── CanvasView.{hpp,cpp}          # View state
+│   ├── vulkan/
+│   │   ├── VulkanContext.{hpp,cpp}   # Instance, device, queues
+│   │   ├── VulkanSwapchain.{hpp,cpp} # Surface, swapchain, resize
+│   │   ├── VulkanRenderer.{hpp,cpp}  # Render loop, pipelines
+│   │   ├── VulkanTexture.{hpp,cpp}   # GPU image upload
+│   │   ├── VulkanText.{hpp,cpp}      # Text rendering
+│   │   └── VulkanDebug.{hpp,cpp}     # Validation, debug markers
+│   └── cpu/
+│       └── CPURenderer.{hpp,cpp}     # Software fallback
+├── ui/
+│   └── CanvasPanel.{hpp,cpp}         # wxWidgets dockable wrapper
+└── shaders/
+    ├── canvas_text.vert/frag
+    ├── canvas_image.vert/frag
+    └── canvas_overlay.vert/frag
+```
 
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/core/MediaService.{hpp,cpp}` | Media type detection, metadata, AI extraction stubs |
-| `src/ui/ImageViewer.{hpp,cpp}` | Image viewer with zoom, pan, fit, context menu |
-| `src/ui/PythonConsole.{hpp,cpp}` | Python REPL panel (stub) |
+### AI Integration Points
+- `Canvas::Create()` — AI creates new canvas instances
+- `Canvas::Render(content)` — AI renders content to canvas
+- `Canvas::Composite(canvases)` — AI composites multiple canvases (PiP)
+- `Canvas::Export(path, format)` — AI exports canvas to file
+- `Canvas::GetPixelData()` — AI extracts pixel buffer for analysis
 
 ### Dependencies Added
-- ImageMagick 7 (Apache-like license)
-- pybind11 (BSD 3-Clause, header-only via FetchContent)
+- Vulkan SDK (Apache 2.0)
+- glslang (Apache 2.0, shader compilation)
+- SPIRV-Tools (Apache 2.0, shader optimization)
 
 ### Checkpoint
-- Auto-commit with tag `v0.0.3-dev`
-- Python scripting foundation in place for future milestones
+- Auto-commit with tag `v0.0.2-dev`
 
 ---
 
-## Milestone 3: Video Player (AVIM: Video)
+## Milestone 3: Text Enhancement
 
 **Tag:** `v0.0.3-dev`
 **Status:** Planned
 
 ### Deliverables
-- `VideoPlayer` — libmpv wrapper with embedded playback
-- Controls bar: Play/Pause, Stop, scrub bar (seek), volume slider, time display
-- MP4, WebM, MKV, AVI, MOV (full codec support via libmpv)
-- AI-ready: `MediaService::ExtractFrame(path, timestamp)` → image bytes
-- Python: `pybind11` bindings for video control from scripts
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/ui/VideoPlayer.{hpp,cpp}` | libmpv video player with controls |
-| `src/ai/MediaExtractor.{hpp,cpp}` | Frame extraction for AI (stub) |
+- Rich text formatting (bold, italic, underline, fonts, colors, sizes)
+- Paragraph formatting (alignment, indentation, spacing)
+- Lists (bulleted, numbered)
+- Tables
+- Headers/footers
+- Page layout (margins, orientation, size)
+- Format support: DOCX, PDF, RTF, ODT, TXT, MD
+- Format conversion between types
+- AI-accessible document model (structured content)
+- Text rendering through Vulkan Canvas
 
 ### Dependencies Added
-- libmpv (LGPL 2.1+, dynamic link)
+- libzip (BSD, DOCX parsing)
+- poppler (GPL, PDF rendering) or MuPDF (AGPL)
 
 ### Checkpoint
 - Auto-commit with tag `v0.0.3-dev`
 
 ---
 
-## Milestone 4: Audio Player (AVIM: Audio)
+## Milestone 4: Image Processing (AVIM: Image)
 
 **Tag:** `v0.0.4-dev`
 **Status:** Planned
 
 ### Deliverables
-- `AudioPlayer` — libmpv audio with waveform visualization
-- Controls: Play/Pause, Stop, volume, scrub bar
-- MP3, WAV, OGG, FLAC
-- Waveform amplitude visualization (custom wxPanel)
-- AI-ready: `MediaService::GetAudioWaveform(path)` → amplitude array
-- Python: audio playback and waveform access from scripts
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/ui/AudioPlayer.{hpp,cpp}` | Audio player with waveform |
+- GPU-accelerated image filters (brightness, contrast, blur, sharpen, etc.)
+- Image editing tools (crop, resize, rotate, flip)
+- Color adjustment tools (levels, curves, hue, saturation)
+- Layer support (basic compositing)
+- Format support: PNG, JPEG, BMP, GIF, TIFF, WebP, PSD, PSB
+- AI-accessible image operations
+- Image rendering through Vulkan Canvas
 
 ### Dependencies Added
-- None (reuses libmpv from Milestone 3)
+- None (reuses Vulkan Canvas from M2)
 
 ### Checkpoint
 - Auto-commit with tag `v0.0.4-dev`
 
 ---
 
-## Milestone 5: 3D Model Viewer (AVIM: Model)
+## Milestone 5: Video Player (AVIM: Video)
 
 **Tag:** `v0.0.5-dev`
 **Status:** Planned
 
 ### Deliverables
-- `ModelViewer` — `wxGLCanvas` with Assimp loader
-- FBX, OBJ, glTF, GLB loading
-- OpenGL rendering with basic Phong lighting
-- Texture mapping support
-- Orbit camera: left-drag rotate, right-drag pan, scroll zoom
-- Status bar: vertex count, face count, texture count
-- AI-ready: `MediaService::GetModelMetadata(path)` → mesh/texture/bone info
-- Python: 3D model inspection from scripts
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/ui/ModelViewer.{hpp,cpp}` | 3D model viewer with OpenGL |
+- Video playback via libmpv
+- Controls: Play/Pause, Stop, scrub bar, volume, time display
+- Frame extraction for AI analysis
+- Codec support: MP4, WebM, MKV, AVI, MOV (via libmpv)
+- Video rendering through Vulkan Canvas
+- AI-ready: `ExtractFrame(path, timestamp)` → image bytes
 
 ### Dependencies Added
-- Assimp (BSD 3-Clause)
-- OpenGL (Khronos, free)
+- libmpv (LGPL 2.1+, dynamic link)
 
 ### Checkpoint
 - Auto-commit with tag `v0.0.5-dev`
 
 ---
 
-## Milestone 6: AI Integration Layer
+## Milestone 6: 3D Model Viewer (AVIM: Model)
 
 **Tag:** `v0.0.6-dev`
 **Status:** Planned
 
 ### Deliverables
-- `AIInterface` — AI provider abstraction (GPT, Claude, local models)
-- `MediaExtractor` — full implementation: frame/image/audio/model data extraction
-- `AIPanel` — chat/response panel, dockable
-- Python: full pybind11 bindings for all AVIM components
-- Context sharing: AI sees open files, images, models simultaneously
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/ai/AIInterface.{hpp,cpp}` | AI provider abstraction |
-| `src/ai/MediaExtractor.{hpp,cpp}` | Media data extraction for AI |
-| `src/ui/AIPanel.{hpp,cpp}` | AI chat/response panel |
-| `src/python/Bindings.cpp` | pybind11 module definition |
+- 3D model loading via Assimp (FBX, OBJ, glTF, GLB)
+- Vulkan rendering pipeline for geometry
+- Orbit camera: left-drag rotate, right-drag pan, scroll zoom
+- Texture mapping, basic lighting
+- Animation playback support
+- Status bar: vertex count, face count, texture count
+- AI-ready: `GetModelMetadata(path)` → mesh/texture/bone info
+- 3D rendering through Vulkan Canvas
 
 ### Dependencies Added
-- cURL (for AI API calls) or httplib (header-only)
+- Assimp (BSD 3-Clause)
 
 ### Checkpoint
 - Auto-commit with tag `v0.0.6-dev`
 
 ---
 
-## Milestone 7: AI Content Generation
+## Milestone 7: Unified Workspace
 
 **Tag:** `v0.0.7-dev`
 **Status:** Planned
 
 ### Deliverables
-- `GenerationPanel` — prompt input, generation settings, output gallery
-- `GenerationService` — orchestrates image/video/model generation APIs
-- Text-to-image generation (DALL-E, Stable Diffusion, etc.)
-- Image-to-image generation (reference images from AVIM tabs)
-- Text-to-video generation
-- Image/Text-to-3D model generation
-- Generated content appears as new AVIM tabs automatically
-- Generation history and versioning
-- Python: generation scripting support
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/ui/GenerationPanel.{hpp,cpp}` | Generation UI |
-| `src/ai/GenerationService.{hpp,cpp}` | Generation orchestration |
+- Split workspace: code editor + Canvas side by side
+- Multi-canvas layout management
+- AI chat panel docked alongside
+- Project-level asset browser
+- Consistent theme across all components
+- Keyboard shortcuts for AI actions
+- Python scripting: full IDE automation via Python
+- Settings/preferences panel
+- Project configuration files
 
 ### Checkpoint
 - Auto-commit with tag `v0.0.7-dev`
 
 ---
 
-## Milestone 8: Unified Workspace (AIO IDE)
+## Milestone 8: AI Integration Layer
 
 **Tag:** `v0.0.8-dev`
 **Status:** Planned
 
 ### Deliverables
-- Split workspace: code editor + media viewer side by side
-- AI chat panel docked alongside
-- Project-level media management (asset browser)
-- Consistent theme across all components
-- Keyboard shortcuts for AI actions (Ctrl+Shift+G for generation)
-- Python scripting: full IDE automation via Python
-- Settings/preferences panel
-- Project configuration files
+- `AIInterface` — AI provider abstraction (GPT, Claude, local models)
+- `MediaExtractor` — Frame/image/audio/model data extraction
+- `AIPanel` — Chat/response panel, dockable
+- Context sharing: AI sees open files, canvases, models simultaneously
+- Python: full pybind11 bindings for all components
+- AI can create/manage Canvas instances programmatically
 
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/ui/AssetBrowser.{hpp,cpp}` | Project media management |
-| `src/ui/SettingsPanel.{hpp,cpp}` | Preferences |
-| `src/python/IDEBindings.cpp` | Full IDE automation bindings |
+### Dependencies Added
+- cURL (for AI API calls) or httplib (header-only)
 
 ### Checkpoint
 - Auto-commit with tag `v0.0.8-dev`
 
 ---
 
+## Milestone 9: AI Content Generation
+
+**Tag:** `v0.0.9-dev`
+**Status:** Planned
+
+### Deliverables
+- `GenerationPanel` — Prompt input, generation settings, output gallery
+- `GenerationService` — Orchestrates image/video/model generation APIs
+- Text-to-image generation (DALL-E, Stable Diffusion, etc.)
+- Image-to-image generation (reference images from Canvas)
+- Text-to-video generation
+- Image/Text-to-3D model generation
+- Generated content appears as Canvas layers automatically
+- Generation history and versioning
+- Python: generation scripting support
+
+### Checkpoint
+- Auto-commit with tag `v0.0.9-dev`
+
+---
+
 ## Architecture Principles
 
-1. **Every viewer is a `wxPanel`** — dockable, tabbable, consistent behavior
-2. **`MediaService` is the single source of truth** — type detection, metadata, AI extraction
-3. **AI modules are provider-agnostic** — swap GPT/Claude/local without touching UI
-4. **Python scripting at every layer** — users can automate any AVIM component
-5. **No dead code** — every component serves the AIO vision
-6. **Commercial-free libraries only** — verified licenses throughout
-
-## Python Scripting Scope
-
-Python is embedded at every milestone with increasing capability:
-
-| Milestone | Python Capability |
-|-----------|------------------|
-| 2 | Console panel (stub), pybind11 foundation |
-| 3 | Video control from scripts (play, seek, extract frame) |
-| 4 | Audio control + waveform access |
-| 5 | 3D model inspection (mesh data, camera control) |
-| 6 | Full AI provider scripting, media extraction pipeline |
-| 7 | Generation scripting (create images, video, models from Python) |
-| 8 | Full IDE automation (open files, manipulate UI, run builds) |
-
-**Binding approach:** pybind11 (BSD 3-Clause, header-only, CMake FetchContent)
+1. **Vulkan Canvas is the universal render layer** — all content renders through it
+2. **CPU+GPU dual-path** — Vulkan when available, CPU fallback always functional
+3. **Multi-canvas support** — AI can create/manage multiple canvases
+4. **Picture-in-Picture compositing** — Canvases can be layered
+5. **AI-accessible APIs** — All Canvas operations exposed programmatically
+6. **No dead code** — every component serves the AIO vision
+7. **Commercial-free libraries only** — verified licenses throughout
 
 ## Library License Verification
 
@@ -304,7 +313,8 @@ All libraries used in this project are commercially viable at zero cost:
 | ImageMagick | ImageMagick License (Apache-like) | ✅ Yes | Free for commercial use |
 | libmpv | LGPL 2.1+ | ✅ Yes | Must dynamically link |
 | Assimp | BSD 3-Clause | ✅ Yes | Attribution only |
-| OpenGL | Khronos Standard | ✅ Yes | Free, no license cost |
+| Vulkan SDK | Apache 2.0 | ✅ Yes | Free for commercial use |
 | pybind11 | BSD 3-Clause | ✅ Yes | Header-only |
 | cURL | MIT/X derivative | ✅ Yes | Free for commercial use |
-| httplib | BSD 3-Clause | ✅ Yes | Header-only alternative to cURL |
+| glslang | Apache 2.0 | ✅ Yes | Shader compilation |
+| SPIRV-Tools | Apache 2.0 | ✅ Yes | Shader optimization |

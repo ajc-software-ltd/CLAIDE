@@ -8,7 +8,6 @@ This file is a **project-specific OpenCode skill sheet** for **CLIADE**.
 It is not a generic Vulkan note.
 It exists to guide planning and implementation for:
 
-- **Milestone 2.1.1**
 - **Imaging Tools**
 - **Photoshop-style implementation**
 - **Vulkan-backed unified render canvas**
