@@ -20,6 +20,7 @@
 #include <spdlog/spdlog.h>
 
 #include "platform/PlatformPaths.hpp"
+#include "core/MediaService.hpp"
 
 namespace Ui {
 
@@ -71,6 +72,22 @@ void ThumbnailCache::Clear() {
 }
 
 wxBitmap ThumbnailCache::GenerateImageThumbnail(const std::filesystem::path& path, int size) {
+    if (!std::filesystem::is_regular_file(path)) {
+        return GenerateDefaultThumbnail("folder", size);
+    }
+
+    auto mediaType = Core::MediaService::DetectMediaType(path);
+    if (mediaType != Core::MediaType::Image) {
+        switch (mediaType) {
+        case Core::MediaType::Video:
+            return GenerateDefaultThumbnail("video", size);
+        case Core::MediaType::Model:
+            return GenerateDefaultThumbnail("model", size);
+        default:
+            return GenerateDefaultThumbnail("file", size);
+        }
+    }
+
     try {
         Magick::Image img(path.string());
         img.type(Magick::TrueColorType);
@@ -124,7 +141,11 @@ wxBitmap ThumbnailCache::GenerateDefaultThumbnail(const std::string& type, int s
 }
 
 std::string ThumbnailCache::GetCacheKey(const std::filesystem::path& path) const {
-    auto modTime = std::filesystem::last_write_time(path);
+    std::error_code ec;
+    auto modTime = std::filesystem::last_write_time(path, ec);
+    if (ec) {
+        return path.string() + "_0";
+    }
     auto epoch = std::chrono::duration_cast<std::chrono::seconds>(
                      modTime.time_since_epoch()).count();
     return path.string() + "_" + std::to_string(epoch);

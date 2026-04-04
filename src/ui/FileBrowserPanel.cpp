@@ -133,8 +133,16 @@ void FileBrowserPanel::LoadDirectory(const std::filesystem::path& path) {
 
     try {
         for (const auto& entry : std::filesystem::directory_iterator(path)) {
-            if (entry.is_directory() || MatchesFilter(entry.path())) {
-                m_items.push_back(entry.path());
+            const auto& p = entry.path();
+            auto name = p.filename().string();
+
+            // Skip hidden files
+            if (!name.empty() && name[0] == '.') continue;
+
+            if (entry.is_directory()) {
+                m_items.push_back(p);
+            } else if (entry.is_regular_file() && MatchesFilter(p)) {
+                m_items.push_back(p);
             }
         }
     } catch (const std::filesystem::filesystem_error& e) {
