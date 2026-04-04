@@ -215,6 +215,7 @@ void FileBrowserPanel::UpdateLayout() {
 }
 
 void FileBrowserPanel::OnGridPaint(wxPaintEvent& event) {
+    spdlog::debug("FileBrowserPanel::OnGridPaint called");
     wxAutoBufferedPaintDC dc(m_grid);
     dc.SetBackground(wxBrush(wxColour(30, 30, 30)));
     dc.Clear();
@@ -232,6 +233,9 @@ void FileBrowserPanel::OnGridPaint(wxPaintEvent& event) {
     wxSize clientSize = m_grid->GetClientSize();
     int visibleTop = offsetY;
     int visibleBottom = offsetY + clientSize.GetHeight();
+
+    spdlog::debug("FileBrowserPanel::OnGridPaint: {} items, visible range {}-{}",
+                  m_items.size(), visibleTop, visibleBottom);
 
     for (int i = 0; i < static_cast<int>(m_items.size()); ++i) {
         int col = i % m_columns;
@@ -277,6 +281,7 @@ void FileBrowserPanel::OnGridPaint(wxPaintEvent& event) {
         dc.DrawText(name, textX, textY);
     }
 
+    spdlog::debug("FileBrowserPanel::OnGridPaint complete");
     event.Skip();
 }
 

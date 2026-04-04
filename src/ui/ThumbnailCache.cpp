@@ -72,7 +72,8 @@ void ThumbnailCache::Clear() {
 }
 
 wxBitmap ThumbnailCache::GenerateImageThumbnail(const std::filesystem::path& path, int size) {
-    if (!std::filesystem::is_regular_file(path)) {
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(path, ec) || ec) {
         return GenerateDefaultThumbnail("folder", size);
     }
 
@@ -109,8 +110,13 @@ wxBitmap ThumbnailCache::GenerateImageThumbnail(const std::filesystem::path& pat
         Magick::Blob blob;
         img.write(&blob, "RGB");
 
-        wxImage wxImg(thumbW, thumbH);
-        wxImg.SetData(static_cast<unsigned char*>(const_cast<void*>(blob.data())), true);
+        // wxImage needs data allocated with new unsigned char[] when staticData=false.
+        // Copy blob data into a new[] buffer that wxImage can own and delete.
+        std::size_t dataLen = blob.length();
+        unsigned char* ownedData = new unsigned char[dataLen];
+        std::memcpy(ownedData, blob.data(), dataLen);
+
+        wxImage wxImg(thumbW, thumbH, ownedData, false);
 
         wxBitmap bmp(wxImg);
 
@@ -121,6 +127,10 @@ wxBitmap ThumbnailCache::GenerateImageThumbnail(const std::filesystem::path& pat
         spdlog::warn("ThumbnailCache: failed to generate thumbnail for {}: {}",
                      path.filename().string(), e.what());
         return GenerateDefaultThumbnail("image", size);
+    } catch (const std::exception& e) {
+        spdlog::warn("ThumbnailCache: unexpected error for {}: {}",
+                     path.filename().string(), e.what());
+        return GenerateDefaultThumbnail("file", size);
     }
 }
 
