@@ -49,6 +49,7 @@ set(SOURCES
     src/core/DocumentState.cpp
     src/core/TileCache.cpp
     src/core/MipmapGenerator.cpp
+    src/core/CrashHandler.cpp
     src/gpu/GPUEngine.cpp
     src/gpu/VulkanValidation.cpp
     src/render/vulkan/VulkanContext.cpp
@@ -75,6 +76,7 @@ set(HEADERS
     src/core/DocumentState.hpp
     src/core/TileCache.hpp
     src/core/MipmapGenerator.hpp
+    src/core/CrashHandler.hpp
     src/gpu/GPUEngine.hpp
     src/gpu/VulkanValidation.hpp
     src/ui/Theme.hpp

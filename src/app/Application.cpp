@@ -20,6 +20,7 @@
 #include <Magick++.h>
 
 #include "platform/PlatformPaths.hpp"
+#include "core/CrashHandler.hpp"
 #include "ui/MainFrame.hpp"
 #include "ui/Theme.hpp"
 
@@ -90,6 +91,9 @@ bool Application::OnInit() {
         auto logPath = Platform::GetLogFilePath();
         auto logDir = logPath.parent_path();
         std::filesystem::create_directories(logDir);
+
+        // Initialize crash handler
+        Core::CrashHandler::Initialize(logDir);
 
         // Clean up old log files (keep last 10)
         std::vector<std::filesystem::path> oldLogs;
