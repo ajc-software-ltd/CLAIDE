@@ -216,7 +216,7 @@ void FileBrowserPanel::UpdateLayout() {
     }
 }
 
-void FileBrowserPanel::OnGridPaint(wxPaintEvent& event) {
+void FileBrowserPanel::OnGridPaint([[maybe_unused]] wxPaintEvent& event) {
     wxAutoBufferedPaintDC dc(m_grid);
     dc.SetBackground(wxBrush(wxColour(30, 30, 30)));
     dc.Clear();
