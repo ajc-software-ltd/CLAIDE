@@ -83,6 +83,7 @@ FileBrowserPanel::FileBrowserPanel(wxWindow* parent)
                                   wxDefaultPosition, wxDefaultSize,
                                   wxHSCROLL | wxVSCROLL);
     m_grid->SetBackgroundColour(wxColour(30, 30, 30));
+    m_grid->SetBackgroundStyle(wxBG_STYLE_PAINT);
     m_grid->SetScrollRate(20, 20);
 
     m_grid->Bind(wxEVT_PAINT, &FileBrowserPanel::OnGridPaint, this);
