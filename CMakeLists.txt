@@ -53,6 +53,11 @@ set(SOURCES
     src/gpu/VulkanValidation.cpp
     src/render/vulkan/VulkanContext.cpp
     src/ui/Theme.cpp
+    src/ui/ActivityBar.cpp
+    src/ui/SidebarPanel.cpp
+    src/ui/PropertiesPanel.cpp
+    src/ui/BackgroundPanel.cpp
+    src/ui/PromptBar.cpp
     src/ui/EditorPanel.cpp
     src/ui/ImageViewer.cpp
     src/ui/MainFrame.cpp
@@ -71,6 +76,11 @@ set(HEADERS
     src/gpu/GPUEngine.hpp
     src/gpu/VulkanValidation.hpp
     src/ui/Theme.hpp
+    src/ui/ActivityBar.hpp
+    src/ui/SidebarPanel.hpp
+    src/ui/PropertiesPanel.hpp
+    src/ui/BackgroundPanel.hpp
+    src/ui/PromptBar.hpp
     src/ui/EditorPanel.hpp
     src/ui/ImageViewer.hpp
     src/ui/MainFrame.hpp
