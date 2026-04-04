@@ -54,9 +54,9 @@ bool GPUEngine::Initialize() {
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "CLIADE";
-    appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 2);
+    appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 3);
     appInfo.pEngineName = "CLIADE GPU Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 2);
+    appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 3);
     appInfo.apiVersion = VK_API_VERSION_1_2;
 
     VkInstanceCreateInfo createInfo = {};

@@ -17,7 +17,7 @@ After each milestone is complete:
 | Milestone | Tag | Status |
 |-----------|-----|--------|
 | 1: Core IDE Shell | `v0.0.1-dev` | ✅ Complete |
-| 2: Image Processing | `v0.0.2-dev` | ⏳ In Progress |
+| 2: Image Processing | `v0.0.3-dev` | ⏳ In Progress |
 | 3: Video Player | `v0.0.3-dev` | ⏳ Planned |
 | 4: Audio Player | `v0.0.4-dev` | ⏳ Planned |
 | 5: 3D Model Viewer | `v0.0.5-dev` | ⏳ Planned |
@@ -70,7 +70,7 @@ After each milestone is complete:
 
 ## Milestone 2: Image Processing (AVIM: Image)
 
-**Tag:** `v0.0.2-dev`
+**Tag:** `v0.0.3-dev`
 **Status:** ⏳ In Progress
 
 ### Deliverables
@@ -99,7 +99,7 @@ After each milestone is complete:
 - pybind11 (BSD 3-Clause, header-only via FetchContent)
 
 ### Checkpoint
-- Auto-commit with tag `v0.0.2-dev`
+- Auto-commit with tag `v0.0.3-dev`
 - Python scripting foundation in place for future milestones
 
 ---
