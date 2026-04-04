@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <wx/panel.h>
 #include <wx/scrolwin.h>
 #include <wx/bitmap.h>
 #include <wx/textctrl.h>
@@ -22,7 +23,7 @@
 
 namespace Ui {
 
-class FileBrowserPanel : public wxScrolledWindow {
+class FileBrowserPanel : public wxPanel {
 public:
     FileBrowserPanel(wxWindow* parent);
 
@@ -36,35 +37,34 @@ public:
     void GoUp();
 
 private:
-    void OnPaint(wxPaintEvent& event);
-    void OnSize(wxSizeEvent& event);
-    void OnLeftDClick(wxMouseEvent& event);
     void OnBack(wxCommandEvent& event);
     void OnForward(wxCommandEvent& event);
     void OnUp(wxCommandEvent& event);
     void OnFilterChanged(wxCommandEvent& event);
     void OnPathEntered(wxCommandEvent& event);
+    void OnGridPaint(wxPaintEvent& event);
+    void OnGridSize(wxSizeEvent& event);
+    void OnGridLeftDClick(wxMouseEvent& event);
 
     void LoadDirectory(const std::filesystem::path& path);
     void UpdateLayout();
     void RenderGrid(wxDC& dc);
-    std::filesystem::path GetItemAtIndex(int index) const;
     int GetIndexAtPosition(wxPoint pos) const;
-    wxBitmap GetFileIcon(const std::filesystem::path& path) const;
-    std::string GetFileDisplayName(const std::filesystem::path& path) const;
     bool MatchesFilter(const std::filesystem::path& path) const;
+
+    wxPanel* m_toolbar;
+    wxScrolledWindow* m_grid;
+    wxTextCtrl* m_pathBar;
+    wxButton* m_backBtn;
+    wxButton* m_forwardBtn;
+    wxButton* m_upBtn;
+    wxChoice* m_filterChoice;
 
     std::filesystem::path m_currentPath;
     std::filesystem::path m_homePath;
     std::vector<std::filesystem::path> m_items;
     std::vector<std::filesystem::path> m_backHistory;
     std::vector<std::filesystem::path> m_forwardHistory;
-
-    wxTextCtrl* m_pathBar;
-    wxButton* m_backBtn;
-    wxButton* m_forwardBtn;
-    wxButton* m_upBtn;
-    wxChoice* m_filterChoice;
 
     ThumbnailCache m_thumbnailCache;
 
