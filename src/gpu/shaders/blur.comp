@@ -1,0 +1,41 @@
+#version 450
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+layout(binding = 0) buffer InputBuffer { float inputData[]; };
+layout(binding = 1) buffer OutputBuffer { float outputData[]; };
+
+layout(push_constant) uniform PushConstants {
+    float radius;
+    int width;
+    int height;
+    int channels;
+} pc;
+
+void main() {
+    uint x = gl_GlobalInvocationID.x;
+    uint y = gl_GlobalInvocationID.y;
+
+    if (x >= pc.width || y >= pc.height) return;
+
+    uint idx = (y * pc.width + x) * pc.channels;
+    int kernelSize = int(max(1.0, pc.radius * 2.0 + 1.0));
+
+    for (int c = 0; c < pc.channels; c++) {
+        float sum = 0.0;
+        float weightSum = 0.0;
+
+        for (int ky = -kernelSize; ky <= kernelSize; ky++) {
+            for (int kx = -kernelSize; kx <= kernelSize; kx++) {
+                int sx = clamp(int(x) + kx, 0, pc.width - 1);
+                int sy = clamp(int(y) + ky, 0, pc.height - 1);
+                float dist = sqrt(float(kx * kx + ky * ky));
+                float w = exp(-(dist * dist) / (2.0 * pc.radius * pc.radius));
+
+                sum += inputData[(sy * pc.width + sx) * pc.channels + c] * w;
+                weightSum += w;
+            }
+        }
+        outputData[idx + c] = sum / weightSum;
+    }
+}

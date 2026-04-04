@@ -707,7 +707,7 @@ void MainFrame::UpdateStatusBar() {
         statusBar->SetStatusText("Coming soon", 1);
         break;
     }
-    statusBar->SetStatusText("CLIADE v0.0.2-dev", 2);
+    statusBar->SetStatusText("CLIADE v0.0.3-dev", 2);
 }
 
 void MainFrame::OnNew([[maybe_unused]] wxCommandEvent& event) {
@@ -775,7 +775,7 @@ void MainFrame::OnExit([[maybe_unused]] wxCommandEvent& event) {
 
 void MainFrame::OnAbout([[maybe_unused]] wxCommandEvent& event) {
     wxMessageDialog dlg(this,
-        wxString::FromUTF8("CLIADE\nVersion 0.0.2-dev\n\n"
+        wxString::FromUTF8("CLIADE\nVersion 0.0.3-dev\n\n"
                            "AJC-Software Ltd \xC2\xA9 2026\n\n"
                            "A cross-platform text editor built with C++23 and wxWidgets."),
         "About CLIADE", wxOK | wxICON_INFORMATION);

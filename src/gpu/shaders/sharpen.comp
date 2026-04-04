@@ -1,0 +1,36 @@
+#version 450
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+layout(binding = 0) buffer InputBuffer { float inputData[]; };
+layout(binding = 1) buffer OutputBuffer { float outputData[]; };
+
+layout(push_constant) uniform PushConstants {
+    float amount;
+    int width;
+    int height;
+    int channels;
+} pc;
+
+void main() {
+    uint x = gl_GlobalInvocationID.x;
+    uint y = gl_GlobalInvocationID.y;
+
+    if (x < 1 || x >= pc.width - 1 || y < 1 || y >= pc.height - 1) return;
+
+    uint idx = (y * pc.width + x) * pc.channels;
+    float k[9] = float[](0.0, -pc.amount, 0.0,
+                         -pc.amount, 1.0 + 4.0 * pc.amount, -pc.amount,
+                         0.0, -pc.amount, 0.0);
+
+    for (int c = 0; c < pc.channels; c++) {
+        float sum = 0.0;
+        int ki = 0;
+        for (int ky = -1; ky <= 1; ky++) {
+            for (int kx = -1; kx <= 1; kx++) {
+                sum += inputData[((y + ky) * pc.width + (x + kx)) * pc.channels + c] * k[ki++];
+            }
+        }
+        outputData[idx + c] = clamp(sum, 0.0, 255.0);
+    }
+}
