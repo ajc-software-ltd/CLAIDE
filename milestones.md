@@ -17,7 +17,7 @@ After each milestone is complete:
 | Milestone | Tag | Status |
 |-----------|-----|--------|
 | 1: Core IDE Shell | `v0.0.1-dev` | ✅ Complete |
-| 2: Image Processing | `v0.0.2-dev` | ⏳ Planned |
+| 2: Image Processing | `v0.0.2-dev` | ⏳ In Progress |
 | 3: Video Player | `v0.0.3-dev` | ⏳ Planned |
 | 4: Audio Player | `v0.0.4-dev` | ⏳ Planned |
 | 5: 3D Model Viewer | `v0.0.5-dev` | ⏳ Planned |
@@ -71,13 +71,16 @@ After each milestone is complete:
 ## Milestone 2: Image Processing (AVIM: Image)
 
 **Tag:** `v0.0.2-dev`
-**Status:** Planned
+**Status:** ⏳ In Progress
 
 ### Deliverables
 - `MediaService` — unified media type detection, metadata extraction, AI-ready extraction stubs
 - `ImageViewer` — `wxScrolledWindow` with zoom (mouse wheel, cursor-centered), pan (drag), fit-to-window, actual size
 - `File > Open` detects all media types and routes to correct viewer
 - Status bar: dimensions, file size, color depth, format name
+- IconBar sidebar with 4 icons: Files, Images, Video, 3D Models
+- File explorer with file selection support (double-click to open)
+- Sidebar mode controls sidebar panels only, center pane persists across mode changes
 - Python foundation: pybind11 integration, Python console panel (stub)
 
 ### Supported Formats
@@ -88,7 +91,7 @@ After each milestone is complete:
 | File | Purpose |
 |------|---------|
 | `src/core/MediaService.{hpp,cpp}` | Media type detection, metadata, AI extraction stubs |
-| `src/ui/ImageViewer.{hpp,cpp}` | Image viewer with zoom, pan, fit |
+| `src/ui/ImageViewer.{hpp,cpp}` | Image viewer with zoom, pan, fit, context menu |
 | `src/ui/PythonConsole.{hpp,cpp}` | Python REPL panel (stub) |
 
 ### Dependencies Added

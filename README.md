@@ -32,10 +32,19 @@ CLIADE is evolving into a full AIO AI Content Creator with the **AVIM Canvas** �
 |-----------|-----------|--------|
 | **A**udio | M4: Audio Player | ⏳ Planned |
 | **V**ideo | M3: Video Player | ⏳ Planned |
-| **I**mage | M2: Image Processing | ⏳ Planned |
+| **I**mage | M2: Image Processing | ⏳ In Progress |
 | **M**odel | M5: 3D Model Viewer | ⏳ Planned |
 
 Plus AI integration (M6), content generation (M7), and unified workspace (M8). See `milestones.md` for the full roadmap.
+
+### Milestone 2 Progress (Image Processing)
+- ✅ `MediaService` — media type detection, ImageMagick metadata extraction, AI-ready pixel data API
+- ✅ `ImageViewer` — zoom (mouse wheel), pan (drag), fit-to-window, actual size, right-click context menu
+- ✅ `File > Open` — routes images, text, video, audio, 3D to correct viewers
+- ✅ IconBar sidebar — 4 icons (Files, Images, Video, 3D Models) with active/inactive states
+- ✅ File explorer — double-click files to open, folder navigation, detach support
+- ✅ Sidebar mode persistence — switching modes doesn't replace center content
+- ⏳ Python console panel (stub)
 
 ---
 

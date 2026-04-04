@@ -17,6 +17,7 @@
 
 #include <wx/image.h>
 #include <wx/log.h>
+#include <Magick++.h>
 
 #include "platform/PlatformPaths.hpp"
 #include "ui/MainFrame.hpp"
@@ -111,6 +112,7 @@ bool Application::OnInit() {
     spdlog::info("Application: starting CLIADE");
 
     wxImage::AddHandler(new wxPNGHandler());
+    Magick::InitializeMagick(nullptr);
 
 #ifndef NDEBUG
     wxHandleFatalExceptions(true);

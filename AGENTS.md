@@ -165,33 +165,41 @@ Use **spdlog** with rotating file sink (5MB max, 3 files).
 
 ## Current Project State
 
-### Source Files (21 files)
+### Source Files (27 files)
 | File | Lines | Purpose |
 |------|-------|---------|
 | `src/main.cpp` | 11 | Entry point |
 | `src/app/Application.hpp` | 21 | wxApp declaration |
-| `src/app/Application.cpp` | 142 | Bootstrap, spdlog, wxLog routing, assert handler, PNG handler |
+| `src/app/Application.cpp` | 143 | Bootstrap, spdlog, wxLog routing, assert handler, PNG/Magick init |
 | `src/core/Encoding.hpp` | 70 | BOM detection, UTF-8/16 encode/decode API |
 | `src/core/Encoding.cpp` | 416 | Full encoding with surrogate pairs, UTF-8 validation |
 | `src/core/Document.hpp` | 48 | Document model, dirty tracking |
 | `src/core/Document.cpp` | 74 | Document implementation |
 | `src/core/FileService.hpp` | 42 | Safe save, load, delete API |
 | `src/core/FileService.cpp` | 162 | Atomic replace, returns DecodeResult with metadata |
+| `src/core/MediaService.hpp` | 52 | Media type detection, metadata, AI extraction stubs |
+| `src/core/MediaService.cpp` | 141 | Type detection, ImageMagick metadata, pixel data extraction |
 | `src/ui/Theme.hpp` | 35 | Dark colour palette |
 | `src/ui/Theme.cpp` | 35 | Dark colours + Windows remap |
 | `src/ui/EditorPanel.hpp` | 24 | wxTextCtrl subclass |
 | `src/ui/EditorPanel.cpp` | 42 | Monospace font, dark colours |
-| `src/ui/MainFrame.hpp` | 118 | Main window: AUI, IconBar, Explorer, PromptBar, tabbed editors |
-| `src/ui/MainFrame.cpp` | 609 | Full docking system, per-tab Document tracking |
+| `src/ui/ImageViewer.hpp` | 45 | Image viewer with zoom, pan, fit |
+| `src/ui/ImageViewer.cpp` | 196 | ImageMagick loading, mouse wheel zoom, drag pan, context menu |
+| `src/ui/MainFrame.hpp` | 118 | Main window: AUI, IconBar (4 icons), Explorer, PromptBar, ImageViewer |
+| `src/ui/MainFrame.cpp` | 804 | Full docking system, media routing, sidebar modes, per-tab Document tracking |
 | `src/platform/PlatformPaths.hpp` | 21 | Cross-platform path helpers |
 | `src/platform/PlatformPaths.cpp` | 62 | XDG on Linux, APPDATA on Windows |
 | `tests/EncodingTests.cpp` | 166 | 16 encoding tests |
 | `tests/FileServiceTests.cpp` | 179 | 10 file service tests |
 | `tests/DocumentTests.cpp` | 100 | 10 document tests |
+| `tests/MediaServiceTests.cpp` | 108 | 10 media service tests |
 
 ### Assets
 - `assets/canvas.png` — Background image
 - `assets/icons/folder_icon_128x128.png` — Sidebar folder icon
+- `assets/icons/images_icon.png` — Sidebar images icon
+- `assets/icons/video_icon.png` — Sidebar video icon
+- `assets/icons/3dmodels_icon.png` — Sidebar 3D models icon
 - `assets/icons/send_icon.png` — Send button icon (80×32)
 - `assets/icons/clear_icon.png` — Clear button icon (80×32)
 - `assets/icons/app_icon.png` — Application icon
@@ -224,7 +232,7 @@ A valid deliverable should include:
 Development follows the 8-milestone roadmap in `milestones.md`:
 
 1. ✅ **Core IDE Shell** — wxAui docking, text editor, logging, tests
-2. ⏳ **Image Processing** — ImageViewer, MediaService, Python foundation
+2. ⏳ **Image Processing** — ImageViewer, MediaService, IconBar with 4 modes, file explorer with file selection
 3. ⏳ **Video Player** — libmpv playback, scrub bar, frame extraction
 4. ⏳ **Audio Player** — libmpv audio, waveform visualization
 5. ⏳ **3D Model Viewer** — Assimp + OpenGL, orbit camera

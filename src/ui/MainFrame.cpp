@@ -9,6 +9,8 @@
 #include "ui/MainFrame.hpp"
 
 #include <wx/accel.h>
+#include <wx/bmpbuttn.h>
+#include <wx/button.h>
 #include <wx/dcclient.h>
 #include <wx/filedlg.h>
 #include <wx/generic/dirctrlg.h>
@@ -17,9 +19,6 @@
 #include <wx/msgdlg.h>
 #include <wx/sizer.h>
 #include <wx/string.h>
-#include <wx/artprov.h>
-#include <wx/button.h>
-#include <wx/bmpbuttn.h>
 #include <wx/tglbtn.h>
 
 #include <filesystem>
@@ -27,10 +26,12 @@
 
 #include <spdlog/spdlog.h>
 
-#include "ui/EditorPanel.hpp"
-#include "ui/Theme.hpp"
 #include "core/FileService.hpp"
+#include "core/MediaService.hpp"
 #include "platform/PlatformPaths.hpp"
+#include "ui/EditorPanel.hpp"
+#include "ui/ImageViewer.hpp"
+#include "ui/Theme.hpp"
 
 namespace Ui {
 
@@ -77,41 +78,74 @@ void BackgroundPanel::OnSize(wxSizeEvent& event) {
 // ── IconBar ────────────────────────────────────────────────────────
 
 IconBar::IconBar(wxWindow* parent)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(160, -1)),
-      m_folderActive(false) {
+    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(80, -1)),
+      m_activeMode(SidebarMode::Files) {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 
     auto projectRoot = Platform::GetProjectRoot();
-    auto iconPath = projectRoot / "assets" / "icons" / "folder_icon_128x128.png";
+    auto iconsDir = projectRoot / "assets" / "icons";
 
-    if (std::filesystem::exists(iconPath)) {
-        wxImage img(iconPath.string(), wxBITMAP_TYPE_PNG);
-        if (img.IsOk()) {
-            m_folderBmp = wxBitmap(img);
+    struct IconDef {
+        const char* filename;
+        const char* label;
+        SidebarMode mode;
+    };
+
+    IconDef defs[] = {
+        {"folder_icon_128x128.png", "Files",   SidebarMode::Files},
+        {"images_icon.png",         "Images",  SidebarMode::Images},
+        {"video_icon.png",          "Video",   SidebarMode::Video},
+        {"3dmodels_icon.png",       "3D",      SidebarMode::Models},
+    };
+
+    for (auto& def : defs) {
+        auto iconPath = iconsDir / def.filename;
+        IconEntry entry;
+        entry.label = def.label;
+        entry.mode = def.mode;
+
+        if (std::filesystem::exists(iconPath)) {
+            wxImage img(iconPath.string(), wxBITMAP_TYPE_PNG);
+            if (img.IsOk()) {
+                img.Rescale(48, 48, wxIMAGE_QUALITY_HIGH);
+                entry.bitmap = wxBitmap(img);
+
+                wxImage activeImg = img;
+                entry.activeBitmap = wxBitmap(activeImg);
+
+                wxImage inactiveImg = img;
+                inactiveImg = inactiveImg.ConvertToGreyscale();
+                entry.inactiveBitmap = wxBitmap(inactiveImg);
+            }
         }
+
+        if (!entry.bitmap.IsOk()) {
+            wxImage fallback(48, 48);
+            fallback.SetRGB(wxRect(0, 0, 48, 48), 100, 100, 100);
+            entry.bitmap = wxBitmap(fallback);
+            entry.activeBitmap = wxBitmap(fallback);
+            wxImage grey = fallback;
+            grey = grey.ConvertToGreyscale();
+            entry.inactiveBitmap = wxBitmap(grey);
+        }
+
+        m_icons.push_back(std::move(entry));
     }
 
-    if (!m_folderBmp.IsOk()) {
-        wxImage img(16, 16);
-        img.SetRGB(wxRect(0, 0, 16, 16), 212, 160, 23);
-        img.SetRGB(wxRect(2, 2, 12, 12), 245, 200, 66);
-        m_folderBmp = wxBitmap(img);
-    }
-
-    Bind(wxEVT_LEFT_DOWN, &IconBar::OnFolder, this);
+    Bind(wxEVT_LEFT_DOWN, &IconBar::OnMouse, this);
     Bind(wxEVT_PAINT, &IconBar::OnPaint, this);
 }
 
-void IconBar::OnFolder(wxMouseEvent& event) {
+void IconBar::OnMouse(wxMouseEvent& event) {
     wxPoint pos = event.GetPosition();
-    int iconX = (GetSize().x - m_folderBmp.GetWidth()) / 2;
-    int iconY = 10;
-    wxRect iconRect(iconX, iconY, m_folderBmp.GetWidth(), m_folderBmp.GetHeight());
 
-    if (iconRect.Contains(pos)) {
-        m_folderActive = !m_folderActive;
-        Refresh();
-        if (m_folderCb) m_folderCb();
+    for (auto& icon : m_icons) {
+        if (icon.hitRect.Contains(pos)) {
+            m_activeMode = icon.mode;
+            Refresh();
+            if (m_modeCb) m_modeCb(icon.mode);
+            return;
+        }
     }
 }
 
@@ -123,33 +157,31 @@ void IconBar::OnPaint(wxPaintEvent& event) {
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(0, 0, sz.x, sz.y);
 
-    int iconX = (sz.x - m_folderBmp.GetWidth()) / 2;
-    int iconY = 10;
+    int iconSize = 48;
+    int spacing = 12;
+    int y = 16;
 
-    if (m_folderBmp.IsOk()) {
-        if (m_folderActive) {
-            dc.DrawBitmap(m_folderBmp, iconX, iconY, true);
+    for (auto& icon : m_icons) {
+        int x = (sz.x - iconSize) / 2;
+        icon.hitRect = wxRect(x - 4, y - 4, iconSize + 8, iconSize + 32);
+
+        if (icon.mode == m_activeMode) {
+            dc.DrawBitmap(icon.activeBitmap, x, y, true);
+            dc.SetTextForeground(wxColour(220, 220, 220));
         } else {
-            wxImage img = m_folderBmp.ConvertToImage();
-            img = img.ConvertToGreyscale();
-            dc.DrawBitmap(wxBitmap(img), iconX, iconY, true);
+            dc.DrawBitmap(icon.inactiveBitmap, x, y, true);
+            dc.SetTextForeground(wxColour(120, 120, 120));
         }
+
+        dc.SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
+                          wxFONTWEIGHT_NORMAL));
+        wxCoord textW = 0, textH = 0;
+        dc.GetTextExtent(icon.label, &textW, &textH);
+        dc.DrawText(icon.label, (sz.x - textW) / 2,
+                    y + iconSize + 4);
+
+        y += iconSize + spacing + 20;
     }
-
-    dc.SetTextForeground(m_folderActive
-                             ? wxColour(220, 220, 220)
-                             : wxColour(140, 140, 140));
-    dc.SetFont(wxFont(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
-                      wxFONTWEIGHT_BOLD));
-
-    wxString label = "Files";
-    wxCoord textW = 0, textH = 0;
-    dc.GetTextExtent(label, &textW, &textH);
-
-    int textX = (sz.x - textW) / 2;
-    int textY = iconY + m_folderBmp.GetHeight() + 2;
-
-    dc.DrawText(label, textX, textY);
 
     event.Skip();
 }
@@ -173,7 +205,7 @@ FileExplorerPanel::FileExplorerPanel(wxWindow* parent)
     m_dirCtrl = new wxGenericDirCtrl(this, wxID_ANY,
                                      wxDirDialogDefaultFolderStr,
                                      wxDefaultPosition, wxDefaultSize,
-                                     wxDIRCTRL_DIR_ONLY | wxDIRCTRL_SHOW_FILTERS);
+                                     wxDIRCTRL_SHOW_FILTERS);
     sizer->Add(m_dirCtrl, 1, wxEXPAND | wxALL, 2);
 
     SetSizer(sizer);
@@ -182,6 +214,34 @@ FileExplorerPanel::FileExplorerPanel(wxWindow* parent)
          m_openFolderBtn->GetId());
     Bind(wxEVT_BUTTON, &FileExplorerPanel::OnDetach, this,
          m_detachBtn->GetId());
+
+    m_dirCtrl->Bind(wxEVT_TREE_ITEM_ACTIVATED,
+                    [this](wxTreeEvent& event) { OnFileActivated(event); },
+                    m_dirCtrl->GetTreeCtrl()->GetId());
+}
+
+void FileExplorerPanel::OnFileActivated(wxTreeEvent& event) {
+    (void)event;
+
+    auto selectedPath = m_dirCtrl->GetFilePath();
+    if (selectedPath.IsEmpty()) return;
+
+    auto path = selectedPath.ToStdString();
+    if (!std::filesystem::is_regular_file(std::filesystem::path(path))) {
+        return;
+    }
+
+    spdlog::info("FileExplorer: file activated: {}", path);
+
+    if (m_fileOpenCb) {
+        try {
+            m_fileOpenCb(path);
+        } catch (const std::exception& e) {
+            spdlog::error("FileExplorer: failed to open {}: {}", path, e.what());
+            wxMessageBox("Failed to open file: " + std::string(e.what()),
+                         "Open Error", wxOK | wxICON_ERROR, this);
+        }
+    }
 }
 
 void FileExplorerPanel::LoadDirectory(const std::string& path) {
@@ -321,18 +381,19 @@ void PromptBar::OnClear(wxCommandEvent& event) {
 MainFrame::MainFrame()
     : wxFrame(nullptr, wxID_ANY, "CLIADE", wxDefaultPosition,
               wxSize(1200, 800)),
-      m_editorTabs(nullptr), m_bgPanel(nullptr), m_iconBar(nullptr),
-      m_fileExplorer(nullptr), m_promptBar(nullptr), m_explorerVisible(false) {
+      m_editorTabs(nullptr), m_imageViewer(nullptr), m_bgPanel(nullptr),
+      m_iconBar(nullptr), m_fileExplorer(nullptr), m_promptBar(nullptr),
+      m_currentMode(SidebarMode::Files) {
     SetBackgroundColour(Theme::GetDarkTheme().background);
 
     CreateMenuBar();
-    CreateStatusBar();
     CreateDockingSystem();
     LoadBackgroundImage();
     LoadAppIcon();
 
     Bind(wxEVT_CLOSE_WINDOW, &MainFrame::OnClose, this);
 
+    UpdateStatusBar();
     spdlog::info("MainFrame: created");
 }
 
@@ -358,20 +419,6 @@ void MainFrame::CreateMenuBar() {
     Bind(wxEVT_MENU, &MainFrame::OnAbout, this, wxID_ABOUT);
 }
 
-void MainFrame::CreateStatusBar() {
-    wxFrame::CreateStatusBar(3);
-    auto theme = Theme::GetDarkTheme();
-    GetStatusBar()->SetBackgroundColour(theme.statusBarBackground);
-    GetStatusBar()->SetForegroundColour(theme.statusBarText);
-
-    int widths[] = {200, 200, -1};
-    GetStatusBar()->SetStatusWidths(3, widths);
-
-    GetStatusBar()->SetStatusText("UTF-8", 0);
-    GetStatusBar()->SetStatusText("Ready", 1);
-    GetStatusBar()->SetStatusText("CLIADE v0.0.2-dev", 2);
-}
-
 void MainFrame::CreateDockingSystem() {
     m_auiManager.SetManagedWindow(this);
 
@@ -387,21 +434,17 @@ void MainFrame::CreateDockingSystem() {
                              .PaneBorder(false));
 
     m_iconBar = new IconBar(this);
-    m_iconBar->SetFolderCallback([this]() {
-        if (m_explorerVisible) {
-            HideFileExplorer();
-        } else {
-            ShowFileExplorer();
-        }
+    m_iconBar->SetModeCallback([this](SidebarMode mode) {
+        SetSidebarMode(mode);
     });
     m_auiManager.AddPane(m_iconBar,
                          wxAuiPaneInfo()
                              .Name("IconBar")
                              .Left()
                              .Layer(10)
-                             .MinSize(wxSize(160, -1))
-                             .BestSize(wxSize(160, -1))
-                             .MaxSize(wxSize(160, -1))
+                             .MinSize(wxSize(80, -1))
+                             .BestSize(wxSize(80, -1))
+                             .MaxSize(wxSize(80, -1))
                              .CaptionVisible(false)
                              .CloseButton(false)
                              .Gripper(false)
@@ -411,6 +454,33 @@ void MainFrame::CreateDockingSystem() {
                              .PaneBorder(false));
 
     m_fileExplorer = new FileExplorerPanel(this);
+    m_fileExplorer->SetFileOpenCallback([this](const std::string& path) {
+        auto mediaType = Core::MediaService::DetectMediaType(path);
+        switch (mediaType) {
+        case Core::MediaType::Image:
+            OpenImage(path);
+            break;
+        case Core::MediaType::Text:
+            OpenTextFile(path);
+            break;
+        case Core::MediaType::Video:
+            wxMessageBox("Video player coming in Milestone 3.",
+                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+            break;
+        case Core::MediaType::Audio:
+            wxMessageBox("Audio player coming in Milestone 4.",
+                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+            break;
+        case Core::MediaType::Model:
+            wxMessageBox("3D model viewer coming in Milestone 5.",
+                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+            break;
+        default:
+            wxMessageBox("Unsupported file type: " + path,
+                         "Open Error", wxOK | wxICON_ERROR, this);
+            break;
+        }
+    });
     m_auiManager.AddPane(m_fileExplorer,
                          wxAuiPaneInfo()
                              .Name("FileExplorer")
@@ -425,6 +495,21 @@ void MainFrame::CreateDockingSystem() {
                              .Floatable(true)
                              .Dockable(true)
                              .PinButton(true)
+                             .PaneBorder(false)
+                             .Hide());
+
+    m_imageViewer = new ImageViewer(this, "");
+    m_auiManager.AddPane(m_imageViewer,
+                         wxAuiPaneInfo()
+                             .Name("ImageViewer")
+                             .Center()
+                             .CaptionVisible(false)
+                             .CloseButton(false)
+                             .MaximizeButton(false)
+                             .MinimizeButton(false)
+                             .Resizable(true)
+                             .Floatable(false)
+                             .Dockable(true)
                              .PaneBorder(false)
                              .Hide());
 
@@ -517,69 +602,171 @@ void MainFrame::LoadAppIcon() {
                  iconPath.string(), img.GetWidth(), img.GetHeight());
 }
 
-void MainFrame::ShowFileExplorer() {
-    m_auiManager.GetPane("FileExplorer").Show();
+void MainFrame::SetSidebarMode(SidebarMode mode) {
+    m_currentMode = mode;
+
+    // Only toggle sidebar panels, never touch center pane content
+    m_auiManager.GetPane("FileExplorer").Hide();
+
+    switch (mode) {
+    case SidebarMode::Files:
+        m_auiManager.GetPane("FileExplorer").Show();
+        spdlog::info("MainFrame: sidebar mode: Files");
+        break;
+    case SidebarMode::Images:
+        spdlog::info("MainFrame: sidebar mode: Images");
+        break;
+    case SidebarMode::Video:
+        wxMessageBox("Video player coming in Milestone 3.",
+                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+        break;
+    case SidebarMode::Models:
+        wxMessageBox("3D model viewer coming in Milestone 5.",
+                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+        break;
+    }
+
     m_auiManager.Update();
-    m_explorerVisible = true;
-    spdlog::info("MainFrame: file explorer shown");
+    UpdateStatusBar();
 }
 
-void MainFrame::HideFileExplorer() {
-    m_auiManager.GetPane("FileExplorer").Hide();
+void MainFrame::OpenImage(const std::filesystem::path& path) {
+    try {
+        m_auiManager.GetPane("Background").Hide();
+        m_auiManager.GetPane("EditorTabs").Hide();
+        m_auiManager.GetPane("ImageViewer").Show();
+        m_auiManager.Update();
+
+        m_imageViewer->LoadImage(path);
+        m_currentMode = SidebarMode::Images;
+        m_iconBar->Refresh();
+
+        auto meta = Core::MediaService::GetImageMetadata(path);
+        auto statusBar = GetStatusBar();
+        if (meta && statusBar) {
+            statusBar->SetStatusText(
+                std::to_string(meta->width) + "x" + std::to_string(meta->height), 0);
+            statusBar->SetStatusText(meta->format, 1);
+            statusBar->SetStatusText(path.filename().string(), 2);
+        }
+
+        spdlog::info("MainFrame: opened image: {}", path.string());
+    } catch (const std::exception& e) {
+        spdlog::error("MainFrame: failed to open image {}: {}", path.string(), e.what());
+        wxMessageBox("Failed to open image: " + std::string(e.what()),
+                     "Image Error", wxOK | wxICON_ERROR, this);
+    }
+}
+
+void MainFrame::OpenTextFile(const std::filesystem::path& path) {
+    auto result = Core::FileService::LoadFile(path);
+    if (!result) {
+        wxMessageBox(result.error(), "Open Error", wxOK | wxICON_ERROR, this);
+        return;
+    }
+
+    m_auiManager.GetPane("Background").Hide();
+    m_auiManager.GetPane("ImageViewer").Hide();
+    m_auiManager.GetPane("EditorTabs").Show();
     m_auiManager.Update();
-    m_explorerVisible = false;
-    spdlog::info("MainFrame: file explorer hidden");
+
+    auto editor = new EditorPanel(m_editorTabs, wxID_ANY);
+    editor->SetValue(wxString::FromUTF8(result->text));
+
+    auto displayName = std::filesystem::path(path).filename().string();
+    m_editorTabs->AddPage(editor, displayName, true);
+
+    auto& doc = m_documents[m_editorTabs->GetPageCount() - 1];
+    doc.SetContent(result->text);
+    doc.SetFilePath(path);
+    doc.SetEncoding(result->detectedEncoding);
+    doc.SetModified(false);
+
+    spdlog::info("MainFrame: opened text file: {}", path.string());
+}
+
+void MainFrame::UpdateStatusBar() {
+    auto statusBar = GetStatusBar();
+    if (!statusBar) return;
+
+    switch (m_currentMode) {
+    case SidebarMode::Files:
+        statusBar->SetStatusText("Files", 0);
+        statusBar->SetStatusText("Ready", 1);
+        break;
+    case SidebarMode::Images:
+        statusBar->SetStatusText("Images", 0);
+        statusBar->SetStatusText("Ready", 1);
+        break;
+    case SidebarMode::Video:
+        statusBar->SetStatusText("Video", 0);
+        statusBar->SetStatusText("Coming soon", 1);
+        break;
+    case SidebarMode::Models:
+        statusBar->SetStatusText("3D Models", 0);
+        statusBar->SetStatusText("Coming soon", 1);
+        break;
+    }
+    statusBar->SetStatusText("CLIADE v0.0.2-dev", 2);
 }
 
 void MainFrame::OnNew([[maybe_unused]] wxCommandEvent& event) {
-    auto editor = new EditorPanel(m_editorTabs, wxID_ANY);
-    size_t idx = m_editorTabs->GetPageCount();
-    m_editorTabs->AddPage(editor, "Untitled", true);
-    m_documents[idx] = Core::Document();
+    m_auiManager.GetPane("Background").Hide();
+    m_auiManager.GetPane("ImageViewer").Hide();
+    m_auiManager.GetPane("EditorTabs").Show();
+    m_auiManager.Update();
 
-    if (!m_auiManager.GetPane("EditorTabs").IsShown()) {
-        m_auiManager.GetPane("EditorTabs").Show();
-        m_auiManager.Update();
-    }
+    auto editor = new EditorPanel(m_editorTabs, wxID_ANY);
+    m_editorTabs->AddPage(editor, "Untitled", true);
+    m_documents[m_editorTabs->GetPageCount() - 1] = Core::Document();
 
     spdlog::info("MainFrame: opened new editor");
 }
 
 void MainFrame::OnOpen([[maybe_unused]] wxCommandEvent& event) {
     wxFileDialog openDialog(this, "Open File", "", "",
-                            "Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
+                            "All Supported Files|"
+                            "*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.tif;*.webp;*.psd;*.psb;*.ico;*.xpm;"
+                            "*.mp4;*.webm;*.mkv;*.avi;*.mov;*.mp3;*.wav;*.ogg;*.flac;"
+                            "*.fbx;*.obj;*.gltf;*.glb;*.stl;*.dae;"
+                            "*.txt;*.md;*.cpp;*.hpp;*.c;*.h;*.py;*.js;*.json;*.xml"
+                            "|Image Files (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.webp;*.psd;*.psb)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.tif;*.webp;*.psd;*.psb"
+                            "|Video Files (*.mp4;*.webm;*.mkv;*.avi;*.mov)|*.mp4;*.webm;*.mkv;*.avi;*.mov"
+                            "|Audio Files (*.mp3;*.wav;*.ogg;*.flac)|*.mp3;*.wav;*.ogg;*.flac"
+                            "|3D Models (*.fbx;*.obj;*.gltf;*.glb)|*.fbx;*.obj;*.gltf;*.glb"
+                            "|Text Files (*.txt;*.md;*.cpp;*.hpp)|*.txt;*.md;*.cpp;*.hpp"
+                            "|All Files (*.*)|*.*",
                             wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
     if (openDialog.ShowModal() != wxID_OK) return;
 
-    auto result = Core::FileService::LoadFile(
-        openDialog.GetPath().ToStdString());
-    if (!result) {
-        wxMessageBox(result.error(), "Open Error", wxOK | wxICON_ERROR, this);
-        return;
+    auto path = openDialog.GetPath().ToStdString();
+    auto mediaType = Core::MediaService::DetectMediaType(path);
+
+    switch (mediaType) {
+    case Core::MediaType::Image:
+        OpenImage(path);
+        break;
+    case Core::MediaType::Text:
+        OpenTextFile(path);
+        break;
+    case Core::MediaType::Video:
+        wxMessageBox("Video player coming in Milestone 3.",
+                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+        break;
+    case Core::MediaType::Audio:
+        wxMessageBox("Audio player coming in Milestone 4.",
+                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+        break;
+    case Core::MediaType::Model:
+        wxMessageBox("3D model viewer coming in Milestone 5.",
+                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+        break;
+    default:
+        wxMessageBox("Unsupported file type: " + path,
+                     "Open Error", wxOK | wxICON_ERROR, this);
+        break;
     }
-
-    auto editor = new EditorPanel(m_editorTabs, wxID_ANY);
-    editor->SetValue(wxString::FromUTF8(result->text));
-
-    auto displayName = std::filesystem::path(
-        openDialog.GetPath().ToStdString()).filename().string();
-    size_t idx = m_editorTabs->GetPageCount();
-    m_editorTabs->AddPage(editor, displayName, true);
-
-    auto& doc = m_documents[idx];
-    doc.SetContent(result->text);
-    doc.SetFilePath(openDialog.GetPath().ToStdString());
-    doc.SetEncoding(result->detectedEncoding);
-    doc.SetModified(false);
-
-    if (!m_auiManager.GetPane("EditorTabs").IsShown()) {
-        m_auiManager.GetPane("EditorTabs").Show();
-        m_auiManager.Update();
-    }
-
-    spdlog::info("MainFrame: opened file: {}",
-                 openDialog.GetPath().ToStdString());
 }
 
 void MainFrame::OnExit([[maybe_unused]] wxCommandEvent& event) {

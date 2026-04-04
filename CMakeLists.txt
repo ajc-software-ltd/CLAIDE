@@ -13,6 +13,7 @@ option(ENABLE_SANITIZERS "Enable AddressSanitizer and UBSan in debug builds" ON)
 # Find dependencies
 find_package(wxWidgets 3.2 REQUIRED COMPONENTS core base aui)
 find_package(spdlog 1.11 REQUIRED)
+find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
 
 include(${wxWidgets_USE_FILE})
 
@@ -23,8 +24,10 @@ set(SOURCES
     src/core/Encoding.cpp
     src/core/Document.cpp
     src/core/FileService.cpp
+    src/core/MediaService.cpp
     src/ui/Theme.cpp
     src/ui/EditorPanel.cpp
+    src/ui/ImageViewer.cpp
     src/ui/MainFrame.cpp
     src/platform/PlatformPaths.cpp
 )
@@ -34,8 +37,10 @@ set(HEADERS
     src/core/Encoding.hpp
     src/core/Document.hpp
     src/core/FileService.hpp
+    src/core/MediaService.hpp
     src/ui/Theme.hpp
     src/ui/EditorPanel.hpp
+    src/ui/ImageViewer.hpp
     src/ui/MainFrame.hpp
     src/platform/PlatformPaths.hpp
 )
@@ -46,8 +51,12 @@ if(WIN32)
     target_sources(CLIADE PRIVATE resources.rc)
 endif()
 
-target_include_directories(CLIADE PRIVATE src)
-target_link_libraries(CLIADE PRIVATE ${wxWidgets_LIBRARIES} spdlog::spdlog)
+target_include_directories(CLIADE PRIVATE src ${ImageMagick_INCLUDE_DIRS})
+target_compile_definitions(CLIADE PRIVATE
+    MAGICKCORE_QUANTUM_DEPTH=16
+    MAGICKCORE_HDRI_ENABLE=1
+)
+target_link_libraries(CLIADE PRIVATE ${wxWidgets_LIBRARIES} spdlog::spdlog ${ImageMagick_Magick++_LIBRARIES})
 
 # Compiler warnings
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -73,11 +82,16 @@ if(Catch2_FOUND)
         tests/EncodingTests.cpp
         tests/FileServiceTests.cpp
         tests/DocumentTests.cpp
+        tests/MediaServiceTests.cpp
     )
 
-    add_executable(CLIADETests ${TEST_SOURCES} src/core/Encoding.cpp src/core/Document.cpp src/core/FileService.cpp src/platform/PlatformPaths.cpp)
-    target_include_directories(CLIADETests PRIVATE src)
-    target_link_libraries(CLIADETests PRIVATE spdlog::spdlog Catch2::Catch2WithMain)
+    add_executable(CLIADETests ${TEST_SOURCES} src/core/Encoding.cpp src/core/Document.cpp src/core/FileService.cpp src/core/MediaService.cpp src/platform/PlatformPaths.cpp)
+    target_include_directories(CLIADETests PRIVATE src ${ImageMagick_INCLUDE_DIRS})
+    target_link_libraries(CLIADETests PRIVATE spdlog::spdlog Catch2::Catch2WithMain ${ImageMagick_Magick++_LIBRARIES})
+    target_compile_definitions(CLIADETests PRIVATE
+        MAGICKCORE_QUANTUM_DEPTH=16
+        MAGICKCORE_HDRI_ENABLE=1
+    )
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         target_compile_options(CLIADETests PRIVATE -Wall -Wextra -Wpedantic)
