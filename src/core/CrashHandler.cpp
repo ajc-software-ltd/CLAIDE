@@ -21,6 +21,9 @@
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <unistd.h>
+#include <cxxabi.h>
+#include <cstdlib>
+#include <cstring>
 #endif
 
 #include <spdlog/spdlog.h>
@@ -29,6 +32,7 @@ namespace Core {
 
 std::filesystem::path CrashHandler::s_crashDir;
 std::filesystem::path CrashHandler::s_logDir;
+volatile sig_atomic_t CrashHandler::s_inHandler = 0;
 
 void CrashHandler::Initialize(const std::filesystem::path& logDir) {
     s_logDir = logDir;
@@ -39,7 +43,7 @@ void CrashHandler::Initialize(const std::filesystem::path& logDir) {
     struct sigaction sa;
     sa.sa_handler = HandleSignal;
     sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESETHAND;
+    sa.sa_flags = SA_RESETHAND | SA_SIGINFO;
 
     sigaction(SIGSEGV, &sa, nullptr);  // Segmentation fault
     sigaction(SIGABRT, &sa, nullptr);  // Abort
@@ -47,6 +51,8 @@ void CrashHandler::Initialize(const std::filesystem::path& logDir) {
     sigaction(SIGILL, &sa, nullptr);   // Illegal instruction
     sigaction(SIGBUS, &sa, nullptr);   // Bus error
     sigaction(SIGSYS, &sa, nullptr);   // Bad system call
+
+    std::set_terminate(HandleTerminate);
 
     spdlog::info("CrashHandler: signal handlers installed");
 #endif
@@ -66,34 +72,22 @@ static const char* SignalName(int signal) {
     }
 }
 
-void CrashHandler::WriteCrashDump(int signal, void* /*context*/) {
+static std::string GetTimestamp() {
     auto now = std::chrono::system_clock::now();
     auto timeT = std::chrono::system_clock::to_time_t(now);
     std::tm tm = *std::localtime(&timeT);
-    char timeBuf[64];
-    std::strftime(timeBuf, sizeof(timeBuf), "%Y%m%d_%H%M%S", &tm);
+    char buf[64];
+    std::strftime(buf, sizeof(buf), "%Y%m%d_%H%M%S", &tm);
+    return buf;
+}
 
-    std::string crashFile = std::string("crash_") + timeBuf + ".dump";
-    auto crashPath = s_crashDir / crashFile;
-
-    std::ofstream dump(crashPath);
-    if (!dump.is_open()) return;
-
-    // Signal info
-    dump << "=== CLIADE Crash Dump ===" << std::endl;
-    dump << "Signal: " << SignalName(signal) << std::endl;
-    dump << "Time: " << timeBuf << std::endl;
-    dump << "PID: " << getpid() << std::endl;
-    dump << std::endl;
-
-    // Stack trace
-    void* buffer[128];
+static void WriteStackTrace(std::ofstream& dump) {
+    void* buffer[256];
     int nptrs = backtrace(buffer, sizeof(buffer) / sizeof(buffer[0]));
     char** symbols = backtrace_symbols(buffer, nptrs);
 
-    dump << "=== Stack Trace ===" << std::endl;
+    dump << "=== Stack Trace (" << nptrs << " frames) ===" << std::endl;
     for (int i = 0; i < nptrs; ++i) {
-        // Try to demangle C++ symbols
         std::string rawSymbol(symbols[i]);
 
         // Format: module(mangledSymbol+offset) [address]
@@ -105,47 +99,113 @@ void CrashHandler::WriteCrashDump(int signal, void* /*context*/) {
             int status = 0;
             char* demangled = abi::__cxa_demangle(mangled.c_str(), nullptr, nullptr, &status);
             if (status == 0 && demangled) {
-                dump << "  #" << i << " " << rawSymbol.substr(0, start + 1)
-                     << demangled << rawSymbol.substr(end) << std::endl;
+                dump << "  #" << std::setw(3) << i << " "
+                     << rawSymbol.substr(0, start + 1)
+                     << demangled
+                     << rawSymbol.substr(end) << std::endl;
                 free(demangled);
             } else {
-                dump << "  #" << i << " " << symbols[i] << std::endl;
+                dump << "  #" << std::setw(3) << i << " " << symbols[i] << std::endl;
             }
         } else {
-            dump << "  #" << i << " " << symbols[i] << std::endl;
+            dump << "  #" << std::setw(3) << i << " " << symbols[i] << std::endl;
         }
     }
 
     if (symbols) free(symbols);
+}
+
+void CrashHandler::WriteCrashDump(int signal) {
+    std::string ts = GetTimestamp();
+    std::string crashFile = "crash_" + ts + ".dump";
+    auto crashPath = s_crashDir / crashFile;
+
+    std::ofstream dump(crashPath);
+    if (!dump.is_open()) {
+        // Fallback: write to stderr
+        fprintf(stderr, "CRASH: %s — failed to write dump to %s\n",
+                SignalName(signal), crashPath.c_str());
+        return;
+    }
+
+    dump << "========================================" << std::endl;
+    dump << "  CLIADE AI Content Creator — Crash Dump" << std::endl;
+    dump << "========================================" << std::endl;
+    dump << std::endl;
+    dump << "Signal:     " << SignalName(signal) << std::endl;
+    dump << "Time:       " << ts << std::endl;
+    dump << "PID:        " << getpid() << std::endl;
+    dump << "UID:        " << getuid() << std::endl;
+    dump << "Crash dir:  " << s_crashDir.string() << std::endl;
+    dump << std::endl;
+
+    WriteStackTrace(dump);
 
     dump << std::endl;
     dump << "=== End Crash Dump ===" << std::endl;
     dump.flush();
     dump.close();
 
-    // Also log to spdlog (may not work if heap is corrupted, but try)
-    try {
-        spdlog::critical("CRASH: {} — dump written to {}", SignalName(signal), crashPath.string());
-        spdlog::critical("Stack trace (top 10):");
-        void* buf[10];
-        int n = backtrace(buf, 10);
-        char** syms = backtrace_symbols(buf, n);
-        for (int i = 0; i < n; ++i) {
-            spdlog::critical("  #{} {}", i, syms[i]);
-        }
-        if (syms) free(syms);
-    } catch (...) {
-        // spdlog may be corrupted, write directly to stderr
-        fprintf(stderr, "CRASH: %s — dump: %s\n", SignalName(signal), crashPath.c_str());
-    }
+    // Also log to stderr (always works, even if heap is corrupted)
+    fprintf(stderr, "\n");
+    fprintf(stderr, "========================================\n");
+    fprintf(stderr, "  CLIADE CRASH: %s\n", SignalName(signal));
+    fprintf(stderr, "  Dump written to: %s\n", crashPath.c_str());
+    fprintf(stderr, "========================================\n");
+    fprintf(stderr, "\n");
+    fflush(stderr);
 }
 
-void CrashHandler::HandleSignal(int sig) {
-    WriteCrashDump(sig);
+void CrashHandler::HandleSignal(int signal) {
+    // Prevent re-entry
+    if (__atomic_exchange_n(&s_inHandler, 1, __ATOMIC_SEQ_CST)) {
+        _exit(128 + signal);
+    }
 
-    // Re-raise signal to generate core dump
-    std::signal(sig, SIG_DFL);
-    std::raise(sig);
+    WriteCrashDump(signal);
+
+    // Generate core dump by resetting signal to default and re-raising
+    std::signal(signal, SIG_DFL);
+    std::raise(signal);
+}
+
+void CrashHandler::HandleTerminate() {
+    if (__atomic_exchange_n(&s_inHandler, 1, __ATOMIC_SEQ_CST)) {
+        _exit(1);
+    }
+
+    std::string ts = GetTimestamp();
+    std::string crashFile = "terminate_" + ts + ".dump";
+    auto crashPath = s_crashDir / crashFile;
+
+    std::ofstream dump(crashPath);
+    if (dump.is_open()) {
+        dump << "========================================" << std::endl;
+        dump << "  CLIADE — std::terminate Crash Dump" << std::endl;
+        dump << "========================================" << std::endl;
+        dump << std::endl;
+        dump << "Cause:      Uncaught exception (std::terminate)" << std::endl;
+        dump << "Time:       " << ts << std::endl;
+        dump << "PID:        " << getpid() << std::endl;
+        dump << std::endl;
+
+        WriteStackTrace(dump);
+
+        dump << std::endl;
+        dump << "=== End Crash Dump ===" << std::endl;
+        dump.flush();
+        dump.close();
+
+        fprintf(stderr, "\n");
+        fprintf(stderr, "========================================\n");
+        fprintf(stderr, "  CLIADE CRASH: std::terminate\n");
+        fprintf(stderr, "  Dump written to: %s\n", crashPath.c_str());
+        fprintf(stderr, "========================================\n\n");
+        fflush(stderr);
+    }
+
+    // Generate core dump
+    std::abort();
 }
 
 #endif

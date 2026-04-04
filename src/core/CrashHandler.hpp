@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <csignal>
 #include <filesystem>
 #include <string>
 
@@ -20,11 +21,13 @@ public:
 private:
 #ifdef __linux__
     static void HandleSignal(int signal);
-    static void WriteCrashDump(int signal, void* context = nullptr);
+    static void WriteCrashDump(int signal);
+    static void HandleTerminate();
 #endif
 
     static std::filesystem::path s_crashDir;
     static std::filesystem::path s_logDir;
+    static volatile sig_atomic_t s_inHandler;
 };
 
 } // namespace Core
