@@ -195,10 +195,6 @@ void FileBrowserPanel::LoadDirectory(const std::filesystem::path& path) {
     }
 
     UpdateLayout();
-    m_grid->Refresh();
-
-    spdlog::debug("FileBrowserPanel: loaded {} items from {}",
-                  m_items.size(), path.string());
 }
 
 void FileBrowserPanel::UpdateLayout() {
@@ -211,11 +207,16 @@ void FileBrowserPanel::UpdateLayout() {
                (static_cast<int>(m_items.size()) + m_columns - 1) / m_columns;
 
     int totalHeight = rows * m_rowHeight + 60;
-    m_grid->SetVirtualSize(availableWidth, totalHeight);
+    
+    // Only update if size actually changed
+    int currentW = 0, currentH = 0;
+    m_grid->GetVirtualSize(&currentW, &currentH);
+    if (currentW != availableWidth || currentH != totalHeight) {
+        m_grid->SetVirtualSize(availableWidth, totalHeight);
+    }
 }
 
 void FileBrowserPanel::OnGridPaint(wxPaintEvent& event) {
-    spdlog::debug("FileBrowserPanel::OnGridPaint called");
     wxAutoBufferedPaintDC dc(m_grid);
     dc.SetBackground(wxBrush(wxColour(30, 30, 30)));
     dc.Clear();
@@ -234,9 +235,6 @@ void FileBrowserPanel::OnGridPaint(wxPaintEvent& event) {
     int visibleTop = offsetY;
     int visibleBottom = offsetY + clientSize.GetHeight();
 
-    spdlog::debug("FileBrowserPanel::OnGridPaint: {} items, visible range {}-{}",
-                  m_items.size(), visibleTop, visibleBottom);
-
     for (int i = 0; i < static_cast<int>(m_items.size()); ++i) {
         int col = i % m_columns;
         int row = i / m_columns;
@@ -244,7 +242,6 @@ void FileBrowserPanel::OnGridPaint(wxPaintEvent& event) {
         int x = startX + col * m_cellSize;
         int y = startY + row * m_rowHeight;
 
-        // Skip items outside visible area
         if (y + m_rowHeight < visibleTop || y > visibleBottom) continue;
 
         auto& item = m_items[i];
@@ -280,14 +277,10 @@ void FileBrowserPanel::OnGridPaint(wxPaintEvent& event) {
 
         dc.DrawText(name, textX, textY);
     }
-
-    spdlog::debug("FileBrowserPanel::OnGridPaint complete");
-    event.Skip();
 }
 
 void FileBrowserPanel::OnGridSize(wxSizeEvent& event) {
     UpdateLayout();
-    m_grid->Refresh();
     event.Skip();
 }
 
