@@ -12,7 +12,7 @@ For Codex-based agents, process project instructions in this order:
 
 1. Read `codex.md` and apply its practices first.
 2. Continue with the rest of this `AGENTS.md`.
-3. If instructions conflict, prefer direct system/developer/user instructions, then `AGENTS.md`, then `codex.md`.
+3. If instructions conflict, prefer direct system/developer/user instructions, then `codex.md`, then `AGENTS.md`.
 
 The intent is to keep changes simple, surgical, and verifiable while preserving CLIADE architecture constraints.
 

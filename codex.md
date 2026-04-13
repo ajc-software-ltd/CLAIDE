@@ -2,6 +2,7 @@
 
 Behavioral guidelines for OpenAI Codex agents to reduce common coding mistakes.
 Apply these practices first, then follow project-specific instructions in `AGENTS.md`.
+When `codex.md` and `AGENTS.md` conflict, `codex.md` has higher precedence (after system/developer/user instructions).
 
 **Tradeoff:** these practices bias toward caution over speed. For trivial tasks, use judgment.
 
