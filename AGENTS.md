@@ -18,6 +18,33 @@ The intent is to keep changes simple, surgical, and verifiable while preserving 
 
 ---
 
+## Release + Merge Protocol (Required)
+
+When the user asks to merge a branch into `main`, complete all of the following unless explicitly told otherwise:
+
+1. Merge the requested branch into `main`.
+2. Push `main` to `origin`.
+3. Create and push a **new signed tag** on `main`.
+4. Verify the tag signature locally.
+5. Report the final `main` commit SHA and tag name.
+
+### Signed tag requirements
+- Use an annotated **GPG-signed** tag: `git tag -s <tag> -m "<message>" main`
+- Verify before pushing:
+  - `git tag -v <tag>`
+  - `git verify-tag <tag>`
+- Push tag: `git push origin <tag>`
+- For GitHub to show **Verified**, the signer public key must be uploaded to the GitHub account/org that performs the push.
+
+### Known-good GitHub push method in this environment
+- Configure remote with token auth (do not print token values in responses/logs):
+  - `git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/ajc-software-ltd/CLIADE.git`
+- Then push normally:
+  - `git push origin <branch>`
+  - `git push origin <tag>`
+
+---
+
 ## Build / Lint / Test Commands
 
 ```bash
