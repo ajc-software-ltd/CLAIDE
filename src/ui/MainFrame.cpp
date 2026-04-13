@@ -163,6 +163,8 @@ void MainFrame::CreateDockingSystem() {
                              .Dockable(true)
                              .PaneBorder(false)
                              .Show(false));
+    m_editorTabs->Bind(wxEVT_AUINOTEBOOK_PAGE_CLOSE,
+                       &MainFrame::OnEditorTabClosed, this);
 
     // Properties panel (right)
     m_propertiesPanel = new PropertiesPanel(this);
@@ -326,7 +328,15 @@ void MainFrame::OpenTextFile(const std::filesystem::path& path) {
     auto displayName = std::filesystem::path(path).filename().string();
     m_editorTabs->AddPage(editor, displayName, true);
 
-    auto& doc = m_documents[m_editorTabs->GetPageCount() - 1];
+    auto* activePage = m_editorTabs->GetCurrentPage();
+    if (activePage == nullptr) {
+        spdlog::error("MainFrame: failed to obtain active editor page for {}", path.string());
+        wxMessageBox("Opened file but failed to attach document state.",
+                     "Internal Error", wxOK | wxICON_ERROR, this);
+        return;
+    }
+
+    auto& doc = m_documents[activePage];
     doc.SetContent(result->text);
     doc.SetFilePath(path);
     doc.SetEncoding(result->detectedEncoding);
@@ -380,7 +390,10 @@ void MainFrame::OnNew([[maybe_unused]] wxCommandEvent& event) {
 
     auto editor = new EditorPanel(m_editorTabs, wxID_ANY);
     m_editorTabs->AddPage(editor, "Untitled", true);
-    m_documents[m_editorTabs->GetPageCount() - 1] = Core::Document();
+    auto* activePage = m_editorTabs->GetCurrentPage();
+    if (activePage != nullptr) {
+        m_documents[activePage] = Core::Document();
+    }
 
     m_currentMode = ActivityMode::Notepad;
     m_activityBar->SetActiveMode(ActivityMode::Notepad);
@@ -439,6 +452,26 @@ void MainFrame::OnExit([[maybe_unused]] wxCommandEvent& event) {
     Close(true);
 }
 
+void MainFrame::OnEditorTabClosed(wxAuiNotebookEvent& event) {
+    if (m_editorTabs == nullptr) {
+        event.Skip();
+        return;
+    }
+
+    auto pageIndex = static_cast<size_t>(event.GetSelection());
+    if (pageIndex >= m_editorTabs->GetPageCount()) {
+        event.Skip();
+        return;
+    }
+
+    auto* page = m_editorTabs->GetPage(pageIndex);
+    if (page != nullptr) {
+        m_documents.erase(page);
+    }
+
+    event.Skip();
+}
+
 void MainFrame::OnAbout([[maybe_unused]] wxCommandEvent& event) {
     wxMessageDialog dlg(this,
         wxString::FromUTF8("CLIADE AI Content Creator\nVersion v0.0.3-dev\n\n"
@@ -450,7 +483,8 @@ void MainFrame::OnAbout([[maybe_unused]] wxCommandEvent& event) {
 }
 
 void MainFrame::OnClose(wxCloseEvent& event) {
-    for (const auto& [idx, doc] : m_documents) {
+    for (const auto& [page, doc] : m_documents) {
+        static_cast<void>(page);
         if (doc.IsModified()) {
             auto result = wxMessageBox(
                 "There are unsaved changes in open editors. Close anyway?",
