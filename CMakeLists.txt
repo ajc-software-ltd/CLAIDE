@@ -105,7 +105,7 @@ target_compile_definitions(CLIADE PRIVATE
     MAGICKCORE_HDRI_ENABLE=1
     CLIADE_VERSION_STRING="${CLIADE_VERSION_STRING}"
 )
-target_link_libraries(CLIADE PRIVATE ${wxWidgets_LIBRARIES} spdlog::spdlog ${ImageMagick_Magick++_LIBRARIES})
+target_link_libraries(CLIADE PRIVATE ${wxWidgets_LIBRARIES} spdlog::spdlog ${ImageMagick_LIBRARIES})
 if(TARGET Vulkan::Vulkan)
     target_link_libraries(CLIADE PRIVATE Vulkan::Vulkan)
     add_custom_target(shaders ALL DEPENDS ${COMPILED_SHADERS})
@@ -143,7 +143,7 @@ if(Catch2_FOUND)
 
     add_executable(CLIADETests ${TEST_SOURCES} src/core/Encoding.cpp src/core/Document.cpp src/core/FileService.cpp src/core/MediaService.cpp src/core/DocumentState.cpp src/core/TileCache.cpp src/core/MipmapGenerator.cpp src/platform/PlatformPaths.cpp)
     target_include_directories(CLIADETests PRIVATE src ${ImageMagick_INCLUDE_DIRS})
-    target_link_libraries(CLIADETests PRIVATE spdlog::spdlog Catch2::Catch2WithMain ${ImageMagick_Magick++_LIBRARIES})
+    target_link_libraries(CLIADETests PRIVATE spdlog::spdlog Catch2::Catch2WithMain ${ImageMagick_LIBRARIES})
     target_compile_definitions(CLIADETests PRIVATE
         MAGICKCORE_QUANTUM_DEPTH=16
         MAGICKCORE_HDRI_ENABLE=1

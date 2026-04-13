@@ -85,6 +85,9 @@ Install via vcpkg or package manager:
 ## Building
 
 ```bash
+# One-time/recurring dependency bootstrap + build (Ubuntu/Debian)
+./scripts/build_with_prereqs.sh Debug
+
 # Configure
 cmake -B build -DCMAKE_BUILD_TYPE=Debug
 
@@ -98,6 +101,9 @@ cmake --build build
 ### Release Build
 
 ```bash
+# Bootstrap deps + release build
+./scripts/build_with_prereqs.sh Release
+
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
@@ -112,6 +118,9 @@ cmake --build build
 ## Testing
 
 ```bash
+# If dependencies are missing in a fresh workspace
+./scripts/bootstrap_prereqs_ubuntu.sh
+
 # Run all tests
 ctest --test-dir build --output-on-failure
 
