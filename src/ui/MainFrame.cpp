@@ -449,7 +449,11 @@ void MainFrame::AddRecentFile(const std::filesystem::path& path) {
 void MainFrame::RebuildOpenRecentMenu() {
     if (m_openRecentMenu == nullptr) return;
 
-    m_openRecentMenu->Clear();
+    while (m_openRecentMenu->GetMenuItemCount() > 0) {
+        auto* item = m_openRecentMenu->FindItemByPosition(0);
+        if (item == nullptr) break;
+        m_openRecentMenu->Destroy(item);
+    }
     if (m_recentFiles.empty()) {
         auto* item = m_openRecentMenu->Append(wxID_ANY, "(Empty)");
         item->Enable(false);
