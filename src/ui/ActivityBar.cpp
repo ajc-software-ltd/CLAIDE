@@ -11,7 +11,9 @@
 #include <wx/dcclient.h>
 #include <wx/image.h>
 
+#include <array>
 #include <filesystem>
+#include <set>
 
 #include <spdlog/spdlog.h>
 
@@ -38,12 +40,24 @@ ActivityBar::ActivityBar(wxWindow* parent)
         {"video_icon.png",          ActivityMode::Video},
         {"3dmodels_icon.png",       ActivityMode::Models},
         {"app_icon.png",            ActivityMode::AI},
+        {"settings_icon.png",       ActivityMode::Settings},
     };
+
+    constexpr std::array<ActivityMode, 6> kExpectedModes = {
+        ActivityMode::Notepad,
+        ActivityMode::Images,
+        ActivityMode::Video,
+        ActivityMode::Models,
+        ActivityMode::AI,
+        ActivityMode::Settings
+    };
+    std::set<ActivityMode> configuredModes;
 
     for (auto& def : defs) {
         auto iconPath = iconsDir / def.filename;
         IconEntry entry;
         entry.mode = def.mode;
+        configuredModes.insert(def.mode);
 
         if (std::filesystem::exists(iconPath)) {
             wxImage img(iconPath.string(), wxBITMAP_TYPE_PNG);
@@ -70,6 +84,12 @@ ActivityBar::ActivityBar(wxWindow* parent)
         }
 
         m_icons.push_back(std::move(entry));
+    }
+
+    for (auto mode : kExpectedModes) {
+        if (!configuredModes.contains(mode)) {
+            spdlog::warn("ActivityBar: missing icon mapping for mode {}", static_cast<int>(mode));
+        }
     }
 
     Bind(wxEVT_LEFT_DOWN, &ActivityBar::OnMouse, this);

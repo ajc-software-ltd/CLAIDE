@@ -16,12 +16,15 @@
 #include <wx/image.h>
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
+#include <wx/dnd.h>
 #include <wx/sizer.h>
 #include <wx/string.h>
+#include <wx/textdlg.h>
 #include <wx/tglbtn.h>
 
 #include <filesystem>
 #include <functional>
+#include <cctype>
 
 #include <spdlog/spdlog.h>
 
@@ -38,12 +41,44 @@
 
 namespace Ui {
 
+#ifndef CLIADE_VERSION_STRING
+#define CLIADE_VERSION_STRING "0.0.3-dev"
+#endif
+
+namespace {
+
+constexpr int kOpenRecentBaseId = wxID_HIGHEST + 1000;
+constexpr int kOpenRecentMaxItems = 10;
+constexpr int kQuickOpenMenuId = wxID_HIGHEST + 2000;
+
+class MainFrameFileDropTarget : public wxFileDropTarget {
+public:
+    explicit MainFrameFileDropTarget(MainFrame* frame) : m_frame(frame) {}
+
+    bool OnDropFiles([[maybe_unused]] wxCoord x,
+                     [[maybe_unused]] wxCoord y,
+                     const wxArrayString& filenames) override {
+        if (m_frame == nullptr) return false;
+
+        for (const auto& file : filenames) {
+            m_frame->OpenDroppedFile(std::filesystem::path(file.ToStdString()));
+        }
+        return true;
+    }
+
+private:
+    MainFrame* m_frame;
+};
+
+} // namespace
+
 MainFrame::MainFrame()
     : wxFrame(nullptr, wxID_ANY, "CLIADE", wxDefaultPosition,
               wxSize(1400, 900)),
       m_editorTabs(nullptr), m_imageViewer(nullptr), m_bgPanel(nullptr),
       m_activityBar(nullptr), m_propertiesPanel(nullptr),
-      m_promptBar(nullptr), m_currentMode(ActivityMode::Notepad) {
+      m_promptBar(nullptr), m_openRecentMenu(nullptr),
+      m_currentMode(ActivityMode::Notepad) {
     SetBackgroundColour(Theme::GetDarkTheme().background);
     SetMinSize(wxSize(800, 600));
 
@@ -54,9 +89,14 @@ MainFrame::MainFrame()
     LoadAppIcon();
 
     Bind(wxEVT_CLOSE_WINDOW, &MainFrame::OnClose, this);
+    SetDropTarget(new MainFrameFileDropTarget(this));
 
     UpdateStatusBar();
     spdlog::info("MainFrame: created (M0 commercial layout)");
+}
+
+void MainFrame::OpenDroppedFile(const std::filesystem::path& path) {
+    OpenPathUnified(path);
 }
 
 void MainFrame::CreateMenuBar() {
@@ -65,6 +105,9 @@ void MainFrame::CreateMenuBar() {
     auto fileMenu = new wxMenu();
     fileMenu->Append(wxID_NEW, "&New\tCtrl+N");
     fileMenu->Append(wxID_OPEN, "&Open...\tCtrl+O");
+    fileMenu->Append(kQuickOpenMenuId, "Quick &Open...\tCtrl+P");
+    m_openRecentMenu = new wxMenu();
+    fileMenu->AppendSubMenu(m_openRecentMenu, "Open &Recent");
     fileMenu->AppendSeparator();
     fileMenu->Append(wxID_EXIT, "E&xit\tAlt+F4");
     menuBar->Append(fileMenu, "&File");
@@ -86,8 +129,12 @@ void MainFrame::CreateMenuBar() {
 
     Bind(wxEVT_MENU, &MainFrame::OnNew, this, wxID_NEW);
     Bind(wxEVT_MENU, &MainFrame::OnOpen, this, wxID_OPEN);
+    Bind(wxEVT_MENU, &MainFrame::OnQuickOpen, this, kQuickOpenMenuId);
+    Bind(wxEVT_MENU, &MainFrame::OnOpenRecent, this, kOpenRecentBaseId, kOpenRecentBaseId + 50);
     Bind(wxEVT_MENU, &MainFrame::OnExit, this, wxID_EXIT);
     Bind(wxEVT_MENU, &MainFrame::OnAbout, this, wxID_ABOUT);
+
+    RebuildOpenRecentMenu();
 }
 
 void MainFrame::CreateDockingSystem() {
@@ -349,6 +396,72 @@ void MainFrame::OpenTextFile(const std::filesystem::path& path) {
     spdlog::info("MainFrame: opened text file: {}", path.string());
 }
 
+void MainFrame::OpenPathUnified(const std::filesystem::path& path, bool addToRecent) {
+    if (!std::filesystem::exists(path)) {
+        wxMessageBox("File does not exist: " + path.string(),
+                     "Open Error", wxOK | wxICON_ERROR, this);
+        return;
+    }
+
+    auto mediaType = Core::MediaService::DetectMediaType(path);
+    switch (mediaType) {
+    case Core::MediaType::Image:
+        OpenImage(path);
+        break;
+    case Core::MediaType::Text:
+        OpenTextFile(path);
+        break;
+    case Core::MediaType::Video:
+        wxMessageBox("Video player coming in Milestone 5.",
+                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+        break;
+    case Core::MediaType::Audio:
+        wxMessageBox("Audio playback support is planned with Milestone 5 media playback.",
+                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+        break;
+    case Core::MediaType::Model:
+        wxMessageBox("3D model viewer coming in Milestone 6.",
+                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
+        break;
+    default:
+        wxMessageBox("Unsupported file type: " + path.string(),
+                     "Open Error", wxOK | wxICON_ERROR, this);
+        return;
+    }
+
+    if (addToRecent) {
+        AddRecentFile(path);
+    }
+}
+
+void MainFrame::AddRecentFile(const std::filesystem::path& path) {
+    auto canonical = path.lexically_normal();
+    m_recentFiles.erase(
+        std::remove(m_recentFiles.begin(), m_recentFiles.end(), canonical),
+        m_recentFiles.end());
+    m_recentFiles.push_front(canonical);
+    while (m_recentFiles.size() > kOpenRecentMaxItems) {
+        m_recentFiles.pop_back();
+    }
+    RebuildOpenRecentMenu();
+}
+
+void MainFrame::RebuildOpenRecentMenu() {
+    if (m_openRecentMenu == nullptr) return;
+
+    m_openRecentMenu->Clear();
+    if (m_recentFiles.empty()) {
+        auto* item = m_openRecentMenu->Append(wxID_ANY, "(Empty)");
+        item->Enable(false);
+        return;
+    }
+
+    for (size_t i = 0; i < m_recentFiles.size(); ++i) {
+        auto label = wxString::Format("&%zu %s", i + 1, m_recentFiles[i].string());
+        m_openRecentMenu->Append(kOpenRecentBaseId + static_cast<int>(i), label);
+    }
+}
+
 void MainFrame::UpdateStatusBar() {
     auto statusBar = GetStatusBar();
     if (!statusBar) return;
@@ -379,7 +492,7 @@ void MainFrame::UpdateStatusBar() {
         statusBar->SetStatusText("Ready", 1);
         break;
     }
-    statusBar->SetStatusText("CLIADE v0.0.3-dev", 2);
+    statusBar->SetStatusText(wxString::Format("CLIADE v%s", CLIADE_VERSION_STRING), 2);
 }
 
 void MainFrame::OnNew([[maybe_unused]] wxCommandEvent& event) {
@@ -415,37 +528,64 @@ void MainFrame::OnOpen([[maybe_unused]] wxCommandEvent& event) {
                             "|3D Models (*.fbx;*.obj;*.gltf;*.glb)|*.fbx;*.obj;*.gltf;*.glb"
                             "|Text Files (*.txt;*.md;*.cpp;*.hpp)|*.txt;*.md;*.cpp;*.hpp"
                             "|All Files (*.*)|*.*",
-                            wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+                            wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
 
     if (openDialog.ShowModal() != wxID_OK) return;
 
-    auto path = openDialog.GetPath().ToStdString();
-    auto mediaType = Core::MediaService::DetectMediaType(path);
-
-    switch (mediaType) {
-    case Core::MediaType::Image:
-        OpenImage(path);
-        break;
-    case Core::MediaType::Text:
-        OpenTextFile(path);
-        break;
-    case Core::MediaType::Video:
-        wxMessageBox("Video player coming in Milestone 5.",
-                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
-        break;
-    case Core::MediaType::Audio:
-        wxMessageBox("Audio player coming in Milestone 5.",
-                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
-        break;
-    case Core::MediaType::Model:
-        wxMessageBox("3D model viewer coming in Milestone 6.",
-                     "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
-        break;
-    default:
-        wxMessageBox("Unsupported file type: " + path,
-                     "Open Error", wxOK | wxICON_ERROR, this);
-        break;
+    wxArrayString paths;
+    openDialog.GetPaths(paths);
+    for (const auto& wxPath : paths) {
+        OpenPathUnified(std::filesystem::path(wxPath.ToStdString()));
     }
+}
+
+void MainFrame::OnOpenRecent(wxCommandEvent& event) {
+    int index = event.GetId() - kOpenRecentBaseId;
+    if (index < 0 || index >= static_cast<int>(m_recentFiles.size())) return;
+
+    auto path = m_recentFiles[static_cast<size_t>(index)];
+    if (!std::filesystem::exists(path)) {
+        wxMessageBox("Recent file is no longer available: " + path.string(),
+                     "Open Recent", wxOK | wxICON_WARNING, this);
+        m_recentFiles.erase(m_recentFiles.begin() + index);
+        RebuildOpenRecentMenu();
+        return;
+    }
+
+    OpenPathUnified(path);
+}
+
+void MainFrame::OnQuickOpen([[maybe_unused]] wxCommandEvent& event) {
+    wxTextEntryDialog dialog(this,
+                             "Enter part of a file path or a full path to open:",
+                             "Quick Open (Ctrl+P)");
+    if (dialog.ShowModal() != wxID_OK) return;
+
+    auto query = dialog.GetValue().ToStdString();
+    if (query.empty()) return;
+
+    std::filesystem::path directPath(query);
+    if (std::filesystem::exists(directPath)) {
+        OpenPathUnified(directPath);
+        return;
+    }
+
+    auto lower = query;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    for (const auto& recentPath : m_recentFiles) {
+        auto recentLower = recentPath.string();
+        std::transform(recentLower.begin(), recentLower.end(), recentLower.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (recentLower.find(lower) != std::string::npos) {
+            OpenPathUnified(recentPath);
+            return;
+        }
+    }
+
+    wxMessageBox("No matching file found in recent items and path does not exist.",
+                 "Quick Open", wxOK | wxICON_INFORMATION, this);
 }
 
 void MainFrame::OnExit([[maybe_unused]] wxCommandEvent& event) {
@@ -474,10 +614,11 @@ void MainFrame::OnEditorTabClosed(wxAuiNotebookEvent& event) {
 
 void MainFrame::OnAbout([[maybe_unused]] wxCommandEvent& event) {
     wxMessageDialog dlg(this,
-        wxString::FromUTF8("CLIADE AI Content Creator\nVersion v0.0.3-dev\n\n"
+        wxString::Format("CLIADE AI Content Creator\nVersion v%s\n\n"
                            "AJC-Software Ltd \xC2\xA9 2026\n\n"
                            "Cross-platform AIO IDE for code editing, media "
-                           "workflows, and AI-powered content generation."),
+                           "workflows, and AI-powered content generation.",
+                           CLIADE_VERSION_STRING),
         "About CLIADE", wxOK | wxICON_INFORMATION);
     dlg.ShowModal();
 }

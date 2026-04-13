@@ -30,21 +30,38 @@ CLIADE is evolving into a full AIO AI Content Creator with the **AVIM Canvas** �
 
 | Component | Milestone | Status |
 |-----------|-----------|--------|
-| **A**udio | M4: Audio Player | ⏳ Planned |
-| **V**ideo | M3: Video Player | ⏳ Planned |
+| **A**udio | M5: Media Playback (Video + Audio) | ⏳ Planned |
+| **V**ideo | M5: Media Playback (Video + Audio) | ⏳ Planned |
 | **I**mage | M2: Image Processing | ⏳ In Progress |
-| **M**odel | M5: 3D Model Viewer | ⏳ Planned |
+| **M**odel | M6: 3D Model Viewer | ⏳ Planned |
 
-Plus AI integration (M6), content generation (M7), and unified workspace (M8). See `milestones.md` for the full roadmap.
+Plus text enhancement (M3), AI integration layer (M8), and AI content generation (M9). See `milestones.md` for the full roadmap.
 
 ### Milestone 2 Progress (Image Processing)
 - ✅ `MediaService` — media type detection, ImageMagick metadata extraction, AI-ready pixel data API
 - ✅ `ImageViewer` — zoom (mouse wheel), pan (drag), fit-to-window, actual size, right-click context menu
 - ✅ `File > Open` — routes images, text, video, audio, 3D to correct viewers
-- ✅ IconBar sidebar — 4 icons (Files, Images, Video, 3D Models) with active/inactive states
+- ✅ ActivityBar sidebar — mode switching for Notepad, Images, Video, Models, AI, Settings
 - ✅ File explorer — double-click files to open, folder navigation, detach support
 - ✅ Sidebar mode persistence — switching modes doesn't replace center content
-- ⏳ Python console panel (stub)
+- ⏳ GPU-first image filter pipeline (CPU fallback currently active)
+- ✅ Explicit GPU capability/fallback logging (GPU unavailable, shader missing, pipeline pending)
+- ✅ Unified open workflow across File > Open, Open Recent, Quick Open (`Ctrl+P`), and drag-and-drop
+
+## Current Implementation Scope
+
+### Functional now
+- Text editor workflow (new/open/edit tabs) with document state tracking
+- Image loading/viewing workflow with metadata display
+- File type routing for text/image/video/audio/model extensions
+- Core services: encoding, file IO, media type detection, document state, mipmap/tile cache utilities
+- Unit test suite for core modules via Catch2/CTest
+
+### Planned or placeholder
+- Full video/audio playback UI and controls
+- 3D model rendering pipeline
+- AI chat/provider integration panels and generation workflows
+- Full Vulkan compute/render path replacing CPU fallback for image operations
 
 ---
 
@@ -117,6 +134,12 @@ cmake --build build --target lint
 # Full validation (format + lint + test)
 cmake --build build --target validate
 ```
+
+## Release Management
+
+- Milestone roadmap and status source: `milestones.md`
+- Release traceability map (milestone → commit → tag): `RELEASES.md`
+- Operational release checklist: `docs/release-checklist.md`
 
 ## Project Structure
 

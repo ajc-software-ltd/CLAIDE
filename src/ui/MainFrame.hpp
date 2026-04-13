@@ -14,6 +14,7 @@
 #include <wx/aui/aui.h>
 
 #include <functional>
+#include <deque>
 #include <unordered_map>
 
 #include "core/Document.hpp"
@@ -29,10 +30,13 @@ class PromptBar;
 class MainFrame : public wxFrame {
 public:
     MainFrame();
+    void OpenDroppedFile(const std::filesystem::path& path);
 
 private:
     void OnNew(wxCommandEvent& event);
     void OnOpen(wxCommandEvent& event);
+    void OnOpenRecent(wxCommandEvent& event);
+    void OnQuickOpen(wxCommandEvent& event);
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnClose(wxCloseEvent& event);
@@ -44,6 +48,9 @@ private:
     void OnActivityModeChanged(ActivityMode mode);
     void OpenImage(const std::filesystem::path& path);
     void OpenTextFile(const std::filesystem::path& path);
+    void OpenPathUnified(const std::filesystem::path& path, bool addToRecent = true);
+    void AddRecentFile(const std::filesystem::path& path);
+    void RebuildOpenRecentMenu();
     void OnEditorTabClosed(wxAuiNotebookEvent& event);
     void UpdateStatusBar();
 
@@ -55,6 +62,8 @@ private:
     PropertiesPanel* m_propertiesPanel;
     PromptBar* m_promptBar;
     std::unordered_map<wxWindow*, Core::Document> m_documents;
+    wxMenu* m_openRecentMenu;
+    std::deque<std::filesystem::path> m_recentFiles;
     ActivityMode m_currentMode;
 };
 

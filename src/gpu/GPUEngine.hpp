@@ -16,6 +16,13 @@
 
 namespace Gpu {
 
+enum class FilterExecutionPath {
+    Gpu,
+    CpuFallbackGpuUnavailable,
+    CpuFallbackShaderMissing,
+    CpuFallbackGpuPipelinePending
+};
+
 class GPUEngine {
 public:
     GPUEngine();
@@ -24,6 +31,7 @@ public:
     bool Initialize();
     [[nodiscard]] bool IsAvailable() const;
     [[nodiscard]] std::string GetDeviceInfo() const;
+    [[nodiscard]] FilterExecutionPath GetLastExecutionPath() const;
 
     std::expected<std::vector<std::uint8_t>, std::string> ApplyBrightness(
         const std::vector<std::uint8_t>& input,

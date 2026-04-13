@@ -17,7 +17,7 @@ After each milestone is complete:
 | Milestone | Tag | Status |
 |-----------|-----|--------|
 | 1: Core IDE Shell | `v0.0.1-dev` | ✅ Complete |
-| 2: Vulkan Canvas | `v0.0.2-dev` | ⏳ Planned |
+| 2: Vulkan Canvas | `v0.0.2-dev` | ⏳ In Progress |
 | 3: Text Enhancement | `v0.0.3-dev` | ⏳ Planned |
 | 4: Image Processing | `v0.0.4-dev` | ⏳ Planned |
 | 5: Video Player | `v0.0.5-dev` | ⏳ Planned |
@@ -191,6 +191,7 @@ src/
 
 ### Deliverables
 - Video playback via libmpv
+- Audio playback via libmpv
 - Controls: Play/Pause, Stop, scrub bar, volume, time display
 - Frame extraction for AI analysis
 - Codec support: MP4, WebM, MKV, AVI, MOV (via libmpv)

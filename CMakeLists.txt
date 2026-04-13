@@ -103,6 +103,7 @@ target_include_directories(CLIADE PRIVATE src ${ImageMagick_INCLUDE_DIRS})
 target_compile_definitions(CLIADE PRIVATE
     MAGICKCORE_QUANTUM_DEPTH=16
     MAGICKCORE_HDRI_ENABLE=1
+    CLIADE_VERSION_STRING="${CLIADE_VERSION_STRING}"
 )
 target_link_libraries(CLIADE PRIVATE ${wxWidgets_LIBRARIES} spdlog::spdlog ${ImageMagick_Magick++_LIBRARIES})
 if(TARGET Vulkan::Vulkan)
@@ -146,6 +147,7 @@ if(Catch2_FOUND)
     target_compile_definitions(CLIADETests PRIVATE
         MAGICKCORE_QUANTUM_DEPTH=16
         MAGICKCORE_HDRI_ENABLE=1
+        CLIADE_VERSION_STRING="${CLIADE_VERSION_STRING}"
     )
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
