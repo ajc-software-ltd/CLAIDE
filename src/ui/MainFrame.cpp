@@ -34,7 +34,6 @@
 #include "ui/ImageViewer.hpp"
 #include "ui/PropertiesPanel.hpp"
 #include "ui/PromptBar.hpp"
-#include "ui/SidebarPanel.hpp"
 #include "ui/Theme.hpp"
 
 namespace Ui {
@@ -43,8 +42,8 @@ MainFrame::MainFrame()
     : wxFrame(nullptr, wxID_ANY, "CLIADE", wxDefaultPosition,
               wxSize(1400, 900)),
       m_editorTabs(nullptr), m_imageViewer(nullptr), m_bgPanel(nullptr),
-      m_activityBar(nullptr), m_sidebar(nullptr), m_propertiesPanel(nullptr),
-      m_promptBar(nullptr), m_currentMode(ActivityMode::Explorer) {
+      m_activityBar(nullptr), m_propertiesPanel(nullptr),
+      m_promptBar(nullptr), m_currentMode(ActivityMode::Notepad) {
     SetBackgroundColour(Theme::GetDarkTheme().background);
     SetMinSize(wxSize(800, 600));
 
@@ -126,52 +125,6 @@ void MainFrame::CreateDockingSystem() {
                              .Floatable(false)
                              .Dockable(true)
                              .PaneBorder(false));
-
-    // Sidebar panel (left of center, resizable) - hidden by default
-    m_sidebar = new SidebarPanel(this);
-    m_sidebar->SetFileOpenCallback([this](const std::string& path) {
-        auto mediaType = Core::MediaService::DetectMediaType(path);
-        switch (mediaType) {
-        case Core::MediaType::Image:
-            OpenImage(path);
-            break;
-        case Core::MediaType::Text:
-            OpenTextFile(path);
-            break;
-        case Core::MediaType::Video:
-            wxMessageBox("Video player coming in Milestone 5.",
-                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
-            break;
-        case Core::MediaType::Audio:
-            wxMessageBox("Audio player coming in Milestone 5.",
-                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
-            break;
-        case Core::MediaType::Model:
-            wxMessageBox("3D model viewer coming in Milestone 6.",
-                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
-            break;
-        default:
-            wxMessageBox("Unsupported file type: " + path,
-                         "Open Error", wxOK | wxICON_ERROR, this);
-            break;
-        }
-    });
-    m_auiManager.AddPane(m_sidebar,
-                         wxAuiPaneInfo()
-                             .Name("Sidebar")
-                             .Left()
-                             .Layer(1)
-                             .MinSize(wxSize(200, -1))
-                             .BestSize(wxSize(280, -1))
-                             .Caption("Explorer")
-                             .CloseButton(false)
-                             .Gripper(true)
-                             .Resizable(true)
-                             .Floatable(true)
-                             .Dockable(true)
-                             .PinButton(true)
-                             .PaneBorder(false)
-                             .Hide());
 
     // Image viewer (center, hidden until image opened)
     m_imageViewer = new ImageViewer(this, "");
@@ -303,13 +256,6 @@ void MainFrame::OnActivityModeChanged(ActivityMode mode) {
     m_auiManager.GetPane("EditorTabs").Hide();
     m_auiManager.GetPane("Background").Show();
 
-    // Show/hide sidebar based on mode
-    if (mode == ActivityMode::Explorer) {
-        m_auiManager.GetPane("Sidebar").Show();
-    } else {
-        m_auiManager.GetPane("Sidebar").Hide();
-    }
-
     m_auiManager.Update();
     UpdateStatusBar();
 
@@ -377,8 +323,8 @@ void MainFrame::UpdateStatusBar() {
     if (!statusBar) return;
 
     switch (m_currentMode) {
-    case ActivityMode::Explorer:
-        statusBar->SetStatusText("Files", 0);
+    case ActivityMode::Notepad:
+        statusBar->SetStatusText("Notepad", 0);
         statusBar->SetStatusText("Ready", 1);
         break;
     case ActivityMode::Images:

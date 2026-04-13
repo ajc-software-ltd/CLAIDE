@@ -17,7 +17,7 @@
 namespace Ui {
 
 enum class ActivityMode {
-    Explorer,
+    Notepad,
     Images,
     Video,
     Models,

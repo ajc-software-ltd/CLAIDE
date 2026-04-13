@@ -24,7 +24,6 @@ namespace Ui {
 
 class BackgroundPanel;
 class ImageViewer;
-class SidebarPanel;
 class PropertiesPanel;
 class PromptBar;
 
@@ -53,7 +52,6 @@ private:
     ImageViewer* m_imageViewer;
     BackgroundPanel* m_bgPanel;
     ActivityBar* m_activityBar;
-    SidebarPanel* m_sidebar;
     PropertiesPanel* m_propertiesPanel;
     PromptBar* m_promptBar;
     std::map<size_t, Core::Document> m_documents;

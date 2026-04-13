@@ -21,7 +21,7 @@ namespace Ui {
 
 ActivityBar::ActivityBar(wxWindow* parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(48, -1)),
-      m_activeMode(ActivityMode::Explorer) {
+      m_activeMode(ActivityMode::Notepad) {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 
     auto projectRoot = Platform::GetProjectRoot();
@@ -33,7 +33,7 @@ ActivityBar::ActivityBar(wxWindow* parent)
     };
 
     IconDef defs[] = {
-        {"folder_icon_128x128.png", ActivityMode::Explorer},
+        {"notepad_icon.png",        ActivityMode::Notepad},
         {"images_icon.png",         ActivityMode::Images},
         {"video_icon.png",          ActivityMode::Video},
         {"3dmodels_icon.png",       ActivityMode::Models},
