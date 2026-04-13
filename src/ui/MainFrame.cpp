@@ -441,10 +441,10 @@ void MainFrame::OnExit([[maybe_unused]] wxCommandEvent& event) {
 
 void MainFrame::OnAbout([[maybe_unused]] wxCommandEvent& event) {
     wxMessageDialog dlg(this,
-        wxString::FromUTF8("CLIADE\nVersion 0.0.3-dev\n\n"
+        wxString::FromUTF8("CLIADE AI Content Creator\nVersion v0.0.3-dev\n\n"
                            "AJC-Software Ltd \xC2\xA9 2026\n\n"
-                           "AI-powered AIO IDE for code, media creation, "
-                           "and content generation."),
+                           "Cross-platform AIO IDE for code editing, media "
+                           "workflows, and AI-powered content generation."),
         "About CLIADE", wxOK | wxICON_INFORMATION);
     dlg.ShowModal();
 }
