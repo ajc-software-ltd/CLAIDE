@@ -34,7 +34,6 @@
 #include "ui/ImageViewer.hpp"
 #include "ui/PropertiesPanel.hpp"
 #include "ui/PromptBar.hpp"
-#include "ui/SidebarPanel.hpp"
 #include "ui/Theme.hpp"
 
 namespace Ui {
@@ -43,8 +42,8 @@ MainFrame::MainFrame()
     : wxFrame(nullptr, wxID_ANY, "CLIADE", wxDefaultPosition,
               wxSize(1400, 900)),
       m_editorTabs(nullptr), m_imageViewer(nullptr), m_bgPanel(nullptr),
-      m_activityBar(nullptr), m_sidebar(nullptr), m_propertiesPanel(nullptr),
-      m_promptBar(nullptr), m_currentMode(ActivityMode::Explorer) {
+      m_activityBar(nullptr), m_propertiesPanel(nullptr),
+      m_promptBar(nullptr), m_currentMode(ActivityMode::Notepad) {
     SetBackgroundColour(Theme::GetDarkTheme().background);
     SetMinSize(wxSize(800, 600));
 
@@ -127,52 +126,6 @@ void MainFrame::CreateDockingSystem() {
                              .Dockable(true)
                              .PaneBorder(false));
 
-    // Sidebar panel (left of center, resizable) - hidden by default
-    m_sidebar = new SidebarPanel(this);
-    m_sidebar->SetFileOpenCallback([this](const std::string& path) {
-        auto mediaType = Core::MediaService::DetectMediaType(path);
-        switch (mediaType) {
-        case Core::MediaType::Image:
-            OpenImage(path);
-            break;
-        case Core::MediaType::Text:
-            OpenTextFile(path);
-            break;
-        case Core::MediaType::Video:
-            wxMessageBox("Video player coming in Milestone 5.",
-                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
-            break;
-        case Core::MediaType::Audio:
-            wxMessageBox("Audio player coming in Milestone 5.",
-                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
-            break;
-        case Core::MediaType::Model:
-            wxMessageBox("3D model viewer coming in Milestone 6.",
-                         "Not Yet Implemented", wxOK | wxICON_INFORMATION, this);
-            break;
-        default:
-            wxMessageBox("Unsupported file type: " + path,
-                         "Open Error", wxOK | wxICON_ERROR, this);
-            break;
-        }
-    });
-    m_auiManager.AddPane(m_sidebar,
-                         wxAuiPaneInfo()
-                             .Name("Sidebar")
-                             .Left()
-                             .Layer(1)
-                             .MinSize(wxSize(200, -1))
-                             .BestSize(wxSize(280, -1))
-                             .Caption("Explorer")
-                             .CloseButton(false)
-                             .Gripper(true)
-                             .Resizable(true)
-                             .Floatable(true)
-                             .Dockable(true)
-                             .PinButton(true)
-                             .PaneBorder(false)
-                             .Hide());
-
     // Image viewer (center, hidden until image opened)
     m_imageViewer = new ImageViewer(this, "");
     m_auiManager.AddPane(m_imageViewer,
@@ -210,6 +163,8 @@ void MainFrame::CreateDockingSystem() {
                              .Dockable(true)
                              .PaneBorder(false)
                              .Show(false));
+    m_editorTabs->Bind(wxEVT_AUINOTEBOOK_PAGE_CLOSE,
+                       &MainFrame::OnEditorTabClosed, this);
 
     // Properties panel (right)
     m_propertiesPanel = new PropertiesPanel(this);
@@ -298,16 +253,26 @@ void MainFrame::LoadAppIcon() {
 void MainFrame::OnActivityModeChanged(ActivityMode mode) {
     m_currentMode = mode;
 
-    // Hide all center content, show background by default
+    // Hide all center content, then show pane for active mode
     m_auiManager.GetPane("ImageViewer").Hide();
     m_auiManager.GetPane("EditorTabs").Hide();
-    m_auiManager.GetPane("Background").Show();
+    m_auiManager.GetPane("Background").Hide();
 
-    // Show/hide sidebar based on mode
-    if (mode == ActivityMode::Explorer) {
-        m_auiManager.GetPane("Sidebar").Show();
-    } else {
-        m_auiManager.GetPane("Sidebar").Hide();
+    switch (mode) {
+    case ActivityMode::Notepad:
+        if (m_editorTabs && m_editorTabs->GetPageCount() > 0) {
+            m_auiManager.GetPane("EditorTabs").Show();
+        } else {
+            m_auiManager.GetPane("Background").Show();
+        }
+        break;
+    case ActivityMode::Images:
+    case ActivityMode::Video:
+    case ActivityMode::Models:
+    case ActivityMode::AI:
+    case ActivityMode::Settings:
+        m_auiManager.GetPane("Background").Show();
+        break;
     }
 
     m_auiManager.Update();
@@ -326,7 +291,7 @@ void MainFrame::OpenImage(const std::filesystem::path& path) {
 
         m_imageViewer->LoadImage(path);
         m_currentMode = ActivityMode::Images;
-        m_activityBar->Refresh();
+        m_activityBar->SetActiveMode(ActivityMode::Images);
 
         auto meta = Core::MediaService::GetImageMetadata(path);
         auto statusBar = GetStatusBar();
@@ -363,11 +328,23 @@ void MainFrame::OpenTextFile(const std::filesystem::path& path) {
     auto displayName = std::filesystem::path(path).filename().string();
     m_editorTabs->AddPage(editor, displayName, true);
 
-    auto& doc = m_documents[m_editorTabs->GetPageCount() - 1];
+    auto* activePage = m_editorTabs->GetCurrentPage();
+    if (activePage == nullptr) {
+        spdlog::error("MainFrame: failed to obtain active editor page for {}", path.string());
+        wxMessageBox("Opened file but failed to attach document state.",
+                     "Internal Error", wxOK | wxICON_ERROR, this);
+        return;
+    }
+
+    auto& doc = m_documents[activePage];
     doc.SetContent(result->text);
     doc.SetFilePath(path);
     doc.SetEncoding(result->detectedEncoding);
     doc.SetModified(false);
+
+    m_currentMode = ActivityMode::Notepad;
+    m_activityBar->SetActiveMode(ActivityMode::Notepad);
+    UpdateStatusBar();
 
     spdlog::info("MainFrame: opened text file: {}", path.string());
 }
@@ -377,8 +354,8 @@ void MainFrame::UpdateStatusBar() {
     if (!statusBar) return;
 
     switch (m_currentMode) {
-    case ActivityMode::Explorer:
-        statusBar->SetStatusText("Files", 0);
+    case ActivityMode::Notepad:
+        statusBar->SetStatusText("Notepad", 0);
         statusBar->SetStatusText("Ready", 1);
         break;
     case ActivityMode::Images:
@@ -413,7 +390,14 @@ void MainFrame::OnNew([[maybe_unused]] wxCommandEvent& event) {
 
     auto editor = new EditorPanel(m_editorTabs, wxID_ANY);
     m_editorTabs->AddPage(editor, "Untitled", true);
-    m_documents[m_editorTabs->GetPageCount() - 1] = Core::Document();
+    auto* activePage = m_editorTabs->GetCurrentPage();
+    if (activePage != nullptr) {
+        m_documents[activePage] = Core::Document();
+    }
+
+    m_currentMode = ActivityMode::Notepad;
+    m_activityBar->SetActiveMode(ActivityMode::Notepad);
+    UpdateStatusBar();
 
     spdlog::info("MainFrame: opened new editor");
 }
@@ -468,18 +452,39 @@ void MainFrame::OnExit([[maybe_unused]] wxCommandEvent& event) {
     Close(true);
 }
 
+void MainFrame::OnEditorTabClosed(wxAuiNotebookEvent& event) {
+    if (m_editorTabs == nullptr) {
+        event.Skip();
+        return;
+    }
+
+    auto pageIndex = static_cast<size_t>(event.GetSelection());
+    if (pageIndex >= m_editorTabs->GetPageCount()) {
+        event.Skip();
+        return;
+    }
+
+    auto* page = m_editorTabs->GetPage(pageIndex);
+    if (page != nullptr) {
+        m_documents.erase(page);
+    }
+
+    event.Skip();
+}
+
 void MainFrame::OnAbout([[maybe_unused]] wxCommandEvent& event) {
     wxMessageDialog dlg(this,
-        wxString::FromUTF8("CLIADE\nVersion 0.0.3-dev\n\n"
+        wxString::FromUTF8("CLIADE AI Content Creator\nVersion v0.0.3-dev\n\n"
                            "AJC-Software Ltd \xC2\xA9 2026\n\n"
-                           "AI-powered AIO IDE for code, media creation, "
-                           "and content generation."),
+                           "Cross-platform AIO IDE for code editing, media "
+                           "workflows, and AI-powered content generation."),
         "About CLIADE", wxOK | wxICON_INFORMATION);
     dlg.ShowModal();
 }
 
 void MainFrame::OnClose(wxCloseEvent& event) {
-    for (const auto& [idx, doc] : m_documents) {
+    for (const auto& [page, doc] : m_documents) {
+        static_cast<void>(page);
         if (doc.IsModified()) {
             auto result = wxMessageBox(
                 "There are unsaved changes in open editors. Close anyway?",

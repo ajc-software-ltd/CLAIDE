@@ -13,18 +13,16 @@
 #include <wx/panel.h>
 #include <wx/aui/aui.h>
 
-#include <map>
 #include <functional>
+#include <unordered_map>
 
 #include "core/Document.hpp"
-#include "core/MediaService.hpp"
 #include "ui/ActivityBar.hpp"
 
 namespace Ui {
 
 class BackgroundPanel;
 class ImageViewer;
-class SidebarPanel;
 class PropertiesPanel;
 class PromptBar;
 
@@ -46,6 +44,7 @@ private:
     void OnActivityModeChanged(ActivityMode mode);
     void OpenImage(const std::filesystem::path& path);
     void OpenTextFile(const std::filesystem::path& path);
+    void OnEditorTabClosed(wxAuiNotebookEvent& event);
     void UpdateStatusBar();
 
     wxAuiManager m_auiManager;
@@ -53,10 +52,9 @@ private:
     ImageViewer* m_imageViewer;
     BackgroundPanel* m_bgPanel;
     ActivityBar* m_activityBar;
-    SidebarPanel* m_sidebar;
     PropertiesPanel* m_propertiesPanel;
     PromptBar* m_promptBar;
-    std::map<size_t, Core::Document> m_documents;
+    std::unordered_map<wxWindow*, Core::Document> m_documents;
     ActivityMode m_currentMode;
 };
 
