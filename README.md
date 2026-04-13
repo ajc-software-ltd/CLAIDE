@@ -161,7 +161,14 @@ CLIADE/
     │   ├── folder_icon_128x128.png   # Sidebar folder icon
     │   ├── send_icon.png             # Prompt bar send button icon
     │   ├── clear_icon.png            # Prompt bar clear button icon
-    │   └── app_icon.png              # Application window/taskbar icon
+    │   ├── app_icon.png              # Application window/taskbar icon
+    │   ├── media_play_icon.png       # Media control play icon
+    │   ├── media_eject_icon.png      # Media control eject icon
+    │   ├── media_rewind_icon.png     # Media control rewind icon
+    │   ├── media_fast_forward_icon.png # Media control fast-forward icon
+    │   ├── media_pause_icon.png      # Media control pause icon
+    │   ├── media_stop_icon.png       # Media control stop icon
+    │   └── media_record_icon.png     # Media control record icon
     └── skills/
         └── wxwidgets-reference.md    # wxWidgets reference extracted from PDF
 ```
