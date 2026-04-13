@@ -11,8 +11,10 @@ AI-powered AIO IDE for code, media creation, and content generation.
 After each milestone is complete:
 1. `git add -A`
 2. `git commit -m "Milestone N: <description>"`
-3. `git tag v0.0.<N>-dev`
+3. `git tag v0.0.<commit_count>-dev`
 4. `git push origin main --tags`
+
+Current versioning baseline: `v0.0.47-dev` (commit-count based).
 
 | Milestone | Tag | Status |
 |-----------|-----|--------|

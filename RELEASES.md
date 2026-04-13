@@ -2,6 +2,11 @@
 
 This document maps milestone progress to concrete commits and release tags.
 
+## Versioning policy (current)
+
+- Versioning now follows commit-count semantics: `v0.0.<commit_count>-dev`.
+- Current baseline version: `v0.0.47-dev`.
+
 ## Current repository tag status
 
 - No milestone tags are currently present in this clone (`git tag --list` returned no tags).
