@@ -17,7 +17,6 @@
 #include <functional>
 
 #include "core/Document.hpp"
-#include "core/MediaService.hpp"
 #include "ui/ActivityBar.hpp"
 
 namespace Ui {

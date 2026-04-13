@@ -30,6 +30,7 @@ public:
     ActivityBar(wxWindow* parent);
 
     void SetModeCallback(std::function<void(ActivityMode)> cb) { m_modeCb = std::move(cb); }
+    void SetActiveMode(ActivityMode mode);
     ActivityMode GetActiveMode() const { return m_activeMode; }
 
 private:

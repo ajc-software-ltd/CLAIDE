@@ -76,6 +76,11 @@ ActivityBar::ActivityBar(wxWindow* parent)
     Bind(wxEVT_PAINT, &ActivityBar::OnPaint, this);
 }
 
+void ActivityBar::SetActiveMode(ActivityMode mode) {
+    m_activeMode = mode;
+    Refresh();
+}
+
 void ActivityBar::OnMouse(wxMouseEvent& event) {
     wxPoint pos = event.GetPosition();
 

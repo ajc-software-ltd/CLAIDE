@@ -251,10 +251,27 @@ void MainFrame::LoadAppIcon() {
 void MainFrame::OnActivityModeChanged(ActivityMode mode) {
     m_currentMode = mode;
 
-    // Hide all center content, show background by default
+    // Hide all center content, then show pane for active mode
     m_auiManager.GetPane("ImageViewer").Hide();
     m_auiManager.GetPane("EditorTabs").Hide();
-    m_auiManager.GetPane("Background").Show();
+    m_auiManager.GetPane("Background").Hide();
+
+    switch (mode) {
+    case ActivityMode::Notepad:
+        if (m_editorTabs && m_editorTabs->GetPageCount() > 0) {
+            m_auiManager.GetPane("EditorTabs").Show();
+        } else {
+            m_auiManager.GetPane("Background").Show();
+        }
+        break;
+    case ActivityMode::Images:
+    case ActivityMode::Video:
+    case ActivityMode::Models:
+    case ActivityMode::AI:
+    case ActivityMode::Settings:
+        m_auiManager.GetPane("Background").Show();
+        break;
+    }
 
     m_auiManager.Update();
     UpdateStatusBar();
@@ -272,7 +289,7 @@ void MainFrame::OpenImage(const std::filesystem::path& path) {
 
         m_imageViewer->LoadImage(path);
         m_currentMode = ActivityMode::Images;
-        m_activityBar->Refresh();
+        m_activityBar->SetActiveMode(ActivityMode::Images);
 
         auto meta = Core::MediaService::GetImageMetadata(path);
         auto statusBar = GetStatusBar();
@@ -314,6 +331,10 @@ void MainFrame::OpenTextFile(const std::filesystem::path& path) {
     doc.SetFilePath(path);
     doc.SetEncoding(result->detectedEncoding);
     doc.SetModified(false);
+
+    m_currentMode = ActivityMode::Notepad;
+    m_activityBar->SetActiveMode(ActivityMode::Notepad);
+    UpdateStatusBar();
 
     spdlog::info("MainFrame: opened text file: {}", path.string());
 }
@@ -360,6 +381,10 @@ void MainFrame::OnNew([[maybe_unused]] wxCommandEvent& event) {
     auto editor = new EditorPanel(m_editorTabs, wxID_ANY);
     m_editorTabs->AddPage(editor, "Untitled", true);
     m_documents[m_editorTabs->GetPageCount() - 1] = Core::Document();
+
+    m_currentMode = ActivityMode::Notepad;
+    m_activityBar->SetActiveMode(ActivityMode::Notepad);
+    UpdateStatusBar();
 
     spdlog::info("MainFrame: opened new editor");
 }
