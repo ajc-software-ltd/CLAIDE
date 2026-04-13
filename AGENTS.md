@@ -6,6 +6,18 @@ AI-powered AIO IDE for code, media creation, and content generation (Linux x64 /
 
 ---
 
+## Codex Processing Order (Required)
+
+For Codex-based agents, process project instructions in this order:
+
+1. Read `codex.md` and apply its practices first.
+2. Continue with the rest of this `AGENTS.md`.
+3. If instructions conflict, prefer direct system/developer/user instructions, then `AGENTS.md`, then `codex.md`.
+
+The intent is to keep changes simple, surgical, and verifiable while preserving CLIADE architecture constraints.
+
+---
+
 ## Build / Lint / Test Commands
 
 ```bash
@@ -242,8 +254,8 @@ Development follows the 8-milestone roadmap in `milestones.md`:
 
 ---
 
-## Agent Response Style
-When performing coding tasks for this project, structure responses using this schema unless the user requests otherwise:
+## Codex Response Style
+When performing coding tasks for this project, Codex should structure responses using this schema unless the user requests otherwise:
 
 ### ANALYSIS
 What the task requires and key constraints.
