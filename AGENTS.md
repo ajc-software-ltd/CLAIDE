@@ -6,6 +6,45 @@ AI-powered AIO IDE for code, media creation, and content generation (Linux x64 /
 
 ---
 
+## Codex Processing Order (Required)
+
+For Codex-based agents, process project instructions in this order:
+
+1. Read `codex.md` and apply its practices first.
+2. Continue with the rest of this `AGENTS.md`.
+3. If instructions conflict, prefer direct system/developer/user instructions, then `codex.md`, then `AGENTS.md`.
+
+The intent is to keep changes simple, surgical, and verifiable while preserving CLIADE architecture constraints.
+
+---
+
+## Release + Merge Protocol (Required)
+
+When the user asks to merge a branch into `main`, complete all of the following unless explicitly told otherwise:
+
+1. Merge the requested branch into `main`.
+2. Push `main` to `origin`.
+3. Create and push a **new signed tag** on `main`.
+4. Verify the tag signature locally.
+5. Report the final `main` commit SHA and tag name.
+
+### Signed tag requirements
+- Use an annotated **GPG-signed** tag: `git tag -s <tag> -m "<message>" main`
+- Verify before pushing:
+  - `git tag -v <tag>`
+  - `git verify-tag <tag>`
+- Push tag: `git push origin <tag>`
+- For GitHub to show **Verified**, the signer public key must be uploaded to the GitHub account/org that performs the push.
+
+### Known-good GitHub push method in this environment
+- Configure remote with token auth (do not print token values in responses/logs):
+  - `git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/ajc-software-ltd/CLIADE.git`
+- Then push normally:
+  - `git push origin <branch>`
+  - `git push origin <tag>`
+
+---
+
 ## Build / Lint / Test Commands
 
 ```bash
@@ -242,8 +281,8 @@ Development follows the 8-milestone roadmap in `milestones.md`:
 
 ---
 
-## Agent Response Style
-When performing coding tasks for this project, structure responses using this schema unless the user requests otherwise:
+## Codex Response Style
+When performing coding tasks for this project, Codex should structure responses using this schema unless the user requests otherwise:
 
 ### ANALYSIS
 What the task requires and key constraints.
