@@ -32,29 +32,26 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ---
 
-## AVIM Canvas Roadmap
+## Current Milestone System
 
-CLIADE is evolving into a full AIO AI Content Creator with the **AVIM Canvas** — a unified media system for:
+The roadmap is currently being executed in milestone phases focused on core stability first.
 
-| Component | Milestone | Status |
-|-----------|-----------|--------|
-| **A**udio | M5: Media Playback (Video + Audio) | ⏳ Planned |
-| **V**ideo | M5: Media Playback (Video + Audio) | ⏳ Planned |
-| **I**mage | M2: Image Processing | ⏳ In Progress |
-| **M**odel | M6: 3D Model Viewer | ⏳ Planned |
+| Milestone | Focus | Status |
+|-----------|-------|--------|
+| **M0** | Base program foundation + Vulkan integration groundwork | ⏳ In Progress |
+| **M1** | Notepad/editor milestone | ⏳ Planned (not started) |
+| **M2** | Text enhancement/polish | ⏳ Planned |
+| **M3** | Image processing | ⏳ Planned |
+| **M4** | Video playback | ⏳ Planned |
+| **M5** | 3D model viewer | ⏳ Planned |
+| **M6+** | Unified workspace + AI milestones | ⏳ Planned |
 
-Plus text enhancement (M3), AI integration layer (M8), and AI content generation (M9). See `milestones.md` for the full roadmap.
+### Current stream status (at this time)
+- ✅ **Notepad track** is active in the current development stream (M0-driven groundwork and editor reliability work).
+- ⏳ **Image track** is **planned**, not currently the active milestone stream.
+- ⏳ Video/audio/model/AI tracks remain planned for later milestones.
 
-### Milestone 2 Progress (Image Processing)
-- ✅ `MediaService` — media type detection, ImageMagick metadata extraction, AI-ready pixel data API
-- ✅ `ImageViewer` — zoom (mouse wheel), pan (drag), fit-to-window, actual size, right-click context menu
-- ✅ `File > Open` — routes images, text, video, audio, 3D to correct viewers
-- ✅ ActivityBar sidebar — mode switching for Notepad, Images, Video, Models, AI, Settings
-- ✅ File explorer — double-click files to open, folder navigation, detach support
-- ✅ Sidebar mode persistence — switching modes doesn't replace center content
-- ⏳ GPU-first image filter pipeline (CPU fallback currently active)
-- ✅ Explicit GPU capability/fallback logging (GPU unavailable, shader missing, pipeline pending)
-- ✅ Unified open workflow across File > Open, Open Recent, Quick Open (`Ctrl+P`), and drag-and-drop
+See `milestones.md` for the canonical milestone breakdown and checkpoint workflow.
 
 ## Current Implementation Scope
 
@@ -66,6 +63,8 @@ Plus text enhancement (M3), AI integration layer (M8), and AI content generation
 - Unit test suite for core modules via Catch2/CTest
 
 ### Planned or placeholder
+- Milestone 1 notepad expansion scope (when M0 is signed off)
+- Full image-processing milestone work (M3)
 - Full video/audio playback UI and controls
 - 3D model rendering pipeline
 - AI chat/provider integration panels and generation workflows
