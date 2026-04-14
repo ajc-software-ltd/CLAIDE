@@ -20,7 +20,7 @@ public:
 
 private:
 #ifdef __linux__
-    static void HandleSignal(int signal);
+    static void HandleSignal(int signal, siginfo_t* info, void* context);
     static void WriteCrashDump(int signal);
     static void HandleTerminate();
 #endif

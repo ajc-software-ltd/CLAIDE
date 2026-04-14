@@ -149,6 +149,30 @@ TEST_CASE("Decode rejects invalid UTF-8", "[encoding]") {
     REQUIRE(!result.has_value());
 }
 
+TEST_CASE("Decode rejects overlong UTF-8", "[encoding]") {
+    std::vector<std::uint8_t> overlongSlash = {0xC0, 0xAF};
+    auto result = Encoding::Decode(overlongSlash);
+    REQUIRE(!result.has_value());
+}
+
+TEST_CASE("Decode rejects UTF-8 surrogate encodings", "[encoding]") {
+    std::vector<std::uint8_t> encodedSurrogate = {0xED, 0xA0, 0x80};
+    auto result = Encoding::Decode(encodedSurrogate);
+    REQUIRE(!result.has_value());
+}
+
+TEST_CASE("Decode rejects out-of-range 4-byte UTF-8 sequence", "[encoding]") {
+    std::vector<std::uint8_t> outOfRange = {0xF4, 0x90, 0x80, 0x80};
+    auto result = Encoding::Decode(outOfRange);
+    REQUIRE(!result.has_value());
+}
+
+TEST_CASE("Decode rejects invalid UTF-8 leading byte C1", "[encoding]") {
+    std::vector<std::uint8_t> invalidLeading = {0xC1, 0xBF};
+    auto result = Encoding::Decode(invalidLeading);
+    REQUIRE(!result.has_value());
+}
+
 TEST_CASE("UTF-8 round-trip encode/decode", "[encoding]") {
     std::string original = "Hello, World!";
     auto encoded = Encoding::Encode(original, TextEncoding::Utf8);

@@ -38,15 +38,17 @@ ActivityBar::ActivityBar(wxWindow* parent)
         {"notepad_icon.png",        ActivityMode::Notepad},
         {"images_icon.png",         ActivityMode::Images},
         {"video_icon.png",          ActivityMode::Video},
+        {"media_play_icon.png",     ActivityMode::Audio},
         {"3dmodels_icon.png",       ActivityMode::Models},
         {"app_icon.png",            ActivityMode::AI},
         {"settings_icon.png",       ActivityMode::Settings},
     };
 
-    constexpr std::array<ActivityMode, 6> kExpectedModes = {
+    constexpr std::array<ActivityMode, 7> kExpectedModes = {
         ActivityMode::Notepad,
         ActivityMode::Images,
         ActivityMode::Video,
+        ActivityMode::Audio,
         ActivityMode::Models,
         ActivityMode::AI,
         ActivityMode::Settings

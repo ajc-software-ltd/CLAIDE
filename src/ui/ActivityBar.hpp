@@ -20,6 +20,7 @@ enum class ActivityMode {
     Notepad,
     Images,
     Video,
+    Audio,
     Models,
     AI,
     Settings

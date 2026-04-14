@@ -21,6 +21,7 @@ fi
 packages=(
   build-essential
   cmake
+  ninja-build
   pkg-config
   libwxgtk3.2-dev
   libspdlog-dev
@@ -46,4 +47,14 @@ echo "[bootstrap] Installing missing packages: ${missing[*]}"
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y "${missing[@]}"
 
-echo "[bootstrap] Prerequisites installed successfully."
+echo "[bootstrap] Verifying toolchain..."
+command -v cmake >/dev/null
+command -v glslangValidator >/dev/null
+command -v ctest >/dev/null
+
+if [[ ! -f /usr/include/vulkan/vulkan.h ]]; then
+  echo "[bootstrap] Vulkan headers not found after install." >&2
+  exit 1
+fi
+
+echo "[bootstrap] Prerequisites installed and verified successfully."

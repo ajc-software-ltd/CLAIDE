@@ -6,7 +6,7 @@
 // Copyright:   © 2026 AJC-Software Ltd
 // ============================================================================
 
-#include "gpu/GPUEngine.hpp"
+#include "vulkan/filters/GPUEngine.hpp"
 
 #include <algorithm>
 #include <array>
@@ -23,6 +23,18 @@
 #include <vulkan/vulkan.h>
 
 namespace Gpu {
+
+#ifndef CLIADE_VERSION_MAJOR
+#define CLIADE_VERSION_MAJOR 0
+#endif
+
+#ifndef CLIADE_VERSION_MINOR
+#define CLIADE_VERSION_MINOR 0
+#endif
+
+#ifndef CLIADE_VERSION_PATCH
+#define CLIADE_VERSION_PATCH 47
+#endif
 
 struct GPUEngine::Impl {
     VkInstance instance = VK_NULL_HANDLE;
@@ -59,9 +71,11 @@ bool GPUEngine::Initialize() {
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "CLIADE";
-    appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 3);
+    appInfo.applicationVersion = VK_MAKE_VERSION(
+        CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
     appInfo.pEngineName = "CLIADE GPU Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 3);
+    appInfo.engineVersion = VK_MAKE_VERSION(
+        CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
     appInfo.apiVersion = VK_API_VERSION_1_2;
 
     VkInstanceCreateInfo createInfo = {};
@@ -227,7 +241,7 @@ bool GPUEngine::Initialize() {
         }
 
         m_impl->shaderAvailability[shaderName] = false;
-        spdlog::warn("GPUEngine::Initialize: missing shader '{}.spv' in build/shaders or src/gpu/shaders", shaderName);
+        spdlog::warn("GPUEngine::Initialize: missing shader '{}.spv' in build/shaders or src/vulkan/shaders", shaderName);
     }
 
     return true;

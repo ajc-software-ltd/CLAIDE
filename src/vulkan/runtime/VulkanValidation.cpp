@@ -6,7 +6,7 @@
 // Copyright:   © 2026 AJC-Software Ltd
 // ============================================================================
 
-#include "gpu/VulkanValidation.hpp"
+#include "vulkan/runtime/VulkanValidation.hpp"
 
 #include <vulkan/vulkan.h>
 

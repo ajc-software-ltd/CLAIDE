@@ -16,17 +16,17 @@ After each milestone is complete:
 
 Current versioning baseline: `v0.0.47-dev` (commit-count based).
 
-| Milestone | Tag | Status |
-|-----------|-----|--------|
-| 1: Core IDE Shell | `v0.0.1-dev` | ✅ Complete |
-| 2: Vulkan Canvas | `v0.0.2-dev` | ⏳ In Progress |
-| 3: Text Enhancement | `v0.0.3-dev` | ⏳ Planned |
-| 4: Image Processing | `v0.0.4-dev` | ⏳ Planned |
-| 5: Video Player | `v0.0.5-dev` | ⏳ Planned |
-| 6: 3D Model Viewer | `v0.0.6-dev` | ⏳ Planned |
-| 7: Unified Workspace | `v0.0.7-dev` | ⏳ Planned |
-| 8: AI Integration Layer | `v0.0.8-dev` | ⏳ Planned |
-| 9: AI Content Generation | `v0.0.9-dev` | ⏳ Planned |
+| Milestone | Status |
+|-----------|--------|
+| 1: Core IDE Shell | ✅ Complete |
+| 2: Vulkan Canvas (Universal Render Layer) | 🚧 In Progress (foundation landed) |
+| 3: Text Enhancement | ⏳ Planned |
+| 4: Image Processing (AVIM: Image) | ⏳ Planned |
+| 5: Video Player (AVIM: Video) | ⏳ Planned |
+| 6: 3D Model Viewer (AVIM: Model) | ⏳ Planned |
+| 7: Unified Workspace | ⏳ Planned |
+| 8: AI Integration Layer | ⏳ Planned |
+| 9: AI Content Generation | ⏳ Planned |
 
 ---
 
@@ -44,7 +44,7 @@ Current versioning baseline: `v0.0.47-dev` (commit-count based).
 - Safe save via temp file + atomic replace
 - spdlog logging with rotating file sink, wxLog routing, assert capture
 - Prompt bar with Send/Clear buttons
-- 36 unit tests (Encoding, FileService, Document) via Catch2/CTest
+- Core unit test suite (Encoding, FileService, Document and expanded modules) via Catch2/CTest
 - clang-format, clang-tidy, sanitizer support via CMake targets
 - Git repo initialized, initial commit pushed to private GitHub
 
@@ -74,7 +74,7 @@ Current versioning baseline: `v0.0.47-dev` (commit-count based).
 ## Milestone 2: Vulkan Canvas (Universal Render Layer)
 
 **Tag:** `v0.0.2-dev`
-**Status:** Planned
+**Status:** In Progress (runtime foundation integrated)
 
 ### Vision
 The Vulkan Canvas is the **universal render surface** for all content types in CLIADE. Every piece of content — text, images, video, 3D models — renders through the Canvas. The AI uses Canvas instances programmatically to create, composite, and output content.

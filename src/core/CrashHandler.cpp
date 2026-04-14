@@ -13,17 +13,17 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <string>
 #include <vector>
 
 #ifdef __linux__
 #include <csignal>
 #include <cxxabi.h>
+#include <cstring>
+#include <cstdlib>
 #include <execinfo.h>
 #include <unistd.h>
-#include <cxxabi.h>
-#include <cstdlib>
-#include <cstring>
 #endif
 
 #include <spdlog/spdlog.h>
@@ -40,8 +40,8 @@ void CrashHandler::Initialize(const std::filesystem::path& logDir) {
     std::filesystem::create_directories(s_crashDir);
 
 #ifdef __linux__
-    struct sigaction sa;
-    sa.sa_handler = HandleSignal;
+    struct sigaction sa {};
+    sa.sa_sigaction = HandleSignal;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESETHAND | SA_SIGINFO;
 
@@ -156,13 +156,19 @@ void CrashHandler::WriteCrashDump(int signal) {
     fflush(stderr);
 }
 
-void CrashHandler::HandleSignal(int signal) {
+void CrashHandler::HandleSignal(int signal, siginfo_t* info, void* context) {
+    (void)info;
+    (void)context;
+
     // Prevent re-entry
     if (__atomic_exchange_n(&s_inHandler, 1, __ATOMIC_SEQ_CST)) {
         _exit(128 + signal);
     }
 
-    WriteCrashDump(signal);
+    // Async-signal-safe emergency marker only.
+    static constexpr char kSignalMessage[] =
+        "CLIADE: fatal signal received; rich crash dump disabled in signal context\n";
+    (void)!write(STDERR_FILENO, kSignalMessage, sizeof(kSignalMessage) - 1);
 
     // Generate core dump by resetting signal to default and re-raising
     std::signal(signal, SIG_DFL);
