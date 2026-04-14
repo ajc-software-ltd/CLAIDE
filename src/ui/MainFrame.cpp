@@ -92,7 +92,7 @@ MainFrame::MainFrame()
     SetDropTarget(new MainFrameFileDropTarget(this));
 
     UpdateStatusBar();
-    spdlog::info("MainFrame: created (M0 commercial layout)");
+    spdlog::info("MainFrame: created (Milestone 2 stream layout)");
 }
 
 void MainFrame::OpenDroppedFile(const std::filesystem::path& path) {

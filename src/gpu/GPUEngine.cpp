@@ -24,6 +24,18 @@
 
 namespace Gpu {
 
+#ifndef CLIADE_VERSION_MAJOR
+#define CLIADE_VERSION_MAJOR 0
+#endif
+
+#ifndef CLIADE_VERSION_MINOR
+#define CLIADE_VERSION_MINOR 0
+#endif
+
+#ifndef CLIADE_VERSION_PATCH
+#define CLIADE_VERSION_PATCH 47
+#endif
+
 struct GPUEngine::Impl {
     VkInstance instance = VK_NULL_HANDLE;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -59,9 +71,11 @@ bool GPUEngine::Initialize() {
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "CLIADE";
-    appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 3);
+    appInfo.applicationVersion = VK_MAKE_VERSION(
+        CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
     appInfo.pEngineName = "CLIADE GPU Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 3);
+    appInfo.engineVersion = VK_MAKE_VERSION(
+        CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
     appInfo.apiVersion = VK_API_VERSION_1_2;
 
     VkInstanceCreateInfo createInfo = {};

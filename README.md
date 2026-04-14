@@ -38,18 +38,20 @@ The roadmap is currently being executed in milestone phases focused on core stab
 
 | Milestone | Focus | Status |
 |-----------|-------|--------|
-| **M0** | Base program foundation + Vulkan integration groundwork | ⏳ In Progress |
-| **M1** | Notepad/editor milestone | ⏳ Planned (not started) |
-| **M2** | Text enhancement/polish | ⏳ Planned |
-| **M3** | Image processing | ⏳ Planned |
-| **M4** | Video playback | ⏳ Planned |
-| **M5** | 3D model viewer | ⏳ Planned |
-| **M6+** | Unified workspace + AI milestones | ⏳ Planned |
+| **Milestone 1** | Core IDE Shell | ✅ Complete |
+| **Milestone 2** | Vulkan Canvas | ⏳ In Progress |
+| **Milestone 3** | Text enhancement/polish | ⏳ Planned |
+| **Milestone 4** | Image processing | ⏳ Planned |
+| **Milestone 5** | Video playback | ⏳ Planned |
+| **Milestone 6** | 3D model viewer | ⏳ Planned |
+| **Milestone 7** | Unified workspace | ⏳ Planned |
+| **Milestone 8** | AI integration layer | ⏳ Planned |
+| **Milestone 9** | AI content generation | ⏳ Planned |
 
 ### Current stream status (at this time)
-- ✅ **Notepad track** is active in the current development stream (M0-driven groundwork and editor reliability work).
-- ⏳ **Image track** is **planned**, not currently the active milestone stream.
-- ⏳ Video/audio/model/AI tracks remain planned for later milestones.
+- ✅ **Core IDE Shell** scope is complete and tracked as Milestone 1.
+- ⏳ **Vulkan Canvas** is the current active stream (Milestone 2).
+- ⏳ Image/video/model/AI tracks remain planned for later milestones.
 
 See `milestones.md` for the canonical milestone breakdown and checkpoint workflow.
 
@@ -63,7 +65,7 @@ See `milestones.md` for the canonical milestone breakdown and checkpoint workflo
 - Unit test suite for core modules via Catch2/CTest
 
 ### Planned or placeholder
-- Milestone 1 notepad expansion scope (when M0 is signed off)
+- Vulkan canvas integration milestones still in progress (Milestone 2)
 - Full image-processing milestone work (M3)
 - Full video/audio playback UI and controls
 - 3D model rendering pipeline
@@ -189,7 +191,7 @@ CLIADE/
 │   │   └── MainFrame.hpp/cpp         # Main window: wxAuiManager, IconBar, FileExplorerPanel, PromptBar, BackgroundPanel, tabbed editors, per-tab Document tracking
 │   └── platform/
 │       ├── PlatformPaths.hpp         # Cross-platform app data/log/project root path helpers
-│       └── PlatformPaths.cpp         # XDG on Linux, APPDATA on Windows, /proc/self/exe resolution
+│       └── PlatformPaths.cpp         # XDG on Linux, APPDATA on Windows, environment/cwd-based root resolution
 ├── tests/
 │   ├── EncodingTests.cpp             # 16 tests: BOM detection, decode, encode, round-trip, invalid data
 │   ├── FileServiceTests.cpp          # 10 tests: load, save (UTF-8/BOM/UTF-16), delete, overwrite, existence
