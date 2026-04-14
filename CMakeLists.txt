@@ -46,6 +46,7 @@ set(SOURCES
     src/core/Document.cpp
     src/core/FileService.cpp
     src/core/MediaService.cpp
+    src/core/FileBrowserService.cpp
     src/core/DocumentState.cpp
     src/core/TileCache.cpp
     src/core/MipmapGenerator.cpp
@@ -73,6 +74,7 @@ set(HEADERS
     src/core/Document.hpp
     src/core/FileService.hpp
     src/core/MediaService.hpp
+    src/core/FileBrowserService.hpp
     src/core/DocumentState.hpp
     src/core/TileCache.hpp
     src/core/MipmapGenerator.hpp
@@ -136,12 +138,13 @@ if(Catch2_FOUND)
         tests/FileServiceTests.cpp
         tests/DocumentTests.cpp
         tests/MediaServiceTests.cpp
+        tests/FileBrowserServiceTests.cpp
         tests/DocumentStateTests.cpp
         tests/TileCacheTests.cpp
         tests/MipmapTests.cpp
     )
 
-    add_executable(CLIADETests ${TEST_SOURCES} src/core/Encoding.cpp src/core/Document.cpp src/core/FileService.cpp src/core/MediaService.cpp src/core/DocumentState.cpp src/core/TileCache.cpp src/core/MipmapGenerator.cpp src/platform/PlatformPaths.cpp)
+    add_executable(CLIADETests ${TEST_SOURCES} src/core/Encoding.cpp src/core/Document.cpp src/core/FileService.cpp src/core/MediaService.cpp src/core/FileBrowserService.cpp src/core/DocumentState.cpp src/core/TileCache.cpp src/core/MipmapGenerator.cpp src/platform/PlatformPaths.cpp)
     target_include_directories(CLIADETests PRIVATE src ${ImageMagick_INCLUDE_DIRS})
     target_link_libraries(CLIADETests PRIVATE spdlog::spdlog Catch2::Catch2WithMain ${ImageMagick_LIBRARIES})
     target_compile_definitions(CLIADETests PRIVATE
@@ -191,7 +194,7 @@ if(CLANG_FORMAT AND CLANG_TIDY AND Catch2_FOUND)
     add_custom_target(validate
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target format-check
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target lint
-        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+        COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_BINARY_DIR} --output-on-failure
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Running full validation"
     )

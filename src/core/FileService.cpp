@@ -13,7 +13,71 @@
 
 #include <spdlog/spdlog.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 namespace Core {
+
+namespace {
+
+std::expected<void, std::string> SyncFileToDisk(const std::filesystem::path& path) {
+#ifdef _WIN32
+    HANDLE fileHandle = CreateFileW(path.wstring().c_str(),
+                                    GENERIC_READ,
+                                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                    nullptr,
+                                    OPEN_EXISTING,
+                                    FILE_ATTRIBUTE_NORMAL,
+                                    nullptr);
+    if (fileHandle == INVALID_HANDLE_VALUE) {
+        return std::unexpected("Failed to open temp file for sync");
+    }
+
+    if (!FlushFileBuffers(fileHandle)) {
+        CloseHandle(fileHandle);
+        return std::unexpected("Failed to flush temp file to disk");
+    }
+
+    CloseHandle(fileHandle);
+    return {};
+#else
+    int fd = open(path.c_str(), O_RDONLY);
+    if (fd < 0) {
+        return std::unexpected("Failed to open temp file for sync");
+    }
+    if (fsync(fd) != 0) {
+        close(fd);
+        return std::unexpected("Failed to flush temp file to disk");
+    }
+    close(fd);
+    return {};
+#endif
+}
+
+std::expected<void, std::string> ReplaceFileAtomically(const std::filesystem::path& from,
+                                                       const std::filesystem::path& to) {
+#ifdef _WIN32
+    if (!MoveFileExW(from.wstring().c_str(),
+                     to.wstring().c_str(),
+                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+        return std::unexpected("Failed to atomically replace file");
+    }
+    return {};
+#else
+    std::error_code ec;
+    std::filesystem::rename(from, to, ec);
+    if (ec) {
+        return std::unexpected("Failed to atomically replace file: " + ec.message());
+    }
+    return {};
+#endif
+}
+
+} // namespace
 
 std::expected<DecodeResult, std::string> FileService::LoadFile(
     const std::filesystem::path& path) {
@@ -107,16 +171,18 @@ std::expected<void, std::string> FileService::SafeSave(
     outFile.flush();
     outFile.close();
 
-    try {
-        if (std::filesystem::exists(path)) {
-            std::filesystem::remove(path);
-        }
-        std::filesystem::rename(tempPath, path);
-    } catch (const std::filesystem::filesystem_error& e) {
+    auto syncResult = SyncFileToDisk(tempPath);
+    if (!syncResult) {
         std::filesystem::remove(tempPath);
-        spdlog::error("FileService::SafeSave: atomic replace failed: {}",
-                      e.what());
-        return std::unexpected("Failed to replace file: " + std::string(e.what()));
+        spdlog::error("FileService::SafeSave: {}", syncResult.error());
+        return std::unexpected(syncResult.error());
+    }
+
+    auto replaceResult = ReplaceFileAtomically(tempPath, path);
+    if (!replaceResult) {
+        std::filesystem::remove(tempPath);
+        spdlog::error("FileService::SafeSave: {}", replaceResult.error());
+        return std::unexpected(replaceResult.error());
     }
 
     spdlog::info("FileService::SafeSave: saved successfully: {}",

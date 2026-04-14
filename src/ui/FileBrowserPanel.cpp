@@ -19,8 +19,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "core/MediaService.hpp"
-
 namespace Ui {
 
 FileBrowserPanel::FileBrowserPanel(wxWindow* parent)
@@ -117,13 +115,8 @@ void FileBrowserPanel::NavigateTo(const std::filesystem::path& path) {
     try {
         spdlog::info("FileBrowserPanel: navigating to {}", path.string());
 
-        std::error_code ec;
-        if (!std::filesystem::exists(path, ec) || ec) {
+        if (!Core::FileBrowserService::IsDirectoryPath(path)) {
             spdlog::warn("FileBrowserPanel: path does not exist: {}", path.string());
-            return;
-        }
-        if (!std::filesystem::is_directory(path, ec) || ec) {
-            spdlog::warn("FileBrowserPanel: path is not a directory: {}", path.string());
             return;
         }
 
@@ -167,50 +160,16 @@ void FileBrowserPanel::GoUp() {
 }
 
 void FileBrowserPanel::LoadDirectory(std::filesystem::path path) {
-    m_items.clear();
-
-    // Copy path to a local string to avoid reference issues during exception handling
-    std::string pathStr = path.string();
-
-    try {
-        std::error_code iterEc;
-        auto dirIter = std::filesystem::directory_iterator(
-            path, std::filesystem::directory_options::skip_permission_denied, iterEc);
-        
-        if (iterEc) {
-            spdlog::warn("FileBrowserPanel: cannot iterate {}: {}", pathStr, iterEc.message());
-            return;
-        }
-
-        for (const auto& entry : dirIter) {
-            std::error_code ec;
-            // Copy the path — entry.path() returns a reference that becomes
-            // invalid when the iterator advances
-            std::filesystem::path p = entry.path();
-            
-            std::string name = p.filename().string();
-            if (!name.empty() && name[0] == '.') continue;
-
-            if (entry.is_directory(ec) && !ec) {
-                m_items.push_back(std::move(p));
-            } else if (entry.is_regular_file(ec) && !ec && MatchesFilter(p)) {
-                m_items.push_back(std::move(p));
-            }
-        }
-    } catch (const std::filesystem::filesystem_error& e) {
-        spdlog::warn("FileBrowserPanel: failed to read {}: {}", pathStr, e.what());
-    } catch (const std::exception& e) {
-        spdlog::warn("FileBrowserPanel: unexpected error reading {}: {}", pathStr, e.what());
+    auto filter = static_cast<Core::FileBrowserFilter>(m_filterIndex);
+    auto itemsResult = Core::FileBrowserService::ListDirectory(path, filter);
+    if (!itemsResult) {
+        m_items.clear();
+        spdlog::warn("FileBrowserPanel: failed to read {}: {}",
+                     path.string(),
+                     itemsResult.error());
+        return;
     }
-
-    std::sort(m_items.begin(), m_items.end(),
-              [](const std::filesystem::path& a, const std::filesystem::path& b) {
-                  std::error_code ec;
-                  bool aDir = std::filesystem::is_directory(a, ec);
-                  bool bDir = std::filesystem::is_directory(b, ec);
-                  if (aDir != bDir) return aDir;
-                  return a.filename().string() < b.filename().string();
-              });
+    m_items = std::move(*itemsResult);
 
     if (m_pathBar) {
         m_pathBar->SetValue(path.string());
@@ -256,7 +215,7 @@ void FileBrowserPanel::OnGridPaint([[maybe_unused]] wxPaintEvent& event) {
         int x = startX + col * m_cellSize;
         int y = startY + row * m_rowHeight;
 
-        auto& item = m_items[i];
+        auto& item = m_items[i].path;
 
         wxBitmap thumb;
         try {
@@ -323,14 +282,13 @@ void FileBrowserPanel::OnGridLeftDClick(wxMouseEvent& event) {
         int index = row * m_columns + col;
         if (index < 0 || index >= static_cast<int>(m_items.size())) return;
 
-        auto& item = m_items[index];
-        spdlog::info("FileBrowserPanel: double-clicked {}", item.string());
+        const auto& item = m_items[index];
+        spdlog::info("FileBrowserPanel: double-clicked {}", item.path.string());
 
-        std::error_code ec;
-        if (std::filesystem::is_directory(item, ec) && !ec) {
-            NavigateTo(item);
+        if (item.isDirectory) {
+            NavigateTo(item.path);
         } else if (m_fileOpenCb) {
-            m_fileOpenCb(item.string());
+            m_fileOpenCb(item.path.string());
         }
     } catch (const std::exception& e) {
         spdlog::error("FileBrowserPanel: double-click handler failed: {}", e.what());
@@ -363,23 +321,8 @@ void FileBrowserPanel::OnFilterChanged(wxCommandEvent& event) {
 void FileBrowserPanel::OnPathEntered(wxCommandEvent& event) {
     (void)event;
     auto path = m_pathBar->GetValue().ToStdString();
-    std::error_code ec;
-    if (std::filesystem::exists(path, ec) && !ec &&
-        std::filesystem::is_directory(path, ec) && !ec) {
+    if (Core::FileBrowserService::IsDirectoryPath(path)) {
         NavigateTo(path);
-    }
-}
-
-bool FileBrowserPanel::MatchesFilter(const std::filesystem::path& path) const {
-    if (m_filterIndex == 0) return true;
-
-    auto mediaType = Core::MediaService::DetectMediaType(path);
-
-    switch (m_filterIndex) {
-    case 1: return mediaType == Core::MediaType::Image;
-    case 2: return mediaType == Core::MediaType::Video;
-    case 3: return mediaType == Core::MediaType::Model;
-    default: return true;
     }
 }
 

@@ -95,31 +95,9 @@ bool Application::OnInit() {
         // Initialize crash handler
         Core::CrashHandler::Initialize(logDir);
 
-        // Clean up old log files (keep last 10)
-        std::vector<std::filesystem::path> oldLogs;
-        std::error_code ec;
-        for (const auto& entry : std::filesystem::directory_iterator(logDir, ec)) {
-            if (entry.path().extension() == ".log") {
-                oldLogs.push_back(entry.path());
-            }
-        }
-        std::sort(oldLogs.begin(), oldLogs.end());
-        while (oldLogs.size() > 10) {
-            std::filesystem::remove(oldLogs.front(), ec);
-            oldLogs.erase(oldLogs.begin());
-        }
-
-        // Create new log file with timestamp
-        auto now = std::chrono::system_clock::now();
-        auto timeT = std::chrono::system_clock::to_time_t(now);
-        std::tm tm = *std::localtime(&timeT);
-        char timeBuf[64];
-        std::strftime(timeBuf, sizeof(timeBuf), "%Y%m%d_%H%M%S", &tm);
-        auto newLogPath = logDir / (std::string("cliade_") + timeBuf + ".log");
-
         auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         auto fileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-            newLogPath.string(), 10 * 1024 * 1024, 5);
+            logPath.string(), 5 * 1024 * 1024, 3);
 
         auto logger = std::make_shared<spdlog::logger>(
             "cliade", spdlog::sinks_init_list{consoleSink, fileSink});
