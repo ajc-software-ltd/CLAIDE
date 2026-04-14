@@ -10,10 +10,14 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <string>
+#include <vector>
 
 #ifdef _WIN32
+#include <fileapi.h>
 #include <windows.h>
 #else
+#include <limits.h>
 #include <unistd.h>
 #endif
 
@@ -40,7 +44,40 @@ std::filesystem::path GetAppDataDir() {
 }
 
 std::filesystem::path GetProjectRoot() {
-    auto exePath = std::filesystem::canonical("/proc/self/exe");
+    std::filesystem::path exePath;
+
+#ifdef _WIN32
+    std::vector<wchar_t> buffer(MAX_PATH, L'\0');
+    DWORD len = GetModuleFileNameW(nullptr, buffer.data(),
+                                   static_cast<DWORD>(buffer.size()));
+    if (len > 0) {
+        exePath = std::filesystem::path(std::wstring(buffer.data(), len));
+    }
+#else
+    std::vector<char> buffer(PATH_MAX, '\0');
+    auto len = readlink("/proc/self/exe", buffer.data(), buffer.size() - 1);
+    if (len > 0) {
+        buffer[static_cast<std::size_t>(len)] = '\0';
+        exePath = std::filesystem::path(buffer.data());
+    }
+#endif
+
+    std::error_code ec;
+    if (!exePath.empty()) {
+        exePath = std::filesystem::weakly_canonical(exePath, ec);
+    }
+
+    if (exePath.empty() || ec) {
+        auto cwd = std::filesystem::current_path(ec);
+        if (ec) {
+            return std::filesystem::path(".");
+        }
+        if (std::filesystem::exists(cwd / "CMakeLists.txt")) {
+            return cwd;
+        }
+        return cwd.parent_path();
+    }
+
     auto projectRoot = exePath.parent_path().parent_path();
 
     if (std::filesystem::exists(projectRoot / "CMakeLists.txt")) {
