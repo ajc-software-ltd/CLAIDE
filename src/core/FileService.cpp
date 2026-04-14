@@ -77,6 +77,29 @@ std::expected<void, std::string> ReplaceFileAtomically(const std::filesystem::pa
 #endif
 }
 
+std::expected<void, std::string> SyncDirectoryToDisk(const std::filesystem::path& path) {
+#ifdef _WIN32
+    (void)path;
+    return {};
+#else
+    auto directory = path.parent_path();
+    if (directory.empty()) {
+        directory = ".";
+    }
+
+    int dirFd = open(directory.c_str(), O_RDONLY);
+    if (dirFd < 0) {
+        return std::unexpected("Failed to open directory for sync");
+    }
+    if (fsync(dirFd) != 0) {
+        close(dirFd);
+        return std::unexpected("Failed to flush directory entry to disk");
+    }
+    close(dirFd);
+    return {};
+#endif
+}
+
 } // namespace
 
 std::expected<DecodeResult, std::string> FileService::LoadFile(
@@ -183,6 +206,11 @@ std::expected<void, std::string> FileService::SafeSave(
         std::filesystem::remove(tempPath);
         spdlog::error("FileService::SafeSave: {}", replaceResult.error());
         return std::unexpected(replaceResult.error());
+    }
+
+    auto syncDirResult = SyncDirectoryToDisk(path);
+    if (!syncDirResult) {
+        spdlog::warn("FileService::SafeSave: {}", syncDirResult.error());
     }
 
     spdlog::info("FileService::SafeSave: saved successfully: {}",

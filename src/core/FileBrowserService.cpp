@@ -10,8 +10,6 @@
 
 #include <algorithm>
 
-#include <spdlog/spdlog.h>
-
 #include "core/MediaService.hpp"
 
 namespace Core {
@@ -85,16 +83,6 @@ std::expected<std::vector<FileBrowserEntry>, std::string> FileBrowserService::Li
               });
 
     return items;
-}
-
-bool FileBrowserService::IsDirectory(const std::filesystem::path& path) {
-    std::error_code ec;
-    auto result = std::filesystem::is_directory(path, ec);
-    if (ec) {
-        spdlog::warn("FileBrowserService::IsDirectory failed: {}", ec.message());
-        return false;
-    }
-    return result;
 }
 
 bool FileBrowserService::IsDirectoryPath(const std::filesystem::path& path) {

@@ -28,8 +28,14 @@ FileBrowserPanel::FileBrowserPanel(wxWindow* parent)
       m_upBtn(nullptr), m_filterChoice(nullptr), m_filterIndex(0) {
     SetBackgroundColour(wxColour(30, 30, 30));
 
-    auto home = std::getenv("HOME");
-    m_homePath = home ? std::filesystem::path(home) : std::filesystem::current_path();
+    const char* home = nullptr;
+#ifdef _WIN32
+    home = std::getenv("USERPROFILE");
+#else
+    home = std::getenv("HOME");
+#endif
+    m_homePath = home ? std::filesystem::path(home)
+                      : std::filesystem::current_path();
     m_currentPath = m_homePath;
 
     // Toolbar

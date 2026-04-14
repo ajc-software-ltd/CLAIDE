@@ -32,7 +32,6 @@ public:
     static std::expected<std::vector<FileBrowserEntry>, std::string> ListDirectory(
         const std::filesystem::path& path, FileBrowserFilter filter);
 
-    static bool IsDirectory(const std::filesystem::path& path);
     static bool IsDirectoryPath(const std::filesystem::path& path);
 };
 
