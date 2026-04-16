@@ -6,6 +6,14 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ---
 
+## Versioning
+
+- Current build version: **`0.0.47-dev`**
+- Tag format from this point forward: **`v0.0.<commit_count>-dev`**
+- Example for current state: **`v0.0.47-dev`**
+
+---
+
 ## Features
 
 - **Dark theme** by default
@@ -24,27 +32,45 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ---
 
-## AVIM Canvas Roadmap
+## Current Milestone System
 
-CLIADE is evolving into a full AIO AI Content Creator with the **AVIM Canvas** — a unified media system for:
+The roadmap is currently being executed in milestone phases focused on core stability first.
 
-| Component | Milestone | Status |
-|-----------|-----------|--------|
-| **A**udio | M4: Audio Player | ⏳ Planned |
-| **V**ideo | M3: Video Player | ⏳ Planned |
-| **I**mage | M2: Image Processing | ⏳ In Progress |
-| **M**odel | M5: 3D Model Viewer | ⏳ Planned |
+| Milestone | Focus | Status |
+|-----------|-------|--------|
+| **Milestone 1** | Core IDE Shell | ✅ Complete |
+| **Milestone 2** | Vulkan Canvas (universal render layer) | 🚧 In Progress (foundation landed) |
+| **Milestone 3** | Text enhancement | ⏳ Planned |
+| **Milestone 4** | Image processing | ⏳ Planned |
+| **Milestone 5** | Video player | ⏳ Planned |
+| **Milestone 6** | 3D model viewer | ⏳ Planned |
+| **Milestone 7** | Unified workspace | ⏳ Planned |
+| **Milestone 8** | AI integration layer | ⏳ Planned |
+| **Milestone 9** | AI content generation | ⏳ Planned |
 
-Plus AI integration (M6), content generation (M7), and unified workspace (M8). See `milestones.md` for the full roadmap.
+### Current stream status (at this time)
+- ✅ **Core IDE Shell** is complete (Milestone 1).
+- 🚧 **Vulkan Canvas** foundation is landed and active development is in progress (Milestone 2).
+- ⏳ Feature tracks (text/image/video/3D/AI) build on the unified render surface roadmap.
 
-### Milestone 2 Progress (Image Processing)
-- ✅ `MediaService` — media type detection, ImageMagick metadata extraction, AI-ready pixel data API
-- ✅ `ImageViewer` — zoom (mouse wheel), pan (drag), fit-to-window, actual size, right-click context menu
-- ✅ `File > Open` — routes images, text, video, audio, 3D to correct viewers
-- ✅ IconBar sidebar — 4 icons (Files, Images, Video, 3D Models) with active/inactive states
-- ✅ File explorer — double-click files to open, folder navigation, detach support
-- ✅ Sidebar mode persistence — switching modes doesn't replace center content
-- ⏳ Python console panel (stub)
+See `milestones.md` for the canonical milestone breakdown and checkpoint workflow.
+
+## Current Implementation Scope
+
+### Functional now
+- Text editor workflow (new/open/edit tabs) with document state tracking
+- Image loading/viewing workflow with metadata display
+- File type routing for text/image/video/audio/model extensions
+- Core services: encoding, file IO, media type detection, document state, mipmap/tile cache utilities
+- Unit test suite for core modules via Catch2/CTest
+
+### Planned or placeholder
+- Full Vulkan canvas/render-layer implementation completion (Milestone 2 in progress)
+- Full image-processing milestone work (Milestone 3+)
+- Full video/audio playback UI and controls
+- 3D model rendering pipeline
+- AI chat/provider integration panels and generation workflows
+- Full Vulkan compute/render path replacing CPU fallback for image operations
 
 ---
 
@@ -68,6 +94,13 @@ Install via vcpkg or package manager:
 ## Building
 
 ```bash
+# REQUIRED FIRST STEP on Ubuntu/Debian:
+# installs and verifies wxWidgets, Vulkan headers/tools, ImageMagick++, spdlog, Catch2
+./scripts/build_with_prereqs.sh Debug
+
+# or (same flow)
+make dev-build
+
 # Configure
 cmake -B build -DCMAKE_BUILD_TYPE=Debug
 
@@ -81,6 +114,12 @@ cmake --build build
 ### Release Build
 
 ```bash
+# Bootstrap+verify dependencies, then build release
+./scripts/build_with_prereqs.sh Release
+
+# or
+make dev-release
+
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
@@ -95,6 +134,12 @@ cmake --build build
 ## Testing
 
 ```bash
+# Preflight dependencies before any build/test in a fresh Ubuntu workspace
+./scripts/bootstrap_prereqs_ubuntu.sh
+
+# or
+make dev-test
+
 # Run all tests
 ctest --test-dir build --output-on-failure
 
@@ -118,6 +163,14 @@ cmake --build build --target lint
 cmake --build build --target validate
 ```
 
+## Release Management
+
+- Milestone roadmap and status source: `milestones.md`
+- Release traceability map (milestone → commit → tag): `RELEASES.md`
+- Operational release checklist: `docs/release-checklist.md`
+- Branch/merge workflow: `docs/branch-policy.md`
+- Required merge validation gates: `build_with_prereqs` + `format-check` + `lint` + full `ctest`
+
 ## Project Structure
 
 ```
@@ -130,6 +183,9 @@ CLIADE/
 ├── .clang-format                     # LLVM base, 4-space indent, 120 column limit
 ├── .clang-tidy                       # cppcoreguidelines/modernize/readability/bugprone/performance checks
 ├── resources.rc                      # Windows application icon resource
+├── include/
+│   └── vulkanai/
+│       └── VulkanAI.h                # Public C ABI for Vulkan runtime module
 ├── src/
 │   ├── main.cpp                      # Entry point (includes Application.hpp)
 │   ├── app/
@@ -148,9 +204,15 @@ CLIADE/
 │   │   ├── EditorPanel.hpp           # wxTextCtrl subclass for editor
 │   │   ├── EditorPanel.cpp           # Monospace font, dark colours, multi-line editor
 │   │   └── MainFrame.hpp/cpp         # Main window: wxAuiManager, IconBar, FileExplorerPanel, PromptBar, BackgroundPanel, tabbed editors, per-tab Document tracking
-│   └── platform/
+│   ├── platform/
 │       ├── PlatformPaths.hpp         # Cross-platform app data/log/project root path helpers
-│       └── PlatformPaths.cpp         # XDG on Linux, APPDATA on Windows, /proc/self/exe resolution
+│       └── PlatformPaths.cpp         # XDG on Linux, APPDATA on Windows, environment/cwd-based root resolution
+│   └── vulkan/
+│       ├── api/VulkanAI.cpp          # Vulkan runtime shared-library API entry points
+│       ├── runtime/VulkanContext.*   # Vulkan instance/device/queue/bootstrap
+│       ├── runtime/VulkanValidation.*# Validation layer and extension helpers
+│       ├── filters/GPUEngine.*       # GPU filter execution + CPU fallback logic
+│       └── shaders/*.comp            # Vulkan compute shaders
 ├── tests/
 │   ├── EncodingTests.cpp             # 16 tests: BOM detection, decode, encode, round-trip, invalid data
 │   ├── FileServiceTests.cpp          # 10 tests: load, save (UTF-8/BOM/UTF-16), delete, overwrite, existence
@@ -179,6 +241,7 @@ CLIADE/
 - **Core** (`src/core/`) — Document, Encoding, FileService
 - **App** (`src/app/`) — Bootstrap, lifecycle, logging init
 - **Platform** (`src/platform/`) — OS-specific paths/config
+- **Vulkan Runtime** (`src/vulkan/` + `include/vulkanai/`) — shared rendering module boundary (`VulkanAI.dll` / `libVulkanAI.so`)
 
 ## License
 

@@ -10,6 +10,7 @@
 #include <filesystem>
 
 #include "core/MediaService.hpp"
+#include "platform/PlatformPaths.hpp"
 
 using namespace Core;
 
@@ -75,9 +76,7 @@ TEST_CASE("IsImageFile returns correct values", "[mediaservice]") {
 }
 
 TEST_CASE("GetImageMetadata reads a valid PNG file", "[mediaservice]") {
-    auto exePath = std::filesystem::canonical("/proc/self/exe");
-    auto projectRoot = exePath.parent_path().parent_path();
-    auto path = projectRoot / "assets" / "canvas.png";
+    auto path = Platform::GetProjectRoot() / "assets" / "canvas.png";
 
     if (!std::filesystem::exists(path)) {
         SKIP("canvas.png not found");

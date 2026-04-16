@@ -6,12 +6,14 @@
 // Copyright:   © 2026 AJC-Software Ltd
 // ============================================================================
 
-#include "gpu/GPUEngine.hpp"
+#include "vulkan/filters/GPUEngine.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 #include <filesystem>
+#include <unordered_map>
 
 #include <spdlog/spdlog.h>
 
@@ -21,6 +23,18 @@
 #include <vulkan/vulkan.h>
 
 namespace Gpu {
+
+#ifndef CLIADE_VERSION_MAJOR
+#define CLIADE_VERSION_MAJOR 0
+#endif
+
+#ifndef CLIADE_VERSION_MINOR
+#define CLIADE_VERSION_MINOR 0
+#endif
+
+#ifndef CLIADE_VERSION_PATCH
+#define CLIADE_VERSION_PATCH 47
+#endif
 
 struct GPUEngine::Impl {
     VkInstance instance = VK_NULL_HANDLE;
@@ -34,6 +48,9 @@ struct GPUEngine::Impl {
 
     std::string deviceName;
     bool initialized = false;
+    FilterExecutionPath lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
+    std::unordered_map<std::string, std::filesystem::path> shaderPaths;
+    std::unordered_map<std::string, bool> shaderAvailability;
 
     ~Impl() {
         if (commandPool) vkDestroyCommandPool(device, commandPool, nullptr);
@@ -54,9 +71,11 @@ bool GPUEngine::Initialize() {
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "CLIADE";
-    appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 3);
+    appInfo.applicationVersion = VK_MAKE_VERSION(
+        CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
     appInfo.pEngineName = "CLIADE GPU Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 3);
+    appInfo.engineVersion = VK_MAKE_VERSION(
+        CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
     appInfo.apiVersion = VK_API_VERSION_1_2;
 
     VkInstanceCreateInfo createInfo = {};
@@ -195,6 +214,36 @@ bool GPUEngine::Initialize() {
 
     m_impl->initialized = true;
     spdlog::info("GPUEngine::Initialize: Vulkan device: {}", m_impl->deviceName);
+
+    constexpr std::array<const char*, 6> kShaderNames = {
+        "brightness", "contrast", "grayscale", "invert", "blur", "sharpen"
+    };
+
+    auto buildShaderDir = std::filesystem::current_path() / "build" / "shaders";
+    auto sourceShaderDir = std::filesystem::current_path() / "src" / "gpu" / "shaders";
+
+    for (const auto* shaderName : kShaderNames) {
+        auto compiledPath = buildShaderDir / (std::string(shaderName) + ".spv");
+        auto sourcePath = sourceShaderDir / (std::string(shaderName) + ".spv");
+
+        if (std::filesystem::exists(compiledPath)) {
+            m_impl->shaderPaths[shaderName] = compiledPath;
+            m_impl->shaderAvailability[shaderName] = true;
+            spdlog::debug("GPUEngine::Initialize: shader available: {}", compiledPath.string());
+            continue;
+        }
+
+        if (std::filesystem::exists(sourcePath)) {
+            m_impl->shaderPaths[shaderName] = sourcePath;
+            m_impl->shaderAvailability[shaderName] = true;
+            spdlog::debug("GPUEngine::Initialize: shader available: {}", sourcePath.string());
+            continue;
+        }
+
+        m_impl->shaderAvailability[shaderName] = false;
+        spdlog::warn("GPUEngine::Initialize: missing shader '{}.spv' in build/shaders or src/vulkan/shaders", shaderName);
+    }
+
     return true;
 }
 
@@ -204,6 +253,10 @@ bool GPUEngine::IsAvailable() const {
 
 std::string GPUEngine::GetDeviceInfo() const {
     return m_impl->deviceName.empty() ? "CPU Fallback" : m_impl->deviceName;
+}
+
+FilterExecutionPath GPUEngine::GetLastExecutionPath() const {
+    return m_impl->lastExecutionPath;
 }
 
 // CPU fallback implementations
@@ -317,6 +370,7 @@ static std::vector<std::uint8_t> ApplySharpenCPU(
 std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyBrightness(
     const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double value) {
     if (!m_impl->initialized) {
+        m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
         return ApplyBrightnessCPU(input, width, height, channels, value);
     }
     return DispatchShader("brightness", input, width, height, channels, {static_cast<float>(value)});
@@ -325,6 +379,7 @@ std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyBrightness
 std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyContrast(
     const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double value) {
     if (!m_impl->initialized) {
+        m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
         return ApplyContrastCPU(input, width, height, channels, value);
     }
     return DispatchShader("contrast", input, width, height, channels, {static_cast<float>(value)});
@@ -333,6 +388,7 @@ std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyContrast(
 std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyGrayscale(
     const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels) {
     if (!m_impl->initialized) {
+        m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
         return ApplyGrayscaleCPU(input, width, height, channels);
     }
     return DispatchShader("grayscale", input, width, height, channels, {});
@@ -341,6 +397,7 @@ std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyGrayscale(
 std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyInvert(
     const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels) {
     if (!m_impl->initialized) {
+        m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
         return ApplyInvertCPU(input, width, height, channels);
     }
     return DispatchShader("invert", input, width, height, channels, {});
@@ -349,6 +406,7 @@ std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyInvert(
 std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyBlur(
     const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double radius) {
     if (!m_impl->initialized) {
+        m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
         return ApplyBlurCPU(input, width, height, channels, radius);
     }
     return DispatchShader("blur", input, width, height, channels, {static_cast<float>(radius)});
@@ -357,6 +415,7 @@ std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyBlur(
 std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplySharpen(
     const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double amount) {
     if (!m_impl->initialized) {
+        m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
         return ApplySharpenCPU(input, width, height, channels, amount);
     }
     return DispatchShader("sharpen", input, width, height, channels, {static_cast<float>(amount)});
@@ -371,9 +430,16 @@ std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::DispatchShader(
         return std::unexpected("GPU not initialized");
     }
 
-    // For now, return CPU fallback - full Vulkan pipeline in next iteration
-    spdlog::debug("GPUEngine::DispatchShader: {} ({}x{}, {} channels) - GPU pipeline pending",
-                  shaderName, width, height, channels);
+    auto it = m_impl->shaderAvailability.find(shaderName);
+    if (it == m_impl->shaderAvailability.end() || !it->second) {
+        m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackShaderMissing;
+        spdlog::warn("GPUEngine::DispatchShader: missing shader '{}.spv', using CPU fallback",
+                     shaderName);
+    } else {
+        m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuPipelinePending;
+        spdlog::info("GPUEngine::DispatchShader: shader '{}' found at {}, GPU dispatch pipeline pending, using CPU fallback",
+                     shaderName, m_impl->shaderPaths[shaderName].string());
+    }
 
     if (shaderName == "brightness" && !pushConstants.empty()) {
         return ApplyBrightnessCPU(input, width, height, channels, pushConstants[0]);

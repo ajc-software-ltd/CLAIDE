@@ -10,11 +10,11 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <string>
 
 #ifdef _WIN32
+#include <fileapi.h>
 #include <windows.h>
-#else
-#include <unistd.h>
 #endif
 
 namespace Platform {
@@ -40,14 +40,39 @@ std::filesystem::path GetAppDataDir() {
 }
 
 std::filesystem::path GetProjectRoot() {
-    auto exePath = std::filesystem::canonical("/proc/self/exe");
-    auto projectRoot = exePath.parent_path().parent_path();
-
-    if (std::filesystem::exists(projectRoot / "CMakeLists.txt")) {
-        return projectRoot;
+    auto configuredRoot = std::getenv("CLIADE_PROJECT_ROOT");
+    if (configuredRoot != nullptr) {
+        std::error_code ec;
+        auto configured = std::filesystem::weakly_canonical(configuredRoot, ec);
+        if (!ec && std::filesystem::exists(configured / "CMakeLists.txt")) {
+            return configured;
+        }
     }
 
-    return exePath.parent_path();
+    std::error_code ec;
+    auto current = std::filesystem::current_path(ec);
+    if (ec) {
+        return std::filesystem::path(".");
+    }
+
+    auto candidate = std::filesystem::weakly_canonical(current, ec);
+    if (ec) {
+        candidate = current;
+    }
+
+    while (!candidate.empty()) {
+        if (std::filesystem::exists(candidate / "CMakeLists.txt")) {
+            return candidate;
+        }
+
+        auto parent = candidate.parent_path();
+        if (parent == candidate) {
+            break;
+        }
+        candidate = parent;
+    }
+
+    return current;
 }
 
 std::filesystem::path GetLogFilePath() {

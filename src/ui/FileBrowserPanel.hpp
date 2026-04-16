@@ -19,6 +19,7 @@
 #include <functional>
 #include <vector>
 
+#include "core/FileBrowserService.hpp"
 #include "ui/ThumbnailCache.hpp"
 
 namespace Ui {
@@ -51,8 +52,6 @@ private:
     void UpdateLayout();
     void RenderGrid(wxDC& dc);
     int GetIndexAtPosition(wxPoint pos) const;
-    bool MatchesFilter(const std::filesystem::path& path) const;
-
     wxPanel* m_toolbar;
     wxScrolledWindow* m_grid;
     wxTextCtrl* m_pathBar;
@@ -63,7 +62,7 @@ private:
 
     std::filesystem::path m_currentPath;
     std::filesystem::path m_homePath;
-    std::vector<std::filesystem::path> m_items;
+    std::vector<Core::FileBrowserEntry> m_items;
     std::vector<std::filesystem::path> m_backHistory;
     std::vector<std::filesystem::path> m_forwardHistory;
 

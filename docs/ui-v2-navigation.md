@@ -63,3 +63,4 @@ All four entry points must converge on one shared "open file" workflow to guaran
 
 ## Icon Asset Mapping Update
 - Notepad mode icon asset path: `assets/icons/notepad_icon.png`.
+- Settings mode icon asset path: `assets/icons/settings_icon.png`.

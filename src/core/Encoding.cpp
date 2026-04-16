@@ -58,12 +58,18 @@ bool Encoding::IsValidUtf8(std::string_view text) {
         } else if ((c & 0xE0) == 0xC0) {
             bytes = 2;
             codePoint = c & 0x1F;
+            if (c < 0xC2) {
+                return false;
+            }
         } else if ((c & 0xF0) == 0xE0) {
             bytes = 3;
             codePoint = c & 0x0F;
         } else if ((c & 0xF8) == 0xF0) {
             bytes = 4;
             codePoint = c & 0x07;
+            if (c > 0xF4) {
+                return false;
+            }
         } else {
             return false;
         }
@@ -77,6 +83,25 @@ bool Encoding::IsValidUtf8(std::string_view text) {
             if ((next & 0xC0) != 0x80) {
                 return false;
             }
+
+            if (j == 1) {
+                if (bytes == 3) {
+                    if (c == 0xE0 && next < 0xA0) {
+                        return false;
+                    }
+                    if (c == 0xED && next > 0x9F) {
+                        return false;
+                    }
+                } else if (bytes == 4) {
+                    if (c == 0xF0 && next < 0x90) {
+                        return false;
+                    }
+                    if (c == 0xF4 && next > 0x8F) {
+                        return false;
+                    }
+                }
+            }
+
             codePoint = (codePoint << 6) | (next & 0x3F);
         }
 
