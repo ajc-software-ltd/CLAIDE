@@ -42,3 +42,6 @@ Lint triage policy:
 - Fix in order: tool/parser errors first, then `clang-analyzer-*` and `bugprone-*`, then other checks.
 - Track readability warnings, but do not prioritize them ahead of correctness and analyzer findings.
 - Test lint excludes `bugprone-chained-comparison` to avoid Catch2 macro decomposition noise; this exclusion applies to tests only.
+- Lint gate thresholds are enforced by `scripts/run_lint.sh` through `scripts/lint_unique_report.py`:
+  - `LINT_MAX_BUCKET_A` (default `0`)
+  - `LINT_MAX_SRC_BUCKET_B` (default `24`, current baseline lock to prevent regressions)

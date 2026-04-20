@@ -6,6 +6,8 @@ BUILD_DIR="${1:-${ROOT_DIR}/build}"
 CLANG_TIDY_BIN="${CLANG_TIDY_BIN:-clang-tidy}"
 CORE_CHECKS="${CORE_CHECKS:--modernize-use-std-print}"
 TEST_CHECKS="${TEST_CHECKS:--modernize-use-std-print,-bugprone-chained-comparison}"
+LINT_MAX_BUCKET_A="${LINT_MAX_BUCKET_A:-0}"
+LINT_MAX_SRC_BUCKET_B="${LINT_MAX_SRC_BUCKET_B:-24}"
 
 REPORT_DIR="${BUILD_DIR}/reports"
 RAW_REPORT="${REPORT_DIR}/clang-tidy.raw.txt"
@@ -92,7 +94,12 @@ else
 fi
 set -e
 
-python3 "${ROOT_DIR}/scripts/lint_unique_report.py" "${RAW_REPORT}" "${UNIQUE_REPORT}" "${SUMMARY_REPORT}"
+python3 "${ROOT_DIR}/scripts/lint_unique_report.py" \
+  "${RAW_REPORT}" \
+  "${UNIQUE_REPORT}" \
+  "${SUMMARY_REPORT}" \
+  "${LINT_MAX_BUCKET_A}" \
+  "${LINT_MAX_SRC_BUCKET_B}"
 
 if [[ ${CORE_STATUS} -ne 0 || ${TEST_STATUS} -ne 0 ]]; then
   echo "[lint] clang-tidy reported diagnostics/errors. See ${SUMMARY_REPORT}" >&2

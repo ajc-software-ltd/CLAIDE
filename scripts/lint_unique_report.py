@@ -16,13 +16,18 @@ def bucket_for(check: str, severity: str) -> str:
 
 
 def main() -> int:
-    if len(sys.argv) != 4:
-        print("usage: lint_unique_report.py <raw_input> <unique_output> <summary_output>", file=sys.stderr)
+    if len(sys.argv) not in {4, 6}:
+        print(
+            "usage: lint_unique_report.py <raw_input> <unique_output> <summary_output> [max_bucket_a max_src_bucket_b]",
+            file=sys.stderr,
+        )
         return 2
 
     raw_path = pathlib.Path(sys.argv[1])
     unique_path = pathlib.Path(sys.argv[2])
     summary_path = pathlib.Path(sys.argv[3])
+    max_bucket_a = int(sys.argv[4]) if len(sys.argv) == 6 else None
+    max_src_bucket_b = int(sys.argv[5]) if len(sys.argv) == 6 else None
 
     diag_pattern = re.compile(
         r"^(?P<path>.+?):(?P<line>\d+):(?P<col>\d+):\s+"
@@ -36,6 +41,7 @@ def main() -> int:
     by_check = collections.Counter()
     by_file = collections.Counter()
     by_scope = collections.Counter()
+    by_scope_bucket = collections.Counter()
 
     for raw_line in raw_path.read_text(encoding="utf-8", errors="replace").splitlines():
         line = raw_line.strip()
@@ -58,11 +64,13 @@ def main() -> int:
             by_check[check] += 1
             by_file[path] += 1
             if "/src/" in path:
-                by_scope["src"] += 1
+                scope = "src"
             elif "/tests/" in path:
-                by_scope["tests"] += 1
+                scope = "tests"
             else:
-                by_scope["other"] += 1
+                scope = "other"
+            by_scope[scope] += 1
+            by_scope_bucket[(scope, bucket)] += 1
             continue
 
         if line.startswith("Error while processing "):
@@ -77,11 +85,13 @@ def main() -> int:
             by_check[check] += 1
             by_file[path] += 1
             if "/src/" in path:
-                by_scope["src"] += 1
+                scope = "src"
             elif "/tests/" in path:
-                by_scope["tests"] += 1
+                scope = "tests"
             else:
-                by_scope["other"] += 1
+                scope = "other"
+            by_scope[scope] += 1
+            by_scope_bucket[(scope, bucket)] += 1
 
     sorted_unique = sorted(unique.values(), key=lambda item: (item[0], item[2], int(item[3]), item[4]))
     unique_lines = [
@@ -103,8 +113,11 @@ def main() -> int:
         "",
         "## Scope split",
         f"- src/: {by_scope['src']}",
+        f"  - src bucket B: {by_scope_bucket[('src', 'B')]}",
         f"- tests/: {by_scope['tests']}",
+        f"  - tests bucket B: {by_scope_bucket[('tests', 'B')]}",
         f"- other: {by_scope['other']}",
+        f"  - other bucket B: {by_scope_bucket[('other', 'B')]}",
         "",
         "## Top checks",
     ]
@@ -122,6 +135,19 @@ def main() -> int:
 
     print(f"[lint-report] Wrote {unique_path}")
     print(f"[lint-report] Wrote {summary_path}")
+    if max_bucket_a is not None and by_bucket["A"] > max_bucket_a:
+        print(
+            f"[lint-report] Bucket A threshold exceeded: {by_bucket['A']} > {max_bucket_a}",
+            file=sys.stderr,
+        )
+        return 1
+    if max_src_bucket_b is not None and by_scope_bucket[("src", "B")] > max_src_bucket_b:
+        print(
+            "[lint-report] Source Bucket B threshold exceeded: "
+            f"{by_scope_bucket[('src', 'B')]} > {max_src_bucket_b}",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

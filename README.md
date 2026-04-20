@@ -166,6 +166,7 @@ cmake --build build --target validate
 > Note: `lint` intentionally disables `modernize-use-std-print` due to an upstream clang-tidy stability issue observed on this project.
 > Lint reporting now writes both raw and deduplicated reports under `build/reports/`; prioritize unique diagnostics from `clang-tidy.summary.md`.
 > Test lint also suppresses `bugprone-chained-comparison` because Catch2 assertion decomposition generates high-volume false positives.
+> Lint gate thresholds are enforced by `scripts/run_lint.sh` (`LINT_MAX_BUCKET_A=0`, `LINT_MAX_SRC_BUCKET_B=24` by default).
 
 ## Release Management
 
