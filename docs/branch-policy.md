@@ -45,3 +45,4 @@ Lint triage policy:
 - Lint gate thresholds are enforced by `scripts/run_lint.sh` through `scripts/lint_unique_report.py`:
   - `LINT_MAX_BUCKET_A` (default `0`)
   - `LINT_MAX_SRC_BUCKET_B` (default `24`, current baseline lock to prevent regressions)
+- Local override is allowed only for troubleshooting (e.g. `LINT_MAX_SRC_BUCKET_B=<value>`), but CI/merge gates must use default thresholds.

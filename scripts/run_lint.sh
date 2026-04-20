@@ -103,6 +103,7 @@ python3 "${ROOT_DIR}/scripts/lint_unique_report.py" \
 
 if [[ ${CORE_STATUS} -ne 0 || ${TEST_STATUS} -ne 0 ]]; then
   echo "[lint] clang-tidy reported diagnostics/errors. See ${SUMMARY_REPORT}" >&2
+  echo "[lint] Active thresholds: LINT_MAX_BUCKET_A=${LINT_MAX_BUCKET_A}, LINT_MAX_SRC_BUCKET_B=${LINT_MAX_SRC_BUCKET_B}" >&2
   exit 1
 fi
 

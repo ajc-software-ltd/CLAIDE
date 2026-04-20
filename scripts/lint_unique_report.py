@@ -110,6 +110,22 @@ def main() -> int:
         f"- Bucket B (clang-analyzer + bugprone): {by_bucket['B']}",
         f"- Bucket C (other non-readability warnings): {by_bucket['C']}",
         f"- Bucket D (readability warnings): {by_bucket['D']}",
+    ]
+
+    if max_bucket_a is not None and max_src_bucket_b is not None:
+        gate_passes = by_bucket["A"] <= max_bucket_a and by_scope_bucket[("src", "B")] <= max_src_bucket_b
+        summary_lines.extend(
+            [
+                "",
+                "## Gate thresholds",
+                f"- LINT_MAX_BUCKET_A: {max_bucket_a}",
+                f"- LINT_MAX_SRC_BUCKET_B: {max_src_bucket_b}",
+                f"- Gate status: {'pass' if gate_passes else 'fail'}",
+            ]
+        )
+
+    summary_lines.extend(
+        [
         "",
         "## Scope split",
         f"- src/: {by_scope['src']}",
@@ -120,7 +136,8 @@ def main() -> int:
         f"  - other bucket B: {by_scope_bucket[('other', 'B')]}",
         "",
         "## Top checks",
-    ]
+        ]
+    )
 
     for check, count in by_check.most_common(20):
         summary_lines.append(f"- {check}: {count}")
