@@ -66,8 +66,9 @@ class MainFrameFileDropTarget : public wxFileDropTarget
 
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     bool OnDropFiles([[maybe_unused]] wxCoord x, [[maybe_unused]] wxCoord y, const wxArrayString& filenames) override {
-        if (m_frame == nullptr)
+        if (m_frame == nullptr) {
             return false;
+        }
 
         for (const auto& file : filenames) {
             m_frame->OpenDroppedFile(std::filesystem::path(file.ToStdString()));
@@ -853,9 +854,9 @@ void MainFrame::OnDeleteFile([[maybe_unused]] wxCommandEvent& event) {
 
     auto confirm = wxMessageBox("Delete this file from disk?\n\n" + path.string(), "Delete File",
                                 wxYES_NO | wxCANCEL | wxICON_WARNING, this);
-    if (confirm != wxYES) {
-        return;
-    }
+        if (confirm != wxYES) {
+            return;
+        }
 
     auto deleteResult = m_documentWorkflowService.DeleteDocumentFile(path);
     if (!deleteResult) {

@@ -130,8 +130,9 @@ void FileBrowserPanel::NavigateTo(const std::filesystem::path& path) {
 }
 
 void FileBrowserPanel::GoBack() {
-    if (m_backHistory.empty())
+    if (m_backHistory.empty()) {
         return;
+    }
 
     m_forwardHistory.push_back(m_currentPath);
     m_currentPath = m_backHistory.back();
@@ -140,8 +141,9 @@ void FileBrowserPanel::GoBack() {
 }
 
 void FileBrowserPanel::GoForward() {
-    if (m_forwardHistory.empty())
+    if (m_forwardHistory.empty()) {
         return;
+    }
 
     m_backHistory.push_back(m_currentPath);
     m_currentPath = m_forwardHistory.back();
@@ -150,8 +152,9 @@ void FileBrowserPanel::GoForward() {
 }
 
 void FileBrowserPanel::GoUp() {
-    if (m_currentPath == m_homePath)
+    if (m_currentPath == m_homePath) {
         return;
+    }
 
     auto parent = m_currentPath.parent_path();
     if (!parent.empty() && parent != m_currentPath) {
@@ -179,8 +182,9 @@ void FileBrowserPanel::LoadDirectory(std::filesystem::path path) {
 
 void FileBrowserPanel::UpdateLayout() {
     wxSize clientSize = m_grid->GetClientSize();
-    if (clientSize.GetWidth() <= 0)
+    if (clientSize.GetWidth() <= 0) {
         return;
+    }
 
     int availableWidth = clientSize.GetWidth() - 8;
     m_columns = std::max(1, availableWidth / m_cellSize);

@@ -27,8 +27,9 @@ EditorDocumentController::EditorDocumentController(wxWindow* parent, wxAuiNotebo
 }
 
 void EditorDocumentController::BindEditorEvents(EditorPanel* editor) {
-    if (editor == nullptr)
+    if (editor == nullptr) {
         return;
+    }
 
     editor->Bind(wxEVT_TEXT, [this, editor](wxCommandEvent& textEvent) {
         auto docIt = m_documents.find(editor);
@@ -45,15 +46,18 @@ void EditorDocumentController::BindEditorEvents(EditorPanel* editor) {
 }
 
 void EditorDocumentController::RefreshEditorTabTitle(wxWindow* page) {
-    if (m_notebook == nullptr || page == nullptr)
+    if (m_notebook == nullptr || page == nullptr) {
         return;
+    }
     auto index = m_notebook->GetPageIndex(page);
-    if (index == wxNOT_FOUND)
+    if (index == wxNOT_FOUND) {
         return;
+    }
 
     auto docIt = m_documents.find(page);
-    if (docIt == m_documents.end())
+    if (docIt == m_documents.end()) {
         return;
+    }
 
     auto title = docIt->second.GetDisplayName();
     if (docIt->second.IsModified()) {
@@ -116,8 +120,9 @@ EditorDocumentController::SaveDocumentForPage(wxWindow* page, bool forceSaveAs, 
 }
 
 bool EditorDocumentController::ConfirmClosePage(wxWindow* page) {
-    if (page == nullptr)
+    if (page == nullptr) {
         return true;
+    }
 
     auto docIt = m_documents.find(page);
     if (docIt == m_documents.end() || !docIt->second.IsModified()) {
