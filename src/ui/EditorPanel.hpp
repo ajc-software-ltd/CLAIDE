@@ -12,13 +12,14 @@
 
 namespace Ui {
 
-class EditorPanel : public wxTextCtrl {
-public:
+class EditorPanel : public wxTextCtrl
+{
+  public:
     EditorPanel(wxWindow* parent, wxWindowID id);
 
     void SetEditorFont(const wxFont& font);
-    void SetEditorColours(const wxColour& foreground,
-                          const wxColour& background);
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+    void SetEditorColours(const wxColour& foreground, const wxColour& background);
 };
 
 } // namespace Ui

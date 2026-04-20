@@ -17,13 +17,15 @@
 
 namespace Core {
 
-struct Operation {
+struct Operation
+{
     std::string type;
     std::map<std::string, double> params;
 };
 
-class DocumentState {
-public:
+class DocumentState
+{
+  public:
     DocumentState();
 
     void PushOperation(const Operation& op);
@@ -40,13 +42,11 @@ public:
     void SetMaxHistory(size_t maxSteps);
 
     std::expected<std::vector<std::uint8_t>, std::string> Serialize() const;
-    std::expected<void, std::string> Deserialize(
-        const std::vector<std::uint8_t>& data);
+    std::expected<void, std::string> Deserialize(const std::vector<std::uint8_t>& data);
 
-    std::expected<std::vector<Operation>, std::string> ReplayOperations(
-        const std::vector<Operation>& ops) const;
+    std::expected<std::vector<Operation>, std::string> ReplayOperations(const std::vector<Operation>& ops) const;
 
-private:
+  private:
     std::vector<Operation> m_history;
     size_t m_currentStep;
     size_t m_maxHistory;

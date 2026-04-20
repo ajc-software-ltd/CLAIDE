@@ -17,13 +17,14 @@ namespace Ui {
 
 class FileBrowserPanel;
 
-class SidebarPanel : public wxPanel {
-public:
+class SidebarPanel : public wxPanel
+{
+  public:
     SidebarPanel(wxWindow* parent);
 
     void SetFileOpenCallback(std::function<void(const std::string&)> cb);
 
-private:
+  private:
     FileBrowserPanel* m_browser;
 };
 

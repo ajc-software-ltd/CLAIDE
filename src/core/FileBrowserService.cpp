@@ -37,9 +37,8 @@ bool MatchesFilter(const std::filesystem::path& path, FileBrowserFilter filter) 
 
 } // namespace
 
-std::expected<std::vector<FileBrowserEntry>, std::string> FileBrowserService::ListDirectory(
-    const std::filesystem::path& path,
-    FileBrowserFilter filter) {
+std::expected<std::vector<FileBrowserEntry>, std::string>
+FileBrowserService::ListDirectory(const std::filesystem::path& path, FileBrowserFilter filter) {
     std::error_code ec;
     if (!std::filesystem::exists(path, ec) || ec) {
         return std::unexpected("Directory does not exist: " + path.string());
@@ -49,8 +48,8 @@ std::expected<std::vector<FileBrowserEntry>, std::string> FileBrowserService::Li
     }
 
     std::vector<FileBrowserEntry> items;
-    auto dirIter = std::filesystem::directory_iterator(
-        path, std::filesystem::directory_options::skip_permission_denied, ec);
+    auto dirIter =
+        std::filesystem::directory_iterator(path, std::filesystem::directory_options::skip_permission_denied, ec);
     if (ec) {
         return std::unexpected("Cannot iterate directory: " + ec.message());
     }
@@ -74,13 +73,12 @@ std::expected<std::vector<FileBrowserEntry>, std::string> FileBrowserService::Li
         }
     }
 
-    std::sort(items.begin(), items.end(),
-              [](const FileBrowserEntry& a, const FileBrowserEntry& b) {
-                  if (a.isDirectory != b.isDirectory) {
-                      return a.isDirectory;
-                  }
-                  return a.path.filename().string() < b.path.filename().string();
-              });
+    std::sort(items.begin(), items.end(), [](const FileBrowserEntry& a, const FileBrowserEntry& b) {
+        if (a.isDirectory != b.isDirectory) {
+            return a.isDirectory;
+        }
+        return a.path.filename().string() < b.path.filename().string();
+    });
 
     return items;
 }

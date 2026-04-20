@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.47-dev`**
+- Current build version: **`0.0.56-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.47-dev`**
+- Example for current state: **`v0.0.56-dev`**
 
 ---
 
@@ -38,18 +38,20 @@ The roadmap is currently being executed in milestone phases focused on core stab
 
 | Milestone | Focus | Status |
 |-----------|-------|--------|
-| **M0** | Base program foundation + Vulkan integration groundwork | ⏳ In Progress |
-| **M1** | Notepad/editor milestone | ⏳ Planned (not started) |
-| **M2** | Text enhancement/polish | ⏳ Planned |
-| **M3** | Image processing | ⏳ Planned |
-| **M4** | Video playback | ⏳ Planned |
-| **M5** | 3D model viewer | ⏳ Planned |
-| **M6+** | Unified workspace + AI milestones | ⏳ Planned |
+| **Milestone 1** | Core IDE Shell | ✅ Complete |
+| **Milestone 2** | Vulkan Canvas (universal render layer) | 🚧 In Progress (foundation landed) |
+| **Milestone 3** | Text enhancement | ⏳ Planned |
+| **Milestone 4** | Image processing | ⏳ Planned |
+| **Milestone 5** | Video player | ⏳ Planned |
+| **Milestone 6** | 3D model viewer | ⏳ Planned |
+| **Milestone 7** | Unified workspace | ⏳ Planned |
+| **Milestone 8** | AI integration layer | ⏳ Planned |
+| **Milestone 9** | AI content generation | ⏳ Planned |
 
 ### Current stream status (at this time)
-- ✅ **Notepad track** is active in the current development stream (M0-driven groundwork and editor reliability work).
-- ⏳ **Image track** is **planned**, not currently the active milestone stream.
-- ⏳ Video/audio/model/AI tracks remain planned for later milestones.
+- ✅ **Core IDE Shell** is complete (Milestone 1).
+- 🚧 **Vulkan Canvas** foundation is landed and active development is in progress (Milestone 2).
+- ⏳ Feature tracks (text/image/video/3D/AI) build on the unified render surface roadmap.
 
 See `milestones.md` for the canonical milestone breakdown and checkpoint workflow.
 
@@ -63,8 +65,8 @@ See `milestones.md` for the canonical milestone breakdown and checkpoint workflo
 - Unit test suite for core modules via Catch2/CTest
 
 ### Planned or placeholder
-- Milestone 1 notepad expansion scope (when M0 is signed off)
-- Full image-processing milestone work (M3)
+- Full Vulkan canvas/render-layer implementation completion (Milestone 2 in progress)
+- Full image-processing milestone work (Milestone 3+)
 - Full video/audio playback UI and controls
 - 3D model rendering pipeline
 - AI chat/provider integration panels and generation workflows
@@ -92,8 +94,12 @@ Install via vcpkg or package manager:
 ## Building
 
 ```bash
-# One-time/recurring dependency bootstrap + build (Ubuntu/Debian)
+# REQUIRED FIRST STEP on Ubuntu/Debian:
+# installs and verifies wxWidgets, Vulkan headers/tools, ImageMagick++, spdlog, Catch2
 ./scripts/build_with_prereqs.sh Debug
+
+# or (same flow)
+make dev-build
 
 # Configure
 cmake -B build -DCMAKE_BUILD_TYPE=Debug
@@ -108,8 +114,11 @@ cmake --build build
 ### Release Build
 
 ```bash
-# Bootstrap deps + release build
+# Bootstrap+verify dependencies, then build release
 ./scripts/build_with_prereqs.sh Release
+
+# or
+make dev-release
 
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
@@ -125,8 +134,11 @@ cmake --build build
 ## Testing
 
 ```bash
-# If dependencies are missing in a fresh workspace
+# Preflight dependencies before any build/test in a fresh Ubuntu workspace
 ./scripts/bootstrap_prereqs_ubuntu.sh
+
+# or
+make dev-test
 
 # Run all tests
 ctest --test-dir build --output-on-failure
@@ -151,11 +163,17 @@ cmake --build build --target lint
 cmake --build build --target validate
 ```
 
+> Note: `lint` intentionally disables `modernize-use-std-print` due to an upstream clang-tidy stability issue observed on this project.
+> Lint reporting now writes both raw and deduplicated reports under `build/reports/`; prioritize unique diagnostics from `clang-tidy.summary.md`.
+> Test lint also suppresses `bugprone-chained-comparison` because Catch2 assertion decomposition generates high-volume false positives.
+
 ## Release Management
 
 - Milestone roadmap and status source: `milestones.md`
 - Release traceability map (milestone → commit → tag): `RELEASES.md`
 - Operational release checklist: `docs/release-checklist.md`
+- Branch/merge workflow: `docs/branch-policy.md`
+- Required merge validation gates: `build_with_prereqs` + `format-check` + `lint` + full `ctest`
 
 ## Project Structure
 
@@ -169,6 +187,9 @@ CLIADE/
 ├── .clang-format                     # LLVM base, 4-space indent, 120 column limit
 ├── .clang-tidy                       # cppcoreguidelines/modernize/readability/bugprone/performance checks
 ├── resources.rc                      # Windows application icon resource
+├── include/
+│   └── vulkanai/
+│       └── VulkanAI.h                # Public C ABI for Vulkan runtime module
 ├── src/
 │   ├── main.cpp                      # Entry point (includes Application.hpp)
 │   ├── app/
@@ -187,9 +208,15 @@ CLIADE/
 │   │   ├── EditorPanel.hpp           # wxTextCtrl subclass for editor
 │   │   ├── EditorPanel.cpp           # Monospace font, dark colours, multi-line editor
 │   │   └── MainFrame.hpp/cpp         # Main window: wxAuiManager, IconBar, FileExplorerPanel, PromptBar, BackgroundPanel, tabbed editors, per-tab Document tracking
-│   └── platform/
+│   ├── platform/
 │       ├── PlatformPaths.hpp         # Cross-platform app data/log/project root path helpers
-│       └── PlatformPaths.cpp         # XDG on Linux, APPDATA on Windows, /proc/self/exe resolution
+│       └── PlatformPaths.cpp         # XDG on Linux, APPDATA on Windows, environment/cwd-based root resolution
+│   └── vulkan/
+│       ├── api/VulkanAI.cpp          # Vulkan runtime shared-library API entry points
+│       ├── runtime/VulkanContext.*   # Vulkan instance/device/queue/bootstrap
+│       ├── runtime/VulkanValidation.*# Validation layer and extension helpers
+│       ├── filters/GPUEngine.*       # GPU filter execution + CPU fallback logic
+│       └── shaders/*.comp            # Vulkan compute shaders
 ├── tests/
 │   ├── EncodingTests.cpp             # 16 tests: BOM detection, decode, encode, round-trip, invalid data
 │   ├── FileServiceTests.cpp          # 10 tests: load, save (UTF-8/BOM/UTF-16), delete, overwrite, existence
@@ -218,6 +245,7 @@ CLIADE/
 - **Core** (`src/core/`) — Document, Encoding, FileService
 - **App** (`src/app/`) — Bootstrap, lifecycle, logging init
 - **Platform** (`src/platform/`) — OS-specific paths/config
+- **Vulkan Runtime** (`src/vulkan/` + `include/vulkanai/`) — shared rendering module boundary (`VulkanAI.dll` / `libVulkanAI.so`)
 
 ## License
 

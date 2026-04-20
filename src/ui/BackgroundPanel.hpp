@@ -8,18 +8,19 @@
 
 #pragma once
 
-#include <wx/panel.h>
 #include <wx/bitmap.h>
+#include <wx/panel.h>
 
 namespace Ui {
 
-class BackgroundPanel : public wxPanel {
-public:
+class BackgroundPanel : public wxPanel
+{
+  public:
     BackgroundPanel(wxWindow* parent);
 
     void SetBackgroundBitmap(const wxBitmap& bmp);
 
-private:
+  private:
     void OnPaint(wxPaintEvent& event);
     void OnSize(wxSizeEvent& event);
 

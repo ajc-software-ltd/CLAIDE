@@ -8,22 +8,23 @@
 
 #pragma once
 
-#include <wx/scrolwin.h>
 #include <wx/bitmap.h>
+#include <wx/scrolwin.h>
 
 #include <filesystem>
 
 namespace Ui {
 
-class ImageViewer : public wxScrolledWindow {
-public:
+class ImageViewer : public wxScrolledWindow
+{
+  public:
     ImageViewer(wxWindow* parent, const std::filesystem::path& path);
 
     void LoadImage(const std::filesystem::path& path);
     void FitToWindow();
     void ActualSize();
 
-private:
+  private:
     void OnPaint(wxPaintEvent& event);
     void OnSize(wxSizeEvent& event);
     void OnMouseWheel(wxMouseEvent& event);

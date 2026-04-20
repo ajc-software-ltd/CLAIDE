@@ -15,22 +15,19 @@
 
 namespace Core {
 
-enum class FileBrowserFilter {
-    All = 0,
-    Images = 1,
-    Video = 2,
-    Models = 3
-};
+enum class FileBrowserFilter { All = 0, Images = 1, Video = 2, Models = 3 };
 
-struct FileBrowserEntry {
+struct FileBrowserEntry
+{
     std::filesystem::path path;
     bool isDirectory = false;
 };
 
-class FileBrowserService {
-public:
-    static std::expected<std::vector<FileBrowserEntry>, std::string> ListDirectory(
-        const std::filesystem::path& path, FileBrowserFilter filter);
+class FileBrowserService
+{
+  public:
+    static std::expected<std::vector<FileBrowserEntry>, std::string> ListDirectory(const std::filesystem::path& path,
+                                                                                   FileBrowserFilter filter);
 
     static bool IsDirectoryPath(const std::filesystem::path& path);
 };
