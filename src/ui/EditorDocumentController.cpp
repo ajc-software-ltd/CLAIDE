@@ -62,8 +62,8 @@ void EditorDocumentController::RefreshEditorTabTitle(wxWindow* page) {
     m_notebook->SetPageText(static_cast<size_t>(index), title);
 }
 
-std::expected<void, std::string> EditorDocumentController::SaveDocumentForPage(wxWindow* page, bool forceSaveAs,
-                                                                               const std::function<void()>& onSaved) {
+EditorDocumentController::SaveDocumentResult
+EditorDocumentController::SaveDocumentForPage(wxWindow* page, bool forceSaveAs, const std::function<void()>& onSaved) {
     if (page == nullptr || m_notebook == nullptr) {
         return std::unexpected("No active editor page.");
     }
@@ -95,7 +95,7 @@ std::expected<void, std::string> EditorDocumentController::SaveDocumentForPage(w
             "Text Files (*.txt;*.md;*.cpp;*.hpp;*.c;*.h)|*.txt;*.md;*.cpp;*.hpp;*.c;*.h|All Files (*.*)|*.*",
             wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
         if (saveDialog.ShowModal() != wxID_OK) {
-            return std::unexpected("Save cancelled.");
+            return SaveOutcome::Cancelled;
         }
         savePath = std::filesystem::path(saveDialog.GetPath().ToStdString());
     }
@@ -112,7 +112,7 @@ std::expected<void, std::string> EditorDocumentController::SaveDocumentForPage(w
         onSaved();
     }
     spdlog::info("EditorDocumentController: saved {}", savePath.string());
-    return {};
+    return SaveOutcome::Saved;
 }
 
 bool EditorDocumentController::ConfirmClosePage(wxWindow* page) {
@@ -133,6 +133,9 @@ bool EditorDocumentController::ConfirmClosePage(wxWindow* page) {
         auto saveResult = SaveDocumentForPage(page, false, [] {});
         if (!saveResult) {
             wxMessageBox(saveResult.error(), "Save Error", wxOK | wxICON_ERROR, m_parent);
+            return false;
+        }
+        if (*saveResult == SaveOutcome::Cancelled) {
             return false;
         }
     }

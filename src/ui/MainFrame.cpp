@@ -58,10 +58,6 @@ constexpr int kRuntimeDiagnosticsMenuId = wxID_HIGHEST + 2001;
 constexpr int kRetryRuntimeMenuId = wxID_HIGHEST + 2002;
 constexpr int kDeleteFileMenuId = wxID_HIGHEST + 2003;
 
-bool IsSaveCancelled(std::string_view message) {
-    return message.find("cancelled") != std::string_view::npos || message.find("canceled") != std::string_view::npos;
-}
-
 class MainFrameFileDropTarget : public wxFileDropTarget
 {
   public:
@@ -793,10 +789,10 @@ void MainFrame::OnSave([[maybe_unused]] wxCommandEvent& event) {
                           ? m_editorController->SaveDocumentForPage(page, false, [this]() { UpdateStatusBar(); })
                           : std::unexpected(std::string("Editor controller is unavailable."));
     if (!saveResult) {
-        if (IsSaveCancelled(saveResult.error())) {
-            return;
-        }
         wxMessageBox(saveResult.error(), "Save Error", wxOK | wxICON_ERROR, this);
+        return;
+    }
+    if (*saveResult == EditorDocumentController::SaveOutcome::Cancelled) {
         return;
     }
 }
@@ -812,10 +808,10 @@ void MainFrame::OnSaveAs([[maybe_unused]] wxCommandEvent& event) {
                           ? m_editorController->SaveDocumentForPage(page, true, [this]() { UpdateStatusBar(); })
                           : std::unexpected(std::string("Editor controller is unavailable."));
     if (!saveResult) {
-        if (IsSaveCancelled(saveResult.error())) {
-            return;
-        }
         wxMessageBox(saveResult.error(), "Save As Error", wxOK | wxICON_ERROR, this);
+        return;
+    }
+    if (*saveResult == EditorDocumentController::SaveOutcome::Cancelled) {
         return;
     }
 }
@@ -846,9 +842,10 @@ void MainFrame::OnDeleteFile([[maybe_unused]] wxCommandEvent& event) {
                                   ? m_editorController->SaveDocumentForPage(page, false, [] {})
                                   : std::unexpected(std::string("Editor controller is unavailable."));
             if (!saveResult) {
-                if (!IsSaveCancelled(saveResult.error())) {
-                    wxMessageBox(saveResult.error(), "Save Error", wxOK | wxICON_ERROR, this);
-                }
+                wxMessageBox(saveResult.error(), "Save Error", wxOK | wxICON_ERROR, this);
+                return;
+            }
+            if (*saveResult == EditorDocumentController::SaveOutcome::Cancelled) {
                 return;
             }
         }
