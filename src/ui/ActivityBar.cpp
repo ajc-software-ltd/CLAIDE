@@ -17,6 +17,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "core/FileSystemService.hpp"
 #include "platform/PlatformPaths.hpp"
 
 namespace Ui {
@@ -52,7 +53,7 @@ ActivityBar::ActivityBar(wxWindow* parent)
         entry.mode = def.mode;
         configuredModes.insert(def.mode);
 
-        if (std::filesystem::exists(iconPath)) {
+        if (Core::FileSystemService::PathExists(iconPath)) {
             wxImage img(iconPath.string(), wxBITMAP_TYPE_PNG);
             if (img.IsOk()) {
                 img.Rescale(32, 32, wxIMAGE_QUALITY_HIGH);

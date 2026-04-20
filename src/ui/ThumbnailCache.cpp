@@ -19,6 +19,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "core/FileSystemService.hpp"
 #include "core/MediaService.hpp"
 #include "platform/PlatformPaths.hpp"
 
@@ -28,7 +29,7 @@ ThumbnailCache::ThumbnailCache()
     : m_maxMemoryBytes(static_cast<std::size_t>(500) * static_cast<std::size_t>(1024) * static_cast<std::size_t>(1024)),
       m_currentMemory(0) {
     m_cacheDir = GetCacheDir();
-    std::filesystem::create_directories(m_cacheDir);
+    Core::FileSystemService::EnsureDirectory(m_cacheDir);
 }
 
 wxBitmap ThumbnailCache::GetThumbnail(const std::filesystem::path& path, int size) {
@@ -66,15 +67,11 @@ bool ThumbnailCache::HasThumbnail(const std::filesystem::path& path) const {
 void ThumbnailCache::Clear() {
     m_memoryCache.clear();
     m_currentMemory = 0;
-    std::error_code ec;
-    for (const auto& entry : std::filesystem::directory_iterator(m_cacheDir)) {
-        std::filesystem::remove(entry.path(), ec);
-    }
+    Core::FileSystemService::RemoveDirectoryContents(m_cacheDir);
 }
 
 wxBitmap ThumbnailCache::GenerateImageThumbnail(const std::filesystem::path& path, int size) {
-    std::error_code ec;
-    if (!std::filesystem::is_regular_file(path, ec) || ec) {
+    if (!Core::FileSystemService::IsRegularFile(path)) {
         return GenerateDefaultThumbnail("folder", size);
     }
 
@@ -137,7 +134,7 @@ wxBitmap ThumbnailCache::GenerateDefaultThumbnail(const std::string& type, int s
         auto projectRoot = Platform::GetProjectRoot();
         auto iconPath = projectRoot / "assets" / "icons" / "folder_icon_128x128.png";
 
-        if (std::filesystem::exists(iconPath)) {
+        if (Core::FileSystemService::PathExists(iconPath)) {
             wxImage img(iconPath.string(), wxBITMAP_TYPE_PNG);
             if (img.IsOk()) {
                 img.Rescale(size, size, wxIMAGE_QUALITY_HIGH);

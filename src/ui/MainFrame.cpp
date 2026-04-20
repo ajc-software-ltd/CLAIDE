@@ -29,6 +29,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "core/FileSystemService.hpp"
 #include "core/FileService.hpp"
 #include "core/MediaService.hpp"
 #include "platform/PlatformPaths.hpp"
@@ -414,7 +415,7 @@ void MainFrame::LoadBackgroundImage() {
     auto projectRoot = Platform::GetProjectRoot();
     auto imgPath = projectRoot / "assets" / "canvas.png";
 
-    if (std::filesystem::exists(imgPath)) {
+    if (Core::FileSystemService::PathExists(imgPath)) {
         wxImage img(imgPath.string(), wxBITMAP_TYPE_PNG);
         if (img.IsOk()) {
             m_bgPanel->SetBackgroundBitmap(wxBitmap(img));
@@ -427,7 +428,7 @@ void MainFrame::LoadAppIcon() {
     auto projectRoot = Platform::GetProjectRoot();
     auto iconPath = projectRoot / "assets" / "icons" / "app_icon.png";
 
-    if (!std::filesystem::exists(iconPath)) {
+    if (!Core::FileSystemService::PathExists(iconPath)) {
         spdlog::warn("MainFrame: app icon not found at {}", iconPath.string());
         return;
     }

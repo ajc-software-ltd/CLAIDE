@@ -46,6 +46,7 @@ set(SOURCES
     src/core/Encoding.cpp
     src/core/Document.cpp
     src/core/FileService.cpp
+    src/core/FileSystemService.cpp
     src/core/DocumentWorkflowService.cpp
     src/core/MediaService.cpp
     src/core/FileBrowserService.cpp
@@ -82,6 +83,7 @@ set(HEADERS
     src/core/Encoding.hpp
     src/core/Document.hpp
     src/core/FileService.hpp
+    src/core/FileSystemService.hpp
     src/core/DocumentWorkflowService.hpp
     src/core/MediaService.hpp
     src/core/FileBrowserService.hpp

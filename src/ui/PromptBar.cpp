@@ -14,6 +14,7 @@
 
 #include <filesystem>
 
+#include "core/FileSystemService.hpp"
 #include "platform/PlatformPaths.hpp"
 
 namespace Ui {
@@ -27,7 +28,7 @@ PromptBar::PromptBar(wxWindow* parent)
     auto clearIconPath = projectRoot / "assets" / "icons" / "clear_icon.png";
 
     wxBitmap sendBmp;
-    if (std::filesystem::exists(sendIconPath)) {
+    if (Core::FileSystemService::PathExists(sendIconPath)) {
         wxImage sendImg(sendIconPath.string(), wxBITMAP_TYPE_PNG);
         if (sendImg.IsOk()) {
             sendImg.Rescale(80, 32, wxIMAGE_QUALITY_HIGH);
@@ -36,7 +37,7 @@ PromptBar::PromptBar(wxWindow* parent)
     }
 
     wxBitmap clearBmp;
-    if (std::filesystem::exists(clearIconPath)) {
+    if (Core::FileSystemService::PathExists(clearIconPath)) {
         wxImage clearImg(clearIconPath.string(), wxBITMAP_TYPE_PNG);
         if (clearImg.IsOk()) {
             clearImg.Rescale(80, 32, wxIMAGE_QUALITY_HIGH);
