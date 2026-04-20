@@ -19,6 +19,17 @@ if [[ ! -f "${BUILD_DIR}/compile_commands.json" ]]; then
   exit 2
 fi
 
+if ! "${CLANG_TIDY_BIN}" --version >/dev/null 2>&1; then
+  echo "[lint] clang-tidy binary '${CLANG_TIDY_BIN}' is not executable." >&2
+  exit 2
+fi
+
+CLANG_TIDY_VERSION="$("${CLANG_TIDY_BIN}" --version | sed -nE 's/.*version ([0-9]+)\..*/\1/p' | head -n 1)"
+if [[ -n "${CLANG_TIDY_VERSION}" && "${CLANG_TIDY_VERSION}" -lt 20 ]]; then
+  echo "[lint] clang-tidy ${CLANG_TIDY_VERSION} detected; version 20+ is required to avoid known false parser/tool failures." >&2
+  exit 2
+fi
+
 mapfile -t CORE_FILES < <(cd "${ROOT_DIR}" && git ls-files | awk '/^src\/.*\.cpp$/')
 mapfile -t TEST_FILES < <(cd "${ROOT_DIR}" && git ls-files | awk '/^tests\/.*\.cpp$/')
 
@@ -27,14 +38,54 @@ if [[ ${#CORE_FILES[@]} -eq 0 ]]; then
   exit 2
 fi
 
+FILTERED_DB_DIR="${BUILD_DIR}/lint"
+FILTERED_DB_PATH="${FILTERED_DB_DIR}/compile_commands.json"
+mkdir -p "${FILTERED_DB_DIR}"
+
+python3 - <<'PY' "${BUILD_DIR}/compile_commands.json" "${FILTERED_DB_PATH}" "${ROOT_DIR}"
+import json
+import pathlib
+import sys
+
+source_path = pathlib.Path(sys.argv[1])
+out_path = pathlib.Path(sys.argv[2])
+root = pathlib.Path(sys.argv[3]).resolve()
+
+with source_path.open("r", encoding="utf-8") as handle:
+    commands = json.load(handle)
+
+chosen = {}
+for entry in commands:
+    file_path = pathlib.Path(entry["file"]).resolve()
+    key = str(file_path)
+    command_text = entry.get("command", "")
+    if key not in chosen:
+        chosen[key] = entry
+        continue
+
+    existing = chosen[key]
+    existing_command = existing.get("command", "")
+
+    relative = file_path.relative_to(root)
+    is_test_source = "tests" in relative.parts
+    prefer_tests = is_test_source and "CLIADETests" in command_text and "CLIADETests" not in existing_command
+    prefer_app = (not is_test_source) and "CLIADETests" in existing_command and "CLIADETests" not in command_text
+
+    if prefer_tests or prefer_app:
+        chosen[key] = entry
+
+filtered = list(chosen.values())
+out_path.write_text(json.dumps(filtered, indent=2), encoding="utf-8")
+PY
+
 echo "[lint] Running clang-tidy on core translation units (${#CORE_FILES[@]} files)..."
 set +e
-"${CLANG_TIDY_BIN}" -p "${BUILD_DIR}" -checks="${CORE_CHECKS}" "${CORE_FILES[@]}" 2>&1 | tee "${RAW_REPORT}"
+"${CLANG_TIDY_BIN}" -p "${FILTERED_DB_DIR}" -checks="${CORE_CHECKS}" "${CORE_FILES[@]}" 2>&1 | tee "${RAW_REPORT}"
 CORE_STATUS=${PIPESTATUS[0]}
 
 if [[ ${#TEST_FILES[@]} -gt 0 ]]; then
   echo "[lint] Running clang-tidy on test translation units (${#TEST_FILES[@]} files)..."
-  "${CLANG_TIDY_BIN}" -p "${BUILD_DIR}" -checks="${TEST_CHECKS}" "${TEST_FILES[@]}" 2>&1 | tee -a "${RAW_REPORT}"
+  "${CLANG_TIDY_BIN}" -p "${FILTERED_DB_DIR}" -checks="${TEST_CHECKS}" "${TEST_FILES[@]}" 2>&1 | tee -a "${RAW_REPORT}"
   TEST_STATUS=${PIPESTATUS[0]}
 else
   TEST_STATUS=0

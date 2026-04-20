@@ -261,9 +261,16 @@ endif()
 
 # Lint target
 find_program(CLANG_TIDY
-    NAMES clang-tidy-20 clang-tidy-19 clang-tidy-18 clang-tidy
-    HINTS /usr/bin
+    NAMES clang-tidy
+    PATHS
+        "$ENV{HOME}/.local/bin"
+    NO_DEFAULT_PATH
 )
+if(NOT CLANG_TIDY)
+    find_program(CLANG_TIDY
+        NAMES clang-tidy-20 clang-tidy-19 clang-tidy
+    )
+endif()
 if(CLANG_TIDY)
     add_custom_target(lint
         COMMAND ${CLANG_TIDY} --version
