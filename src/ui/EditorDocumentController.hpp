@@ -26,11 +26,7 @@ class EditorPanel;
 class EditorDocumentController
 {
   public:
-    enum class SaveOutcome
-    {
-        Saved,
-        Cancelled
-    };
+    enum class SaveOutcome { Saved, Cancelled };
 
     using SaveDocumentResult = std::expected<SaveOutcome, std::string>;
 

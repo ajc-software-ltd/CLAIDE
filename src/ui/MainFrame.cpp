@@ -29,8 +29,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include "core/FileSystemService.hpp"
 #include "core/FileService.hpp"
+#include "core/FileSystemService.hpp"
 #include "core/MediaService.hpp"
 #include "platform/PlatformPaths.hpp"
 #include "ui/ActivityBar.hpp"
@@ -854,9 +854,9 @@ void MainFrame::OnDeleteFile([[maybe_unused]] wxCommandEvent& event) {
 
     auto confirm = wxMessageBox("Delete this file from disk?\n\n" + path.string(), "Delete File",
                                 wxYES_NO | wxCANCEL | wxICON_WARNING, this);
-        if (confirm != wxYES) {
-            return;
-        }
+    if (confirm != wxYES) {
+        return;
+    }
 
     auto deleteResult = m_documentWorkflowService.DeleteDocumentFile(path);
     if (!deleteResult) {
