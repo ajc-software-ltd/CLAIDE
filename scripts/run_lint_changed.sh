@@ -37,10 +37,17 @@ fi
 
 echo "[lint-fast] Running clang-tidy on ${#CHANGED_CPP[@]} changed file(s)..."
 mkdir -p "${REPORT_DIR}"
-"${CLANG_TIDY_BIN}" -p "${BUILD_DIR}" -checks='-modernize-use-std-print,-bugprone-chained-comparison' "${CHANGED_CPP[@]}" | tee "${RAW_REPORT}"
+set +e
+"${CLANG_TIDY_BIN}" -p "${BUILD_DIR}" \
+  -checks='-modernize-use-std-print,-bugprone-chained-comparison' \
+  --extra-arg=-std=gnu++23 \
+  "${CHANGED_CPP[@]}" | tee "${RAW_REPORT}"
+CLANG_TIDY_EXIT=$?
+set -e
 
 python3 "${ROOT_DIR}/scripts/lint_unique_report.py" "${RAW_REPORT}" "${UNIQUE_REPORT}" "${SUMMARY_REPORT}" >/dev/null 2>&1 || true
 echo "[lint-fast] Wrote reports:"
 echo "  - ${RAW_REPORT}"
 echo "  - ${UNIQUE_REPORT}"
 echo "  - ${SUMMARY_REPORT}"
+exit "${CLANG_TIDY_EXIT}"

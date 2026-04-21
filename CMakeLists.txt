@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(CLAIDE VERSION 0.0.120 LANGUAGES CXX)
+project(CLAIDE VERSION 0.0.121 LANGUAGES CXX)
 
-set(CLAIDE_VERSION_STRING "0.0.120-dev")
+set(CLAIDE_VERSION_STRING "0.0.121-dev")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -289,7 +289,7 @@ if(CLANG_TIDY)
         COMMAND ${CLANG_TIDY} --version
         COMMAND ${CMAKE_COMMAND} -E env
             CLANG_TIDY_BIN=${CLANG_TIDY}
-            LINT_SCOPE=src/(core|platform)/
+            "LINT_SCOPE=src/(core|platform)/"
             ${CMAKE_SOURCE_DIR}/scripts/run_lint_changed.sh
             ${CMAKE_BINARY_DIR}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -300,7 +300,7 @@ if(CLANG_TIDY)
         COMMAND ${CLANG_TIDY} --version
         COMMAND ${CMAKE_COMMAND} -E env
             CLANG_TIDY_BIN=${CLANG_TIDY}
-            LINT_SCOPE=src/ui/
+            "LINT_SCOPE=src/ui/"
             ${CMAKE_SOURCE_DIR}/scripts/run_lint_changed.sh
             ${CMAKE_BINARY_DIR}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -311,7 +311,7 @@ if(CLANG_TIDY)
         COMMAND ${CLANG_TIDY} --version
         COMMAND ${CMAKE_COMMAND} -E env
             CLANG_TIDY_BIN=${CLANG_TIDY}
-            LINT_SCOPE=src/vulkan/
+            "LINT_SCOPE=src/vulkan/"
             ${CMAKE_SOURCE_DIR}/scripts/run_lint_changed.sh
             ${CMAKE_BINARY_DIR}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -322,7 +322,7 @@ if(CLANG_TIDY)
         COMMAND ${CLANG_TIDY} --version
         COMMAND ${CMAKE_COMMAND} -E env
             CLANG_TIDY_BIN=${CLANG_TIDY}
-            LINT_SCOPE=tests/
+            "LINT_SCOPE=tests/"
             ${CMAKE_SOURCE_DIR}/scripts/run_lint_changed.sh
             ${CMAKE_BINARY_DIR}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
