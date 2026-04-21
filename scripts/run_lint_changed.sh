@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${1:-${ROOT_DIR}/build}"
 CLANG_TIDY_BIN="${CLANG_TIDY_BIN:-clang-tidy}"
 BASE_REF="${LINT_BASE_REF:-origin/main}"
+SCOPE_FILTER="${LINT_SCOPE:-}"
 
 if [[ ! -f "${BUILD_DIR}/compile_commands.json" ]]; then
   echo "[lint-fast] compile_commands.json not found in ${BUILD_DIR}." >&2
@@ -18,8 +19,15 @@ else
 fi
 
 mapfile -t CHANGED_CPP < <(git -C "${ROOT_DIR}" diff --name-only --diff-filter=ACMR "${RANGE}" | awk '/^(src|tests)\/.*\.cpp$/')
+if [[ -n "${SCOPE_FILTER}" ]]; then
+  mapfile -t CHANGED_CPP < <(printf "%s\n" "${CHANGED_CPP[@]}" | grep -E "^${SCOPE_FILTER}" || true)
+fi
 if [[ ${#CHANGED_CPP[@]} -eq 0 ]]; then
-  echo "[lint-fast] No changed C++ translation units in ${RANGE}."
+  if [[ -n "${SCOPE_FILTER}" ]]; then
+    echo "[lint-fast] No changed C++ translation units in ${RANGE} for scope '${SCOPE_FILTER}'."
+  else
+    echo "[lint-fast] No changed C++ translation units in ${RANGE}."
+  fi
   exit 0
 fi
 
