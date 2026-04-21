@@ -95,6 +95,40 @@ Install via vcpkg or package manager:
 - CMake
 - MSVC or MinGW
 
+## Canonical Codex/Workspace Workflow
+
+Use these scripts as the primary day-to-day workflow in cloud/workspace environments:
+
+```bash
+# Configure (prefers Ninja via preset `dev`; falls back to `dev-make` when Ninja is unavailable)
+./scripts/dev/configure.sh
+
+# Optional clean configure
+./scripts/dev/configure.sh --clean
+
+# Build active preset
+./scripts/dev/build.sh
+
+# Build specific target
+./scripts/dev/build.sh --target CLAIDETests
+
+# Run all tests
+./scripts/dev/test.sh
+
+# Run targeted tests
+./scripts/dev/test.sh -R Encoding
+
+# Lint modes
+./scripts/dev/lint.sh full
+./scripts/dev/lint.sh fast
+./scripts/dev/lint.sh format-check
+./scripts/dev/lint.sh validate
+```
+
+Notes:
+- `configure.sh` runs the `refresh-compile-commands` target when available to sync `compile_commands.json` for clangd/LSP.
+- Legacy `make` and direct `cmake` commands remain supported as compatibility/lower-level alternatives.
+
 ## Building
 
 ```bash
@@ -143,7 +177,7 @@ cmake --build build
 
 
 - `dev` preset uses **Ninja** as the primary fast path for local/Codex workflows.
-- `dev-make` preset is a fallback when Ninja is unavailable.
+- `dev-make` preset is the non-Ninja fallback.
 - If configuration fails due to missing tools/libraries, run `make bootstrap` (or `./scripts/bootstrap_prereqs_ubuntu.sh`) then re-run configure/build.
 - `ccache` is enabled in `dev`/`dev-make` presets; use `ccache -s` to monitor cache hit rates.
 
