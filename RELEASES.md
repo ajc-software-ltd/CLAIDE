@@ -10,7 +10,7 @@ This document maps milestone progress to concrete commits and release tags.
 ## Pre-repo rename checkpoint
 
 - Target checkpoint tag: `v0.0.106-dev`
-- Purpose: final release before GitHub repository rename (`CLAIDE` -> `CLAIDE`).
+- Purpose: project-name consistency release after repository rename to `CLAIDE`.
 - Branch policy moving forward: `main` only for long-lived development.
 
 ## Current repository tag status

@@ -1,4 +1,4 @@
-# Pre-repo rename readiness (CLAIDE -> CLAIDE)
+# Post-rename consistency checklist (CLIADE -> CLAIDE)
 
 This project currently runs from the existing GitHub repository name `CLAIDE`.
 
@@ -12,4 +12,4 @@ Before renaming the repository, complete the following:
 5. Verify CI badges, release links, and workflow references.
 6. Push one no-op confirmation commit to verify end-to-end CI after rename.
 
-Target pre-rename release tag for this checkpoint: `v0.0.106-dev`.
+Target consistency release tag for this checkpoint: `v0.0.106-dev`.
