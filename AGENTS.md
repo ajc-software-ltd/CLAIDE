@@ -48,9 +48,16 @@ When the user asks to merge a branch into `main`, complete all of the following 
 ## Build / Lint / Test Commands
 
 ```bash
-# Configure
-cmake -B build -DCMAKE_BUILD_TYPE=Debug        # or Release
+# Preflight Ubuntu/Debian prerequisites (installs missing packages, including ninja-build)
+./scripts/bootstrap_prereqs_ubuntu.sh
+
+# Configure (default preset does NOT require Ninja)
+cmake --preset dev
 cmake --build build
+
+# Optional faster configure when Ninja is installed
+cmake --preset dev-ninja
+cmake --build build-ninja
 
 # Run a single test
 ctest --test-dir build -R <test_name_pattern> --output-on-failure
@@ -307,4 +314,4 @@ Any known limitations or follow-up concerns.
 ## Final Directive
 If there is a conflict between simplicity and unnecessary framework complexity, choose simplicity.
 
-The target product is **CLAIDE AI Content Creator** — a reliable, commercial-friendly, cross-platform AIO IDE in **C++23**, designed for **Linux x64** and **Windows x64**, developed comfortably in **CLion**, with a workflow compatible with **OpenCode + Qwen3.6**. It combines code editing, media viewing (AVIM Canvas), and AI-powered content generation in one unified workspace.
+The target product is **CLAIDE AI Content Creator** — a reliable, commercial-friendly, cross-platform AIO IDE in **C++23**, designed for **Linux x64** and **Windows x64**, developed comfortably in **CLion**, with a workflow compatible with **CLion + OpenCode + LM Studio**. It combines code editing, media viewing (AVIM Canvas), and AI-powered content generation in one unified workspace.

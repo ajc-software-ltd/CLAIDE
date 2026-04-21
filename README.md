@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.109-dev`**
+- Current build version: **`0.0.110-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.109-dev`**
+- Example for current state: **`v0.0.110-dev`**
 
 ## Repository Rename Readiness
 
@@ -106,10 +106,10 @@ Install via vcpkg or package manager:
 make dev-build
 
 # Configure (recommended preset for LSP/clangd compatibility)
-cmake --preset dev
+cmake --preset dev  # default preset (no Ninja required)
 
 # Or manual configure
-cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake -B build -DCMAKE_BUILD_TYPE=Debug  # manual fallback
 
 # Build
 cmake --build build
@@ -137,6 +137,11 @@ cmake --build build
 cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON
 cmake --build build
 ```
+
+
+- `dev` preset uses **Unix Makefiles** so it works in Codex/CLion/OpenCode/LM Studio even when Ninja is unavailable.
+- `dev-ninja` preset is optional for faster local builds when Ninja is installed.
+- If configuration fails due to missing tools/libraries, run `./scripts/bootstrap_prereqs_ubuntu.sh` then re-run configure/build.
 
 ## Testing
 
@@ -264,7 +269,7 @@ AJC-Software Ltd © 2026
 
 ### clangd / OpenCode / LM Studio LSP troubleshooting
 
-- Configure with `cmake --preset dev` so `build/compile_commands.json` is generated.
+- Configure with `cmake --preset dev  # default preset (no Ninja required)` so `build/compile_commands.json` is generated.
 - Sync compile database to repo root for language servers: `cmake --build build --target refresh-compile-commands`.
 - Restart the language server if diagnostics do not appear after reconfigure.
 - `.clangd`, `.clang-tidy`, and `.clang-format` in repo root define diagnostics/format behavior.

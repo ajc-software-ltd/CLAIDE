@@ -8,9 +8,21 @@
   "configurePresets": [
     {
       "name": "dev",
-      "displayName": "Development",
-      "generator": "Ninja",
+      "displayName": "Development (Unix Makefiles)",
+      "description": "Default preset for Codex/CLion/OpenCode/LM Studio LSP compatibility without requiring Ninja.",
+      "generator": "Unix Makefiles",
       "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "dev-ninja",
+      "displayName": "Development (Ninja)",
+      "description": "Optional faster preset when ninja or ninja-build is installed.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
