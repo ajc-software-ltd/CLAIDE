@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.114-dev`**
+- Current build version: **`0.0.115-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.114-dev`**
+- Example for current state: **`v0.0.115-dev`**
 
 ## Repository Rename Readiness
 
@@ -188,6 +188,7 @@ cmake --build build --target validate
 
 ## Release Management
 
+- Lint chunk workflow plan: `docs/lint-pr-chunks.md`
 - Milestone roadmap and status source: `milestones.md`
 - Release traceability map (milestone → commit → tag): `RELEASES.md`
 - Operational release checklist: `docs/release-checklist.md`
