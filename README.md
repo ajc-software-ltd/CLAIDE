@@ -12,6 +12,10 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
 - Example for current state: **`v0.0.56-dev`**
 
+## Repository Rename Readiness
+
+- Pre-rename checklist: `docs/repo-rename-readiness.md`
+
 ---
 
 ## Features
