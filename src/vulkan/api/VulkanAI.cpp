@@ -26,16 +26,16 @@ std::set<void*> g_surfaces;
 std::unique_ptr<Render::VulkanContext> g_context;
 #endif
 
-#ifndef CLIADE_VERSION_MAJOR
-#define CLIADE_VERSION_MAJOR 0
+#ifndef CLAIDE_VERSION_MAJOR
+#define CLAIDE_VERSION_MAJOR 0
 #endif
 
-#ifndef CLIADE_VERSION_MINOR
-#define CLIADE_VERSION_MINOR 0
+#ifndef CLAIDE_VERSION_MINOR
+#define CLAIDE_VERSION_MINOR 0
 #endif
 
-#ifndef CLIADE_VERSION_PATCH
-#define CLIADE_VERSION_PATCH 47
+#ifndef CLAIDE_VERSION_PATCH
+#define CLAIDE_VERSION_PATCH 47
 #endif
 
 void SetError(std::string message) {
@@ -134,8 +134,8 @@ int VulkanAI_IsVulkanAvailable(void) {
 }
 
 VulkanAIVersion VulkanAI_GetVersion(void) {
-    return VulkanAIVersion{static_cast<uint32_t>(CLIADE_VERSION_MAJOR), static_cast<uint32_t>(CLIADE_VERSION_MINOR),
-                           static_cast<uint32_t>(CLIADE_VERSION_PATCH)};
+    return VulkanAIVersion{static_cast<uint32_t>(CLAIDE_VERSION_MAJOR), static_cast<uint32_t>(CLAIDE_VERSION_MINOR),
+                           static_cast<uint32_t>(CLAIDE_VERSION_PATCH)};
 }
 
 const char* VulkanAI_GetLastError(void) {

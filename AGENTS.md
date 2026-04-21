@@ -1,4 +1,4 @@
-# AGENTS.md — CLIADE AI Content Creator
+# AGENTS.md — CLAIDE AI Content Creator
 
 AJC-Software Ltd © 2026
 
@@ -14,7 +14,7 @@ For Codex-based agents, process project instructions in this order:
 2. Continue with the rest of this `AGENTS.md`.
 3. If instructions conflict, prefer direct system/developer/user instructions, then `codex.md`, then `AGENTS.md`.
 
-The intent is to keep changes simple, surgical, and verifiable while preserving CLIADE architecture constraints.
+The intent is to keep changes simple, surgical, and verifiable while preserving CLAIDE architecture constraints.
 
 ---
 
@@ -38,7 +38,7 @@ When the user asks to merge a branch into `main`, complete all of the following 
 
 ### Known-good GitHub push method in this environment
 - Configure remote with token auth (do not print token values in responses/logs):
-  - `git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/ajc-software-ltd/CLIADE.git`
+  - `git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/ajc-software-ltd/CLAIDE.git`
 - Then push normally:
   - `git push origin <branch>`
   - `git push origin <tag>`
@@ -307,4 +307,4 @@ Any known limitations or follow-up concerns.
 ## Final Directive
 If there is a conflict between simplicity and unnecessary framework complexity, choose simplicity.
 
-The target product is **CLIADE AI Content Creator** — a reliable, commercial-friendly, cross-platform AIO IDE in **C++23**, designed for **Linux x64** and **Windows x64**, developed comfortably in **CLion**, with a workflow compatible with **OpenCode + Qwen3.6**. It combines code editing, media viewing (AVIM Canvas), and AI-powered content generation in one unified workspace.
+The target product is **CLAIDE AI Content Creator** — a reliable, commercial-friendly, cross-platform AIO IDE in **C++23**, designed for **Linux x64** and **Windows x64**, developed comfortably in **CLion**, with a workflow compatible with **OpenCode + Qwen3.6**. It combines code editing, media viewing (AVIM Canvas), and AI-powered content generation in one unified workspace.

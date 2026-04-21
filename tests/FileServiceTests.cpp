@@ -1,8 +1,8 @@
 // ============================================================================
-// CLIADE - Cross-platform Text Editor
+// CLAIDE - Cross-platform Text Editor
 // ============================================================================
 // File:        FileServiceTests.cpp
-// Project:     CLIADE
+// Project:     CLAIDE
 // Copyright:   © 2026 AJC-Software Ltd
 // ============================================================================
 

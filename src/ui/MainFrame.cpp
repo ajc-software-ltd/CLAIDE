@@ -1,8 +1,8 @@
 // ============================================================================
-// CLIADE - Cross-platform Text Editor
+// CLAIDE - Cross-platform Text Editor
 // ============================================================================
 // File:        MainFrame.cpp
-// Project:     CLIADE
+// Project:     CLAIDE
 // Copyright:   © 2026 AJC-Software Ltd
 // ============================================================================
 
@@ -44,8 +44,8 @@
 
 namespace Ui {
 
-#ifndef CLIADE_VERSION_STRING
-#define CLIADE_VERSION_STRING "0.0.105-dev"
+#ifndef CLAIDE_VERSION_STRING
+#define CLAIDE_VERSION_STRING "0.0.106-dev"
 #endif
 
 namespace {
@@ -99,7 +99,7 @@ const char* AvailabilityReasonCodeName(VulkanAIAvailabilityReasonCode code) {
 } // namespace
 
 MainFrame::MainFrame()
-    : wxFrame(nullptr, wxID_ANY, "CLIADE", wxDefaultPosition, wxSize(1400, 900)), m_editorTabs(nullptr),
+    : wxFrame(nullptr, wxID_ANY, "CLAIDE", wxDefaultPosition, wxSize(1400, 900)), m_editorTabs(nullptr),
       m_imageViewer(nullptr), m_canvasPanel(nullptr), m_bgPanel(nullptr), m_activityBar(nullptr),
       m_propertiesPanel(nullptr), m_promptBar(nullptr), m_editorController(nullptr), m_openRecentMenu(nullptr),
       m_currentMode(ActivityMode::Notepad), m_vulkanRenderHost(nullptr),
@@ -677,7 +677,7 @@ void MainFrame::UpdateStatusBar() {
         statusBar->SetStatusText(m_vulkanStatus, 1);
         break;
     }
-    statusBar->SetStatusText(wxString::Format("CLIADE v%s", CLIADE_VERSION_STRING), 2);
+    statusBar->SetStatusText(wxString::Format("CLAIDE v%s", CLAIDE_VERSION_STRING), 2);
 }
 
 void MainFrame::OnNew([[maybe_unused]] wxCommandEvent& event) {
@@ -926,12 +926,12 @@ void MainFrame::OnEditorTabClosed(wxAuiNotebookEvent& event) {
 
 void MainFrame::OnAbout([[maybe_unused]] wxCommandEvent& event) {
     wxMessageDialog dlg(this,
-                        wxString::Format("CLIADE AI Content Creator\nVersion v%s\n\n"
+                        wxString::Format("CLAIDE AI Content Creator\nVersion v%s\n\n"
                                          "AJC-Software Ltd \xC2\xA9 2026\n\n"
                                          "Cross-platform AIO IDE for code editing, media "
                                          "workflows, and AI-powered content generation.",
-                                         CLIADE_VERSION_STRING),
-                        "About CLIADE", wxOK | wxICON_INFORMATION);
+                                         CLAIDE_VERSION_STRING),
+                        "About CLAIDE", wxOK | wxICON_INFORMATION);
     dlg.ShowModal();
 }
 

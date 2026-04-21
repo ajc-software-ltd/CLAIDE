@@ -1,3 +1,3 @@
 #include <windows.h>
 
-CLIADE_ICON ICON "assets/icons/app_icon.ico"
+CLAIDE_ICON ICON "assets/icons/app_icon.ico"

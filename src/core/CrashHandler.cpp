@@ -1,8 +1,8 @@
 // ============================================================================
-// CLIADE - Cross-platform Text Editor
+// CLAIDE - Cross-platform Text Editor
 // ============================================================================
 // File:        CrashHandler.cpp
-// Project:     CLIADE
+// Project:     CLAIDE
 // Copyright:   © 2026 AJC-Software Ltd
 // ============================================================================
 
@@ -134,7 +134,7 @@ void CrashHandler::WriteCrashDump(int signal) {
     }
 
     dump << "========================================" << std::endl;
-    dump << "  CLIADE AI Content Creator — Crash Dump" << std::endl;
+    dump << "  CLAIDE AI Content Creator — Crash Dump" << std::endl;
     dump << "========================================" << std::endl;
     dump << std::endl;
     dump << "Signal:     " << SignalName(signal) << std::endl;
@@ -154,7 +154,7 @@ void CrashHandler::WriteCrashDump(int signal) {
     // Also log to stderr (always works, even if heap is corrupted)
     fprintf(stderr, "\n");
     fprintf(stderr, "========================================\n");
-    fprintf(stderr, "  CLIADE CRASH: %s\n", SignalName(signal));
+    fprintf(stderr, "  CLAIDE CRASH: %s\n", SignalName(signal));
     fprintf(stderr, "  Dump written to: %s\n", crashPath.c_str());
     fprintf(stderr, "========================================\n");
     fprintf(stderr, "\n");
@@ -172,7 +172,7 @@ void CrashHandler::HandleSignal(int signal, siginfo_t* info, void* context) {
 
     // Async-signal-safe emergency marker only.
     static constexpr char kSignalMessage[] =
-        "CLIADE: fatal signal received; rich crash dump disabled in signal context\n";
+        "CLAIDE: fatal signal received; rich crash dump disabled in signal context\n";
     (void)!write(STDERR_FILENO, kSignalMessage, sizeof(kSignalMessage) - 1);
 
     // Generate core dump by resetting signal to default and re-raising
@@ -192,7 +192,7 @@ void CrashHandler::HandleTerminate() {
     std::ofstream dump(crashPath);
     if (dump.is_open()) {
         dump << "========================================" << std::endl;
-        dump << "  CLIADE — std::terminate Crash Dump" << std::endl;
+        dump << "  CLAIDE — std::terminate Crash Dump" << std::endl;
         dump << "========================================" << std::endl;
         dump << std::endl;
         dump << "Cause:      Uncaught exception (std::terminate)" << std::endl;
@@ -209,7 +209,7 @@ void CrashHandler::HandleTerminate() {
 
         fprintf(stderr, "\n");
         fprintf(stderr, "========================================\n");
-        fprintf(stderr, "  CLIADE CRASH: std::terminate\n");
+        fprintf(stderr, "  CLAIDE CRASH: std::terminate\n");
         fprintf(stderr, "  Dump written to: %s\n", crashPath.c_str());
         fprintf(stderr, "========================================\n\n");
         fflush(stderr);

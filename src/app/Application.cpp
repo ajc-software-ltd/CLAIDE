@@ -1,8 +1,8 @@
 // ============================================================================
-// CLIADE - Cross-platform Text Editor
+// CLAIDE - Cross-platform Text Editor
 // ============================================================================
 // File:        Application.cpp
-// Project:     CLIADE
+// Project:     CLAIDE
 // Copyright:   \u00A9 2026 AJC-Software Ltd
 // ============================================================================
 
@@ -107,7 +107,7 @@ bool Application::OnInit() {
         spdlog::error("Failed to initialize logger: {}", e.what());
     }
 
-    spdlog::info("Application: starting CLIADE");
+    spdlog::info("Application: starting CLAIDE");
 
     wxImage::AddHandler(new wxPNGHandler());
     Magick::InitializeMagick(nullptr);

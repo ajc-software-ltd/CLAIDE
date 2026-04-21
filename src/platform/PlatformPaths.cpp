@@ -1,8 +1,8 @@
 // ============================================================================
-// CLIADE - Cross-platform Text Editor
+// CLAIDE - Cross-platform Text Editor
 // ============================================================================
 // File:        PlatformPaths.cpp
-// Project:     CLIADE
+// Project:     CLAIDE
 // Copyright:   © 2026 AJC-Software Ltd
 // ============================================================================
 
@@ -23,7 +23,7 @@ std::filesystem::path GetAppDataDir() {
 #ifdef _WIN32
     auto appData = std::getenv("APPDATA");
     if (appData) {
-        return std::filesystem::path(appData) / "CLIADE";
+        return std::filesystem::path(appData) / "CLAIDE";
     }
     return std::filesystem::current_path();
 #else
@@ -40,7 +40,7 @@ std::filesystem::path GetAppDataDir() {
 }
 
 std::filesystem::path GetProjectRoot() {
-    auto configuredRoot = std::getenv("CLIADE_PROJECT_ROOT");
+    auto configuredRoot = std::getenv("CLAIDE_PROJECT_ROOT");
     if (configuredRoot != nullptr) {
         std::error_code ec;
         auto configured = std::filesystem::weakly_canonical(configuredRoot, ec);

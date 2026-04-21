@@ -1,6 +1,6 @@
 # Vulkan Runtime Plan (`vulkan-runtime` branch)
 
-This branch introduces `VulkanAI` as the Vulkan runtime module consumed by CLIADE.
+This branch introduces `VulkanAI` as the Vulkan runtime module consumed by CLAIDE.
 
 ## Goals
 - Encapsulate Vulkan-specific rendering logic in a shared module.

@@ -1,4 +1,4 @@
-# codex.md — CLIADE Codex Coding Practices
+# codex.md — CLAIDE Codex Coding Practices
 
 Behavioral guidelines for OpenAI Codex agents to reduce common coding mistakes.
 Apply these practices first, then follow project-specific instructions in `AGENTS.md`.

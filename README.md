@@ -1,4 +1,4 @@
-# CLIADE AI Content Creator
+# CLAIDE AI Content Creator
 
 A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content generation.
 
@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.105-dev`**
+- Current build version: **`0.0.106-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.105-dev`**
+- Example for current state: **`v0.0.106-dev`**
 
 ## Repository Rename Readiness
 
@@ -112,7 +112,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 
 # Run
-./build/CLIADE
+./build/CLAIDE
 ```
 
 ### Release Build
@@ -182,7 +182,7 @@ cmake --build build --target validate
 ## Project Structure
 
 ```
-CLIADE/
+CLAIDE/
 ├── CMakeLists.txt                    # C++23, wxWidgets/spdlog/Catch2, sanitizers, format/lint/test/validate targets
 ├── AGENTS.md                         # Agent instructions and code standards
 ├── milestones.md                     # 8-milestone roadmap with checkpoint system

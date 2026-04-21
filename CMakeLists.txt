@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(CLIADE VERSION 0.0.105 LANGUAGES CXX)
+project(CLAIDE VERSION 0.0.106 LANGUAGES CXX)
 
-set(CLIADE_VERSION_STRING "0.0.105-dev")
+set(CLAIDE_VERSION_STRING "0.0.106-dev")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -116,7 +116,7 @@ set(HEADERS
     src/platform/PlatformPaths.hpp
 )
 
-add_executable(CLIADE ${SOURCES} ${HEADERS})
+add_executable(CLAIDE ${SOURCES} ${HEADERS})
 
 set(VULKANAI_SOURCES
     src/vulkan/api/VulkanAI.cpp
@@ -135,31 +135,31 @@ set(VULKANAI_HEADERS
 add_library(VulkanAI SHARED ${VULKANAI_SOURCES} ${VULKANAI_HEADERS})
 
 if(WIN32)
-    target_sources(CLIADE PRIVATE resources.rc)
+    target_sources(CLAIDE PRIVATE resources.rc)
 endif()
 
-target_include_directories(CLIADE PRIVATE src include ${ImageMagick_INCLUDE_DIRS})
-target_compile_definitions(CLIADE PRIVATE
+target_include_directories(CLAIDE PRIVATE src include ${ImageMagick_INCLUDE_DIRS})
+target_compile_definitions(CLAIDE PRIVATE
     MAGICKCORE_QUANTUM_DEPTH=16
     MAGICKCORE_HDRI_ENABLE=1
-    CLIADE_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
-    CLIADE_VERSION_MINOR=${PROJECT_VERSION_MINOR}
-    CLIADE_VERSION_PATCH=${PROJECT_VERSION_PATCH}
-    CLIADE_VERSION_STRING="${CLIADE_VERSION_STRING}"
+    CLAIDE_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+    CLAIDE_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+    CLAIDE_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+    CLAIDE_VERSION_STRING="${CLAIDE_VERSION_STRING}"
 )
-target_link_libraries(CLIADE PRIVATE ${wxWidgets_LIBRARIES} spdlog::spdlog ${ImageMagick_LIBRARIES})
-target_link_libraries(CLIADE PRIVATE VulkanAI)
+target_link_libraries(CLAIDE PRIVATE ${wxWidgets_LIBRARIES} spdlog::spdlog ${ImageMagick_LIBRARIES})
+target_link_libraries(CLAIDE PRIVATE VulkanAI)
 
 target_include_directories(VulkanAI PRIVATE src include)
 target_compile_definitions(VulkanAI PRIVATE
     VULKANAI_BUILD
-    CLIADE_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
-    CLIADE_VERSION_MINOR=${PROJECT_VERSION_MINOR}
-    CLIADE_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+    CLAIDE_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+    CLAIDE_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+    CLAIDE_VERSION_PATCH=${PROJECT_VERSION_PATCH}
 )
 target_link_libraries(VulkanAI PRIVATE spdlog::spdlog)
 if(TARGET Vulkan::Vulkan)
-    target_link_libraries(CLIADE PRIVATE Vulkan::Vulkan)
+    target_link_libraries(CLAIDE PRIVATE Vulkan::Vulkan)
     target_link_libraries(VulkanAI PRIVATE Vulkan::Vulkan)
     target_compile_definitions(VulkanAI PRIVATE VULKANAI_HAS_VULKAN=1)
     add_custom_target(shaders ALL DEPENDS ${COMPILED_SHADERS})
@@ -167,18 +167,18 @@ endif()
 
 # Compiler warnings
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(CLIADE PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(CLAIDE PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(VulkanAI PRIVATE -Wall -Wextra -Wpedantic)
 elseif(MSVC)
-    target_compile_options(CLIADE PRIVATE /W4)
+    target_compile_options(CLAIDE PRIVATE /W4)
     target_compile_options(VulkanAI PRIVATE /W4)
 endif()
 
 # Sanitizers
 if(ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        target_compile_options(CLIADE PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
-        target_link_options(CLIADE PRIVATE -fsanitize=address,undefined)
+        target_compile_options(CLAIDE PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+        target_link_options(CLAIDE PRIVATE -fsanitize=address,undefined)
     endif()
 endif()
 
@@ -201,7 +201,7 @@ if(Catch2_FOUND)
         tests/VulkanRuntimeFoundationTests.cpp
     )
 
-    add_executable(CLIADETests
+    add_executable(CLAIDETests
         ${TEST_SOURCES}
         src/core/Encoding.cpp
         src/core/Document.cpp
@@ -222,23 +222,23 @@ if(Catch2_FOUND)
         src/vulkan/runtime/VulkanRenderer.cpp
         src/platform/PlatformPaths.cpp
     )
-    target_include_directories(CLIADETests PRIVATE src include ${ImageMagick_INCLUDE_DIRS})
-    target_link_libraries(CLIADETests PRIVATE spdlog::spdlog Catch2::Catch2WithMain ${ImageMagick_LIBRARIES})
-    target_compile_definitions(CLIADETests PRIVATE
+    target_include_directories(CLAIDETests PRIVATE src include ${ImageMagick_INCLUDE_DIRS})
+    target_link_libraries(CLAIDETests PRIVATE spdlog::spdlog Catch2::Catch2WithMain ${ImageMagick_LIBRARIES})
+    target_compile_definitions(CLAIDETests PRIVATE
         MAGICKCORE_QUANTUM_DEPTH=16
         MAGICKCORE_HDRI_ENABLE=1
-        CLIADE_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
-        CLIADE_VERSION_MINOR=${PROJECT_VERSION_MINOR}
-        CLIADE_VERSION_PATCH=${PROJECT_VERSION_PATCH}
-        CLIADE_VERSION_STRING="${CLIADE_VERSION_STRING}"
+        CLAIDE_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+        CLAIDE_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+        CLAIDE_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+        CLAIDE_VERSION_STRING="${CLAIDE_VERSION_STRING}"
     )
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        target_compile_options(CLIADETests PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(CLAIDETests PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
     include(Catch)
-    catch_discover_tests(CLIADETests)
+    catch_discover_tests(CLAIDETests)
 endif()
 
 # Format target
@@ -288,7 +288,7 @@ if(CLANG_FORMAT AND CLANG_TIDY AND Catch2_FOUND)
 endif()
 
 # Install rules
-install(TARGETS CLIADE VulkanAI
+install(TARGETS CLAIDE VulkanAI
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib

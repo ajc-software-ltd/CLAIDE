@@ -1,10 +1,10 @@
-# CLIADE — Vulkan Unified Render Canvas Skill
+# CLAIDE — Vulkan Unified Render Canvas Skill
 
 AJC-Software Ltd © 2026
 
 ## Purpose
 
-This file is a **project-specific OpenCode skill sheet** for **CLIADE**.
+This file is a **project-specific OpenCode skill sheet** for **CLAIDE**.
 It is not a generic Vulkan note.
 It exists to guide planning and implementation for:
 
@@ -12,13 +12,13 @@ It exists to guide planning and implementation for:
 - **Photoshop-style implementation**
 - **Vulkan-backed unified render canvas**
 
-This skill must be used when designing, reviewing, or implementing the Vulkan canvas work for CLIADE.
+This skill must be used when designing, reviewing, or implementing the Vulkan canvas work for CLAIDE.
 
 ---
 
 ## Repository Context
 
-Current CLIADE state, as observed from the repo:
+Current CLAIDE state, as observed from the repo:
 
 - Project is **C++23** with **wxWidgets 3.2+** UI and **ImageMagick** for image handling.
 - Milestone 2 is **Image Processing**, already including `MediaService`, `ImageViewer`, file routing, and sidebar modes.
@@ -30,11 +30,11 @@ Current CLIADE state, as observed from the repo:
   - **No unnecessary framework complexity**
   - **Commercially viable libraries only**
 
-This skill therefore assumes the Vulkan work will **replace or sit alongside the current CPU image viewer** while preserving CLIADE architectural rules.
+This skill therefore assumes the Vulkan work will **replace or sit alongside the current CPU image viewer** while preserving CLAIDE architectural rules.
 
 ---
 
-## What Milestone 2.1.1 Means in CLIADE
+## What Milestone 2.1.1 Means in CLAIDE
 
 For this project, **Milestone 2.1.1** means:
 
@@ -47,7 +47,7 @@ It must become the **foundation** for later Photoshop-style image tooling.
 
 ## Hard Project Constraints
 
-OpenCode must respect these constraints for CLIADE:
+OpenCode must respect these constraints for CLAIDE:
 
 1. **Do not break the current Milestone 2 app flow.**
    File open, media routing, docking, sidebar logic, and status-bar behavior must continue to work.
@@ -72,7 +72,7 @@ OpenCode must respect these constraints for CLIADE:
 
 ### In Scope
 
-- Vulkan initialization for a dockable CLIADE canvas
+- Vulkan initialization for a dockable CLAIDE canvas
 - Dedicated Vulkan canvas widget integrated with wxWidgets
 - GPU texture upload for opened images
 - Render pass or dynamic rendering path for 2D image presentation
@@ -264,7 +264,7 @@ Do **not** mix inconsistent ownership styles across the renderer.
 
 ### Recommended Initial Feature Set
 
-For CLIADE canvas work, the first stable renderer should support:
+For CLAIDE canvas work, the first stable renderer should support:
 
 - one graphics queue
 - one present queue
@@ -288,15 +288,15 @@ Do not introduce in 2.1.1 unless clearly needed:
 
 ## wxWidgets + Vulkan Rules
 
-Because CLIADE uses wxWidgets, OpenCode must:
+Because CLAIDE uses wxWidgets, OpenCode must:
 
 1. Choose a platform-appropriate Vulkan presentation path compatible with wxWidgets native window handles.
-2. Keep the Vulkan canvas as a normal CLIADE dockable panel.
+2. Keep the Vulkan canvas as a normal CLAIDE dockable panel.
 3. Ensure resize handling is robust when panes are docked, floated, minimized, hidden, or restored.
 4. Prevent redraw storms from excessive resize or paint events.
 5. Ensure destruction order is safe when panes close or the app exits.
 
-The panel must behave like a first-class CLIADE pane, not a special-case hack.
+The panel must behave like a first-class CLAIDE pane, not a special-case hack.
 
 ---
 
@@ -357,7 +357,7 @@ Responsibilities:
 
 ---
 
-## C++ Rules for Vulkan in CLIADE
+## C++ Rules for Vulkan in CLAIDE
 
 ### Ownership
 - Every Vulkan handle must have a clear owner.
@@ -426,7 +426,7 @@ But do not block 2.1.1 trying to fully solve advanced color science.
 
 ## Status Bar Integration Rules
 
-Current CLIADE already updates status bar information for image opens.
+Current CLAIDE already updates status bar information for image opens.
 The Vulkan canvas path must preserve or improve that behavior.
 
 At minimum, continue to expose:
@@ -447,7 +447,7 @@ Later you may extend with:
 
 A Milestone 2.1.1 implementation is considered valid only if it delivers:
 
-1. A new **Vulkan canvas panel** integrated into CLIADE docking.
+1. A new **Vulkan canvas panel** integrated into CLAIDE docking.
 2. Successful image display through Vulkan.
 3. Pan and zoom working correctly.
 4. Safe resize and swapchain recreation.
@@ -482,7 +482,7 @@ Add pan and zoom.
 Add overlay pipeline.
 
 ### Step 6
-Route CLIADE image opening path to Vulkan canvas.
+Route CLAIDE image opening path to Vulkan canvas.
 
 ### Step 7
 Retain fallback path until stable.
@@ -541,7 +541,7 @@ Milestone 2.1.1 should include at least:
 
 ### Manual validation checklist
 - app starts with validation layers enabled in Debug
-- open PNG/JPEG/WebP/PSD path still works through CLIADE routing
+- open PNG/JPEG/WebP/PSD path still works through CLAIDE routing
 - canvas resizes correctly when docked/floated
 - zoom works without jitter
 - pan works without desync
@@ -549,7 +549,7 @@ Milestone 2.1.1 should include at least:
 
 ---
 
-## Migration Guidance From Current CLIADE State
+## Migration Guidance From Current CLAIDE State
 
 Current repo behavior suggests this transition:
 
@@ -575,10 +575,10 @@ This means the safest near-term change is:
 
 ## OpenCode Behaviour Rules
 
-When working on CLIADE Vulkan tasks, OpenCode must:
+When working on CLAIDE Vulkan tasks, OpenCode must:
 
 1. Read `AGENTS.md` first.
-2. Respect CLIADE architecture boundaries.
+2. Respect CLAIDE architecture boundaries.
 3. Avoid rewriting unrelated Milestone 2 systems.
 4. Keep patches focused and minimal.
 5. Explain Vulkan synchronization and lifetime decisions explicitly.
@@ -587,12 +587,12 @@ When working on CLIADE Vulkan tasks, OpenCode must:
 
 ---
 
-## Response Format for CLIADE Vulkan Tasks
+## Response Format for CLAIDE Vulkan Tasks
 
 Use this structure unless the user requests otherwise:
 
 ### ANALYSIS
-What part of the unified render canvas is being worked on and what existing CLIADE code it touches.
+What part of the unified render canvas is being worked on and what existing CLAIDE code it touches.
 
 ### PLAN
 Exactly what files/classes will be added or changed.
@@ -642,7 +642,7 @@ A second patch can add image texture upload.
 
 ## Final Instruction
 
-For CLIADE Milestone 2.1.1, treat Vulkan as the **long-term rendering foundation** for the image editor, not a cosmetic side experiment.
+For CLAIDE Milestone 2.1.1, treat Vulkan as the **long-term rendering foundation** for the image editor, not a cosmetic side experiment.
 
 The correct approach is:
 - stable renderer core first
@@ -650,4 +650,4 @@ The correct approach is:
 - overlays third
 - editing tools afterwards
 
-Everything must support the future **Photoshop-style unified render canvas** vision while remaining consistent with current CLIADE architecture.
+Everything must support the future **Photoshop-style unified render canvas** vision while remaining consistent with current CLAIDE architecture.

@@ -23,9 +23,9 @@ Instance → PhysicalDevice → LogicalDevice → CommandPool → Pipeline → D
 ```cpp
 VkApplicationInfo appInfo = {};
 appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-appInfo.pApplicationName = "CLIADE";
+appInfo.pApplicationName = "CLAIDE";
 appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 2);
-appInfo.pEngineName = "CLIADE GPU Engine";
+appInfo.pEngineName = "CLAIDE GPU Engine";
 appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 2);
 appInfo.apiVersion = VK_API_VERSION_1_2;
 
@@ -206,7 +206,7 @@ if(GLSLANG_VALIDATOR)
         DEPENDS ${CMAKE_SOURCE_DIR}/src/gpu/shaders/brightness.comp)
 endif()
 
-target_link_libraries(CLIADE PRIVATE Vulkan::Vulkan)
+target_link_libraries(CLAIDE PRIVATE Vulkan::Vulkan)
 ```
 
 ### CPU Fallback Pattern

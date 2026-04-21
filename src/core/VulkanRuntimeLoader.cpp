@@ -78,7 +78,7 @@ std::expected<void, std::string> VulkanRuntimeLoader::Load() {
 
     std::vector<std::filesystem::path> candidates;
 
-    if (const char* overridePath = std::getenv("CLIADE_VULKANAI_PATH");
+    if (const char* overridePath = std::getenv("CLAIDE_VULKANAI_PATH");
         overridePath != nullptr && *overridePath != '\0') {
         candidates.emplace_back(overridePath);
     }

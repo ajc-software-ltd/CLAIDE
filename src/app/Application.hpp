@@ -1,8 +1,8 @@
 // ============================================================================
-// CLIADE - Cross-platform Text Editor
+// CLAIDE - Cross-platform Text Editor
 // ============================================================================
 // File:        Application.hpp
-// Project:     CLIADE
+// Project:     CLAIDE
 // Copyright:   \u00A9 2026 AJC-Software Ltd
 // ============================================================================
 

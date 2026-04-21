@@ -1,4 +1,4 @@
-# CLIADE — Milestone Roadmap
+# CLAIDE — Milestone Roadmap
 
 AJC-Software Ltd © 2026
 
@@ -14,7 +14,7 @@ After each milestone is complete:
 3. `git tag v0.0.<commit_count>-dev`
 4. `git push origin main --tags`
 
-Current versioning baseline: `v0.0.105-dev` (commit-count based).
+Current versioning baseline: `v0.0.106-dev` (commit-count based).
 
 | Milestone | Status |
 |-----------|--------|
@@ -77,7 +77,7 @@ Current versioning baseline: `v0.0.105-dev` (commit-count based).
 **Status:** In Progress (runtime foundation integrated)
 
 ### Vision
-The Vulkan Canvas is the **universal render surface** for all content types in CLIADE. Every piece of content — text, images, video, 3D models — renders through the Canvas. The AI uses Canvas instances programmatically to create, composite, and output content.
+The Vulkan Canvas is the **universal render surface** for all content types in CLAIDE. Every piece of content — text, images, video, 3D models — renders through the Canvas. The AI uses Canvas instances programmatically to create, composite, and output content.
 
 ### Deliverables
 - `Canvas` — Universal canvas interface with CPU+GPU dual-path rendering
