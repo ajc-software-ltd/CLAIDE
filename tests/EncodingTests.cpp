@@ -98,8 +98,7 @@ TEST_CASE("Encode encodes UTF-8 with BOM", "[encoding]") {
     REQUIRE(result->bytes[0] == 0xEF);
     REQUIRE(result->bytes[1] == 0xBB);
     REQUIRE(result->bytes[2] == 0xBF);
-    std::string text(
-        result->bytes.begin() + 3, result->bytes.end());
+    std::string text(result->bytes.begin() + 3, result->bytes.end());
     REQUIRE(text == "Hi");
 }
 
@@ -146,6 +145,30 @@ TEST_CASE("HasBom returns correct values", "[encoding]") {
 TEST_CASE("Decode rejects invalid UTF-8", "[encoding]") {
     std::vector<std::uint8_t> data = {0xFF, 0xFF, 0xFF, 0xFF};
     auto result = Encoding::Decode(data);
+    REQUIRE(!result.has_value());
+}
+
+TEST_CASE("Decode rejects overlong UTF-8", "[encoding]") {
+    std::vector<std::uint8_t> overlongSlash = {0xC0, 0xAF};
+    auto result = Encoding::Decode(overlongSlash);
+    REQUIRE(!result.has_value());
+}
+
+TEST_CASE("Decode rejects UTF-8 surrogate encodings", "[encoding]") {
+    std::vector<std::uint8_t> encodedSurrogate = {0xED, 0xA0, 0x80};
+    auto result = Encoding::Decode(encodedSurrogate);
+    REQUIRE(!result.has_value());
+}
+
+TEST_CASE("Decode rejects out-of-range 4-byte UTF-8 sequence", "[encoding]") {
+    std::vector<std::uint8_t> outOfRange = {0xF4, 0x90, 0x80, 0x80};
+    auto result = Encoding::Decode(outOfRange);
+    REQUIRE(!result.has_value());
+}
+
+TEST_CASE("Decode rejects invalid UTF-8 leading byte C1", "[encoding]") {
+    std::vector<std::uint8_t> invalidLeading = {0xC1, 0xBF};
+    auto result = Encoding::Decode(invalidLeading);
     REQUIRE(!result.has_value());
 }
 

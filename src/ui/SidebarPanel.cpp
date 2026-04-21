@@ -13,8 +13,7 @@
 
 namespace Ui {
 
-SidebarPanel::SidebarPanel(wxWindow* parent)
-    : wxPanel(parent, wxID_ANY), m_browser(nullptr) {
+SidebarPanel::SidebarPanel(wxWindow* parent) : wxPanel(parent, wxID_ANY), m_browser(nullptr) {
     SetBackgroundColour(wxColour(37, 37, 38));
 
     auto sizer = new wxBoxSizer(wxVERTICAL);

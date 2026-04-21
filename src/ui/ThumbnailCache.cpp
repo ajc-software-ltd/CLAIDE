@@ -19,13 +19,14 @@
 
 #include <spdlog/spdlog.h>
 
-#include "platform/PlatformPaths.hpp"
 #include "core/MediaService.hpp"
+#include "platform/PlatformPaths.hpp"
 
 namespace Ui {
 
 ThumbnailCache::ThumbnailCache()
-    : m_maxMemoryBytes(500 * 1024 * 1024), m_currentMemory(0) {
+    : m_maxMemoryBytes(static_cast<std::size_t>(500) * static_cast<std::size_t>(1024) * static_cast<std::size_t>(1024)),
+      m_currentMemory(0) {
     m_cacheDir = GetCacheDir();
     std::filesystem::create_directories(m_cacheDir);
 }
@@ -40,13 +41,13 @@ wxBitmap ThumbnailCache::GetThumbnail(const std::filesystem::path& path, int siz
 
     wxBitmap thumb = GenerateImageThumbnail(path, size);
     if (thumb.IsOk()) {
-        std::size_t memSize = static_cast<std::size_t>(thumb.GetWidth()) *
-                              thumb.GetHeight() * 4;
+        std::size_t memSize = static_cast<std::size_t>(thumb.GetWidth()) * static_cast<std::size_t>(thumb.GetHeight()) *
+                              static_cast<std::size_t>(4);
 
         while (m_currentMemory + memSize > m_maxMemoryBytes && !m_memoryCache.empty()) {
             auto oldest = m_memoryCache.begin();
             m_currentMemory -= static_cast<std::size_t>(oldest->second.GetWidth()) *
-                               oldest->second.GetHeight() * 4;
+                               static_cast<std::size_t>(oldest->second.GetHeight()) * static_cast<std::size_t>(4);
             m_memoryCache.erase(oldest);
         }
 
@@ -79,14 +80,13 @@ wxBitmap ThumbnailCache::GenerateImageThumbnail(const std::filesystem::path& pat
 
     auto mediaType = Core::MediaService::DetectMediaType(path);
     if (mediaType != Core::MediaType::Image) {
-        switch (mediaType) {
-        case Core::MediaType::Video:
-            return GenerateDefaultThumbnail("video", size);
-        case Core::MediaType::Model:
-            return GenerateDefaultThumbnail("model", size);
-        default:
-            return GenerateDefaultThumbnail("file", size);
+        const char* thumbnailType = "file";
+        if (mediaType == Core::MediaType::Video) {
+            thumbnailType = "video";
+        } else if (mediaType == Core::MediaType::Model) {
+            thumbnailType = "model";
         }
+        return GenerateDefaultThumbnail(thumbnailType, size);
     }
 
     try {
@@ -120,20 +120,18 @@ wxBitmap ThumbnailCache::GenerateImageThumbnail(const std::filesystem::path& pat
 
         wxBitmap bmp(wxImg);
 
-        spdlog::debug("ThumbnailCache: generated {}x{} thumbnail for {}",
-                      thumbW, thumbH, path.filename().string());
+        spdlog::debug("ThumbnailCache: generated {}x{} thumbnail for {}", thumbW, thumbH, path.filename().string());
         return bmp;
     } catch (const Magick::Exception& e) {
-        spdlog::warn("ThumbnailCache: failed to generate thumbnail for {}: {}",
-                     path.filename().string(), e.what());
+        spdlog::warn("ThumbnailCache: failed to generate thumbnail for {}: {}", path.filename().string(), e.what());
         return GenerateDefaultThumbnail("image", size);
     } catch (const std::exception& e) {
-        spdlog::warn("ThumbnailCache: unexpected error for {}: {}",
-                     path.filename().string(), e.what());
+        spdlog::warn("ThumbnailCache: unexpected error for {}: {}", path.filename().string(), e.what());
         return GenerateDefaultThumbnail("file", size);
     }
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 wxBitmap ThumbnailCache::GenerateDefaultThumbnail(const std::string& type, int size) {
     if (type == "folder") {
         auto projectRoot = Platform::GetProjectRoot();
@@ -169,8 +167,7 @@ std::string ThumbnailCache::GetCacheKey(const std::filesystem::path& path) const
     if (ec) {
         return path.string() + "_0";
     }
-    auto epoch = std::chrono::duration_cast<std::chrono::seconds>(
-                     modTime.time_since_epoch()).count();
+    auto epoch = std::chrono::duration_cast<std::chrono::seconds>(modTime.time_since_epoch()).count();
     return path.string() + "_" + std::to_string(epoch);
 }
 

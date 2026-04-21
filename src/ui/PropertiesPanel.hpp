@@ -13,13 +13,14 @@
 
 namespace Ui {
 
-class PropertiesPanel : public wxPanel {
-public:
+class PropertiesPanel : public wxPanel
+{
+  public:
     PropertiesPanel(wxWindow* parent);
 
     void SetInfo(const wxString& title, const wxString& details);
 
-private:
+  private:
     wxStaticText* m_title;
     wxStaticText* m_details;
 };

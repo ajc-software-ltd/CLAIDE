@@ -13,8 +13,7 @@
 
 namespace Ui {
 
-BackgroundPanel::BackgroundPanel(wxWindow* parent)
-    : wxPanel(parent, wxID_ANY) {
+BackgroundPanel::BackgroundPanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     Bind(wxEVT_PAINT, &BackgroundPanel::OnPaint, this);
     Bind(wxEVT_SIZE, &BackgroundPanel::OnSize, this);
@@ -31,12 +30,10 @@ void BackgroundPanel::OnPaint(wxPaintEvent& event) {
     wxSize clientSize = GetClientSize();
 
     if (m_bitmap.IsOk()) {
-        if (!m_scaledBitmap.IsOk() ||
-            m_scaledBitmap.GetWidth() != clientSize.GetWidth() ||
+        if (!m_scaledBitmap.IsOk() || m_scaledBitmap.GetWidth() != clientSize.GetWidth() ||
             m_scaledBitmap.GetHeight() != clientSize.GetHeight()) {
             wxImage img = m_bitmap.ConvertToImage();
-            img.Rescale(clientSize.GetWidth(), clientSize.GetHeight(),
-                        wxIMAGE_QUALITY_HIGH);
+            img.Rescale(clientSize.GetWidth(), clientSize.GetHeight(), wxIMAGE_QUALITY_HIGH);
             m_scaledBitmap = wxBitmap(img);
         }
         dc.DrawBitmap(m_scaledBitmap, 0, 0, false);

@@ -15,8 +15,8 @@
 
 namespace Core {
 
-TileCache::TileCache(std::size_t maxMemoryBytes)
-    : m_maxMemory(maxMemoryBytes), m_currentMemory(0), m_accessCounter(0) {}
+TileCache::TileCache(std::size_t maxMemoryBytes) : m_maxMemory(maxMemoryBytes), m_currentMemory(0), m_accessCounter(0) {
+}
 
 void TileCache::SetTile(const TileKey& key, TileData data) {
     std::size_t dataSize = data.pixels.size();
@@ -44,8 +44,8 @@ void TileCache::SetTile(const TileKey& key, TileData data) {
     m_entries.push_back({std::move(data), m_accessCounter++});
     m_currentMemory += m_entries.back().data.pixels.size();
 
-    spdlog::debug("TileCache::SetTile: tile ({},{}) level {}, {} bytes, total {} bytes",
-                  key.x, key.y, key.level, dataSize, m_currentMemory);
+    spdlog::debug("TileCache::SetTile: tile ({},{}) level {}, {} bytes, total {} bytes", key.x, key.y, key.level,
+                  dataSize, m_currentMemory);
 }
 
 std::optional<TileData> TileCache::GetTile(const TileKey& key) const {
@@ -84,7 +84,8 @@ void TileCache::SetSwapDirectory(const std::filesystem::path& dir) {
 }
 
 void TileCache::EvictOldest() {
-    if (m_keys.empty()) return;
+    if (m_keys.empty())
+        return;
 
     std::size_t oldestIdx = 0;
     std::size_t oldestOrder = m_entries[0].accessOrder;
@@ -103,50 +104,48 @@ void TileCache::EvictOldest() {
     m_keys.erase(m_keys.begin() + oldestIdx);
     m_entries.erase(m_entries.begin() + oldestIdx);
 
-    spdlog::debug("TileCache::EvictOldest: freed {} bytes, total {} bytes",
-                  freed, m_currentMemory);
+    spdlog::debug("TileCache::EvictOldest: freed {} bytes, total {} bytes", freed, m_currentMemory);
 }
 
 void TileCache::SwapToDisk(const TileKey& key, const TileData& data) {
-    if (m_swapDir.empty()) return;
+    if (m_swapDir.empty())
+        return;
 
-    std::string filename = std::to_string(key.x) + "_" +
-                           std::to_string(key.y) + "_" +
-                           std::to_string(key.level) + ".tile";
+    std::string filename =
+        std::to_string(key.x) + "_" + std::to_string(key.y) + "_" + std::to_string(key.level) + ".tile";
     auto path = m_swapDir / filename;
 
     std::ofstream file(path, std::ios::binary);
     if (file.is_open()) {
         file.write(reinterpret_cast<const char*>(&data.width), sizeof(int));
         file.write(reinterpret_cast<const char*>(&data.height), sizeof(int));
-        file.write(reinterpret_cast<const char*>(data.pixels.data()),
-                   static_cast<std::streamsize>(data.pixels.size()));
+        file.write(reinterpret_cast<const char*>(data.pixels.data()), static_cast<std::streamsize>(data.pixels.size()));
         spdlog::debug("TileCache::SwapToDisk: {}", path.string());
     }
 }
 
 std::optional<TileData> TileCache::LoadFromDisk(const TileKey& key) const {
-    if (m_swapDir.empty()) return std::nullopt;
+    if (m_swapDir.empty())
+        return std::nullopt;
 
-    std::string filename = std::to_string(key.x) + "_" +
-                           std::to_string(key.y) + "_" +
-                           std::to_string(key.level) + ".tile";
+    std::string filename =
+        std::to_string(key.x) + "_" + std::to_string(key.y) + "_" + std::to_string(key.level) + ".tile";
     auto path = m_swapDir / filename;
 
-    if (!std::filesystem::exists(path)) return std::nullopt;
+    if (!std::filesystem::exists(path))
+        return std::nullopt;
 
     std::ifstream file(path, std::ios::binary);
-    if (!file.is_open()) return std::nullopt;
+    if (!file.is_open())
+        return std::nullopt;
 
     TileData data;
     file.read(reinterpret_cast<char*>(&data.width), sizeof(int));
     file.read(reinterpret_cast<char*>(&data.height), sizeof(int));
 
-    std::size_t pixelCount = static_cast<std::size_t>(data.width) *
-                             static_cast<std::size_t>(data.height) * 4;
+    std::size_t pixelCount = static_cast<std::size_t>(data.width) * static_cast<std::size_t>(data.height) * 4;
     data.pixels.resize(pixelCount);
-    file.read(reinterpret_cast<char*>(data.pixels.data()),
-              static_cast<std::streamsize>(pixelCount));
+    file.read(reinterpret_cast<char*>(data.pixels.data()), static_cast<std::streamsize>(pixelCount));
 
     spdlog::debug("TileCache::LoadFromDisk: {}", path.string());
     return data;

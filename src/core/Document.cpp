@@ -12,8 +12,8 @@
 
 namespace Core {
 
-Document::Document()
-    : m_modified(false), m_encoding(TextEncoding::Utf8) {}
+Document::Document() : m_modified(false), m_encoding(TextEncoding::Utf8) {
+}
 
 std::string_view Document::GetContent() const {
     return m_content;
@@ -48,8 +48,7 @@ TextEncoding Document::GetEncoding() const {
 
 void Document::SetEncoding(TextEncoding encoding) {
     m_encoding = encoding;
-    spdlog::debug("Document::SetEncoding: {}",
-                  Encoding::EncodingName(encoding));
+    spdlog::debug("Document::SetEncoding: {}", Encoding::EncodingName(encoding));
 }
 
 bool Document::IsUntitled() const {

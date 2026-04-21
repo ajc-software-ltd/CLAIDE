@@ -16,16 +16,10 @@
 
 namespace Core {
 
-enum class MediaType {
-    Image,
-    Video,
-    Audio,
-    Model,
-    Text,
-    Unknown
-};
+enum class MediaType { Image, Video, Audio, Model, Text, Unknown };
 
-struct ImageMetadata {
+struct ImageMetadata
+{
     int width;
     int height;
     int colorDepth;
@@ -33,15 +27,14 @@ struct ImageMetadata {
     std::uint64_t fileSize;
 };
 
-class MediaService {
-public:
+class MediaService
+{
+  public:
     static MediaType DetectMediaType(const std::filesystem::path& path);
 
-    static std::expected<ImageMetadata, std::string> GetImageMetadata(
-        const std::filesystem::path& path);
+    static std::expected<ImageMetadata, std::string> GetImageMetadata(const std::filesystem::path& path);
 
-    static std::expected<std::vector<std::uint8_t>, std::string> GetImageData(
-        const std::filesystem::path& path);
+    static std::expected<std::vector<std::uint8_t>, std::string> GetImageData(const std::filesystem::path& path);
 
     static std::string MediaTypeToString(MediaType type);
 
@@ -51,7 +44,7 @@ public:
     static bool IsModelFile(const std::filesystem::path& path);
     static bool IsTextFile(const std::filesystem::path& path);
 
-private:
+  private:
     static std::string GetExtension(const std::filesystem::path& path);
 };
 

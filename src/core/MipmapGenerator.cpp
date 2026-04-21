@@ -15,8 +15,8 @@
 
 namespace Core {
 
-std::vector<std::vector<std::uint8_t>> MipmapGenerator::Generate(
-    const std::uint8_t* data, int width, int height, int channels) {
+std::vector<std::vector<std::uint8_t>> MipmapGenerator::Generate(const std::uint8_t* data, int width, int height,
+                                                                 int channels) {
     int levels = GetLevelCount(width, height);
     std::vector<std::vector<std::uint8_t>> mipmaps;
     mipmaps.reserve(levels);
@@ -31,16 +31,15 @@ std::vector<std::vector<std::uint8_t>> MipmapGenerator::Generate(
         int nextWidth = std::max(1, curWidth / 2);
         int nextHeight = std::max(1, curHeight / 2);
 
-        auto level = Downsample(mipmaps.back().data(), curWidth, curHeight,
-                                nextWidth, nextHeight, channels);
+        auto level = Downsample(mipmaps.back().data(), ImageSize{curWidth, curHeight}, ImageSize{nextWidth, nextHeight},
+                                channels);
         mipmaps.push_back(std::move(level));
 
         curWidth = nextWidth;
         curHeight = nextHeight;
     }
 
-    spdlog::debug("MipmapGenerator::Generate: {} levels, {}x{} -> {}x{}",
-                  levels, width, height, curWidth, curHeight);
+    spdlog::debug("MipmapGenerator::Generate: {} levels, {}x{} -> {}x{}", levels, width, height, curWidth, curHeight);
     return mipmaps;
 }
 
@@ -48,9 +47,8 @@ int MipmapGenerator::GetLevelCount(int width, int height) {
     return static_cast<int>(std::floor(std::log2(std::max(width, height)))) + 1;
 }
 
-const std::uint8_t* MipmapGenerator::GetLevel(
-    const std::vector<std::vector<std::uint8_t>>& mipmaps,
-    int level, int& outWidth, int& outHeight, int channels) {
+const std::uint8_t* MipmapGenerator::GetLevel(const std::vector<std::vector<std::uint8_t>>& mipmaps, int level,
+                                              ImageSize& outSize, int channels) {
     if (level < 0 || level >= static_cast<int>(mipmaps.size())) {
         return nullptr;
     }
@@ -59,18 +57,18 @@ const std::uint8_t* MipmapGenerator::GetLevel(
     if (!mipmaps.empty()) {
         std::size_t level0Size = mipmaps[0].size();
         baseWidth = static_cast<int>(std::sqrt(level0Size / channels));
-        baseHeight = static_cast<int>(level0Size / (baseWidth * channels));
+        const std::size_t rowSize = static_cast<std::size_t>(baseWidth) * static_cast<std::size_t>(channels);
+        baseHeight = static_cast<int>(level0Size / rowSize);
     }
 
-    outWidth = std::max(1, baseWidth >> level);
-    outHeight = std::max(1, baseHeight >> level);
+    outSize.width = std::max(1, baseWidth >> level);
+    outSize.height = std::max(1, baseHeight >> level);
 
     return mipmaps[level].data();
 }
 
-std::vector<std::uint8_t> MipmapGenerator::GetLevelCopy(
-    const std::vector<std::vector<std::uint8_t>>& mipmaps,
-    int level, int& outWidth, int& outHeight, int channels) {
+std::vector<std::uint8_t> MipmapGenerator::GetLevelCopy(const std::vector<std::vector<std::uint8_t>>& mipmaps,
+                                                        int level, ImageSize& outSize, int channels) {
     if (level < 0 || level >= static_cast<int>(mipmaps.size())) {
         return {};
     }
@@ -79,33 +77,33 @@ std::vector<std::uint8_t> MipmapGenerator::GetLevelCopy(
     if (!mipmaps.empty()) {
         std::size_t level0Size = mipmaps[0].size();
         baseWidth = static_cast<int>(std::sqrt(level0Size / channels));
-        baseHeight = static_cast<int>(level0Size / (baseWidth * channels));
+        const std::size_t rowSize = static_cast<std::size_t>(baseWidth) * static_cast<std::size_t>(channels);
+        baseHeight = static_cast<int>(level0Size / rowSize);
     }
 
-    outWidth = std::max(1, baseWidth >> level);
-    outHeight = std::max(1, baseHeight >> level);
+    outSize.width = std::max(1, baseWidth >> level);
+    outSize.height = std::max(1, baseHeight >> level);
 
     return mipmaps[level];
 }
 
-std::vector<std::uint8_t> MipmapGenerator::Downsample(
-    const std::uint8_t* input, int inWidth, int inHeight,
-    int outWidth, int outHeight, int channels) {
-    std::vector<std::uint8_t> output(
-        static_cast<std::size_t>(outWidth) * outHeight * channels);
+std::vector<std::uint8_t> MipmapGenerator::Downsample(const std::uint8_t* input, ImageSize inputSize,
+                                                      ImageSize outputSize, int channels) {
+    std::vector<std::uint8_t> output(static_cast<std::size_t>(outputSize.width) *
+                                     static_cast<std::size_t>(outputSize.height) * static_cast<std::size_t>(channels));
 
-    float scaleX = static_cast<float>(inWidth) / outWidth;
-    float scaleY = static_cast<float>(inHeight) / outHeight;
+    float scaleX = static_cast<float>(inputSize.width) / outputSize.width;
+    float scaleY = static_cast<float>(inputSize.height) / outputSize.height;
 
-    for (int y = 0; y < outHeight; ++y) {
-        for (int x = 0; x < outWidth; ++x) {
+    for (int y = 0; y < outputSize.height; ++y) {
+        for (int x = 0; x < outputSize.width; ++x) {
             float srcX = (x + 0.5f) * scaleX - 0.5f;
             float srcY = (y + 0.5f) * scaleY - 0.5f;
 
             int x0 = static_cast<int>(std::floor(srcX));
             int y0 = static_cast<int>(std::floor(srcY));
-            int x1 = std::min(x0 + 1, inWidth - 1);
-            int y1 = std::min(y0 + 1, inHeight - 1);
+            int x1 = std::min(x0 + 1, inputSize.width - 1);
+            int y1 = std::min(y0 + 1, inputSize.height - 1);
             x0 = std::max(0, x0);
             y0 = std::max(0, y0);
 
@@ -113,17 +111,16 @@ std::vector<std::uint8_t> MipmapGenerator::Downsample(
             float fy = srcY - y0;
 
             for (int c = 0; c < channels; ++c) {
-                float v00 = input[(y0 * inWidth + x0) * channels + c];
-                float v10 = input[(y0 * inWidth + x1) * channels + c];
-                float v01 = input[(y1 * inWidth + x0) * channels + c];
-                float v11 = input[(y1 * inWidth + x1) * channels + c];
+                float v00 = input[(y0 * inputSize.width + x0) * channels + c];
+                float v10 = input[(y0 * inputSize.width + x1) * channels + c];
+                float v01 = input[(y1 * inputSize.width + x0) * channels + c];
+                float v11 = input[(y1 * inputSize.width + x1) * channels + c];
 
                 float top = v00 * (1.0f - fx) + v10 * fx;
                 float bottom = v01 * (1.0f - fx) + v11 * fx;
                 float value = top * (1.0f - fy) + bottom * fy;
 
-                output[(y * outWidth + x) * channels + c] =
-                    static_cast<std::uint8_t>(std::round(value));
+                output[(y * outputSize.width + x) * channels + c] = static_cast<std::uint8_t>(std::round(value));
             }
         }
     }

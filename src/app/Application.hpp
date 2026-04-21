@@ -12,8 +12,9 @@
 
 namespace App {
 
-class Application : public wxApp {
-public:
+class Application : public wxApp
+{
+  public:
     bool OnInit() override;
     int OnExit() override;
 };

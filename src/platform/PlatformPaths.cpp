@@ -11,14 +11,10 @@
 #include <cstdlib>
 #include <filesystem>
 #include <string>
-#include <vector>
 
 #ifdef _WIN32
 #include <fileapi.h>
 #include <windows.h>
-#else
-#include <limits.h>
-#include <unistd.h>
 #endif
 
 namespace Platform {
@@ -44,47 +40,39 @@ std::filesystem::path GetAppDataDir() {
 }
 
 std::filesystem::path GetProjectRoot() {
-    std::filesystem::path exePath;
-
-#ifdef _WIN32
-    std::vector<wchar_t> buffer(MAX_PATH, L'\0');
-    DWORD len = GetModuleFileNameW(nullptr, buffer.data(),
-                                   static_cast<DWORD>(buffer.size()));
-    if (len > 0) {
-        exePath = std::filesystem::path(std::wstring(buffer.data(), len));
+    auto configuredRoot = std::getenv("CLIADE_PROJECT_ROOT");
+    if (configuredRoot != nullptr) {
+        std::error_code ec;
+        auto configured = std::filesystem::weakly_canonical(configuredRoot, ec);
+        if (!ec && std::filesystem::exists(configured / "CMakeLists.txt")) {
+            return configured;
+        }
     }
-#else
-    std::vector<char> buffer(PATH_MAX, '\0');
-    auto len = readlink("/proc/self/exe", buffer.data(), buffer.size() - 1);
-    if (len > 0) {
-        buffer[static_cast<std::size_t>(len)] = '\0';
-        exePath = std::filesystem::path(buffer.data());
-    }
-#endif
 
     std::error_code ec;
-    if (!exePath.empty()) {
-        exePath = std::filesystem::weakly_canonical(exePath, ec);
+    auto current = std::filesystem::current_path(ec);
+    if (ec) {
+        return std::filesystem::path(".");
     }
 
-    if (exePath.empty() || ec) {
-        auto cwd = std::filesystem::current_path(ec);
-        if (ec) {
-            return std::filesystem::path(".");
+    auto candidate = std::filesystem::weakly_canonical(current, ec);
+    if (ec) {
+        candidate = current;
+    }
+
+    while (!candidate.empty()) {
+        if (std::filesystem::exists(candidate / "CMakeLists.txt")) {
+            return candidate;
         }
-        if (std::filesystem::exists(cwd / "CMakeLists.txt")) {
-            return cwd;
+
+        auto parent = candidate.parent_path();
+        if (parent == candidate) {
+            break;
         }
-        return cwd.parent_path();
+        candidate = parent;
     }
 
-    auto projectRoot = exePath.parent_path().parent_path();
-
-    if (std::filesystem::exists(projectRoot / "CMakeLists.txt")) {
-        return projectRoot;
-    }
-
-    return exePath.parent_path();
+    return current;
 }
 
 std::filesystem::path GetLogFilePath() {

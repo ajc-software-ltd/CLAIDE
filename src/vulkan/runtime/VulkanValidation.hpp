@@ -13,8 +13,9 @@
 
 namespace Gpu {
 
-class VulkanValidation {
-public:
+class VulkanValidation
+{
+  public:
     static std::vector<const char*> GetValidationLayers();
     static std::vector<const char*> GetRequiredExtensions(bool enableValidation);
 
