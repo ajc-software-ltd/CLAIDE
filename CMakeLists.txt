@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(CLAIDE VERSION 0.0.117 LANGUAGES CXX)
+project(CLAIDE VERSION 0.0.118 LANGUAGES CXX)
 
-set(CLAIDE_VERSION_STRING "0.0.117-dev")
+set(CLAIDE_VERSION_STRING "0.0.118-dev")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -283,6 +283,50 @@ if(CLANG_TIDY)
             ${CMAKE_BINARY_DIR}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Running clang-tidy on changed files"
+    )
+
+    add_custom_target(lint-core
+        COMMAND ${CLANG_TIDY} --version
+        COMMAND ${CMAKE_COMMAND} -E env
+            CLANG_TIDY_BIN=${CLANG_TIDY}
+            LINT_SCOPE=src/(core|platform)/
+            ${CMAKE_SOURCE_DIR}/scripts/run_lint_changed.sh
+            ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy on changed core/platform files"
+    )
+
+    add_custom_target(lint-ui
+        COMMAND ${CLANG_TIDY} --version
+        COMMAND ${CMAKE_COMMAND} -E env
+            CLANG_TIDY_BIN=${CLANG_TIDY}
+            LINT_SCOPE=src/ui/
+            ${CMAKE_SOURCE_DIR}/scripts/run_lint_changed.sh
+            ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy on changed UI files"
+    )
+
+    add_custom_target(lint-vulkan
+        COMMAND ${CLANG_TIDY} --version
+        COMMAND ${CMAKE_COMMAND} -E env
+            CLANG_TIDY_BIN=${CLANG_TIDY}
+            LINT_SCOPE=src/vulkan/
+            ${CMAKE_SOURCE_DIR}/scripts/run_lint_changed.sh
+            ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy on changed Vulkan files"
+    )
+
+    add_custom_target(lint-tests
+        COMMAND ${CLANG_TIDY} --version
+        COMMAND ${CMAKE_COMMAND} -E env
+            CLANG_TIDY_BIN=${CLANG_TIDY}
+            LINT_SCOPE=tests/
+            ${CMAKE_SOURCE_DIR}/scripts/run_lint_changed.sh
+            ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy on changed tests files"
     )
 endif()
 

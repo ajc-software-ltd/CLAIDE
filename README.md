@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.117-dev`**
+- Current build version: **`0.0.118-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.117-dev`**
+- Example for current state: **`v0.0.118-dev`**
 
 ## Repository Rename Readiness
 
@@ -180,6 +180,7 @@ make lint-core
 make lint-ui
 make lint-vulkan
 make lint-tests
+cmake --build build --target lint-core
 
 # Full static analysis
 cmake --build build --target lint
