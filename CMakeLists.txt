@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(CLAIDE VERSION 0.0.121 LANGUAGES CXX)
+project(CLAIDE VERSION 0.0.122 LANGUAGES CXX)
 
-set(CLAIDE_VERSION_STRING "0.0.121-dev")
+set(CLAIDE_VERSION_STRING "0.0.122-dev")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -264,6 +264,10 @@ find_program(CLANG_TIDY
     NAMES clang-tidy-20 clang-tidy-19 clang-tidy-18 clang-tidy
     HINTS /usr/bin
 )
+find_program(CLANG_TIDY_20 NAMES clang-tidy-20 HINTS /usr/bin)
+if(CLANG_TIDY_20)
+    set(CLANG_TIDY "${CLANG_TIDY_20}")
+endif()
 if(CLANG_TIDY)
     add_custom_target(lint
         COMMAND ${CLANG_TIDY} --version

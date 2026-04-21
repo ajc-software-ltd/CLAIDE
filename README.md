@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.121-dev`**
+- Current build version: **`0.0.122-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.121-dev`**
+- Example for current state: **`v0.0.122-dev`**
 
 ## Repository Rename Readiness
 
@@ -192,6 +192,7 @@ cmake --build build --target validate
 > Note: `lint` intentionally disables `modernize-use-std-print` due to an upstream clang-tidy stability issue observed on this project.
 > Lint reporting now writes both raw and deduplicated reports under `build/reports/`; prioritize unique diagnostics from `clang-tidy.summary.md`.
 > Test lint also suppresses `bugprone-chained-comparison` because Catch2 assertion decomposition generates high-volume false positives.
+> Bootstrap now installs `clang-tidy-20` to avoid parser-level `std::expected` failures observed with older clang-tidy versions.
 
 ## Release Management
 
@@ -199,7 +200,7 @@ cmake --build build --target validate
 - Milestone roadmap and status source: `milestones.md`
 - Release traceability map (milestone → commit → tag): `RELEASES.md`
 - Operational release checklist: `docs/release-checklist.md`
-- Lint validation summary: `docs/lint-validation-v0.0.121-dev.md`
+- Lint validation summary: `docs/lint-validation-v0.0.122-dev.md`
 - Branch/merge workflow: `docs/branch-policy.md`
 - Required merge validation gates: `build_with_prereqs` + `format-check` + `lint` + full `ctest`
 - Scope rule: for docs/version/tag-only changes, skip full rebuild and run lightweight consistency checks only (`git diff --name-only` + targeted `rg`).
