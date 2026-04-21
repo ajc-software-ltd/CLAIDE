@@ -17,26 +17,21 @@
 
 namespace Core {
 
-class FileService {
-public:
-    static std::expected<DecodeResult, std::string> LoadFile(
-        const std::filesystem::path& path);
+class FileService
+{
+  public:
+    static std::expected<DecodeResult, std::string> LoadFile(const std::filesystem::path& path);
 
-    static std::expected<void, std::string> SaveFile(
-        const std::filesystem::path& path,
-        std::string_view content,
-        TextEncoding encoding);
+    static std::expected<void, std::string> SaveFile(const std::filesystem::path& path, std::string_view content,
+                                                     TextEncoding encoding);
 
-    static std::expected<void, std::string> DeleteFile(
-        const std::filesystem::path& path);
+    static std::expected<void, std::string> DeleteFile(const std::filesystem::path& path);
 
     [[nodiscard]] static bool FileExists(const std::filesystem::path& path);
 
-private:
-    static std::expected<void, std::string> SafeSave(
-        const std::filesystem::path& path,
-        std::string_view content,
-        TextEncoding encoding);
+  private:
+    static std::expected<void, std::string> SafeSave(const std::filesystem::path& path, std::string_view content,
+                                                     TextEncoding encoding);
 };
 
 } // namespace Core

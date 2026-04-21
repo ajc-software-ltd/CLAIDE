@@ -17,42 +17,34 @@
 
 #include <spdlog/spdlog.h>
 
+#include "core/FileSystemService.hpp"
 #include "platform/PlatformPaths.hpp"
 
 namespace Ui {
 
 ActivityBar::ActivityBar(wxWindow* parent)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(48, -1)),
-      m_activeMode(ActivityMode::Notepad) {
+    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(48, -1)), m_activeMode(ActivityMode::Notepad) {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 
     auto projectRoot = Platform::GetProjectRoot();
     auto iconsDir = projectRoot / "assets" / "icons";
 
-    struct IconDef {
+    struct IconDef
+    {
         const char* filename;
         ActivityMode mode;
     };
 
     IconDef defs[] = {
-        {"notepad_icon.png",        ActivityMode::Notepad},
-        {"images_icon.png",         ActivityMode::Images},
-        {"video_icon.png",          ActivityMode::Video},
-        {"media_play_icon.png",     ActivityMode::Audio},
-        {"3dmodels_icon.png",       ActivityMode::Models},
-        {"app_icon.png",            ActivityMode::AI},
-        {"settings_icon.png",       ActivityMode::Settings},
+        {"notepad_icon.png", ActivityMode::Notepad},   {"images_icon.png", ActivityMode::Images},
+        {"video_icon.png", ActivityMode::Video},       {"media_play_icon.png", ActivityMode::Audio},
+        {"3dmodels_icon.png", ActivityMode::Models},   {"app_icon.png", ActivityMode::AI},
+        {"settings_icon.png", ActivityMode::Settings},
     };
 
     constexpr std::array<ActivityMode, 7> kExpectedModes = {
-        ActivityMode::Notepad,
-        ActivityMode::Images,
-        ActivityMode::Video,
-        ActivityMode::Audio,
-        ActivityMode::Models,
-        ActivityMode::AI,
-        ActivityMode::Settings
-    };
+        ActivityMode::Notepad, ActivityMode::Images, ActivityMode::Video,   ActivityMode::Audio,
+        ActivityMode::Models,  ActivityMode::AI,     ActivityMode::Settings};
     std::set<ActivityMode> configuredModes;
 
     for (auto& def : defs) {
@@ -61,7 +53,7 @@ ActivityBar::ActivityBar(wxWindow* parent)
         entry.mode = def.mode;
         configuredModes.insert(def.mode);
 
-        if (std::filesystem::exists(iconPath)) {
+        if (Core::FileSystemService::PathExists(iconPath)) {
             wxImage img(iconPath.string(), wxBITMAP_TYPE_PNG);
             if (img.IsOk()) {
                 img.Rescale(32, 32, wxIMAGE_QUALITY_HIGH);
@@ -110,7 +102,8 @@ void ActivityBar::OnMouse(wxMouseEvent& event) {
         if (icon.hitRect.Contains(pos)) {
             m_activeMode = icon.mode;
             Refresh();
-            if (m_modeCb) m_modeCb(icon.mode);
+            if (m_modeCb)
+                m_modeCb(icon.mode);
             return;
         }
     }

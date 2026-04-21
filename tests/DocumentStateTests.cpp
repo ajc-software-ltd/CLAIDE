@@ -99,10 +99,7 @@ TEST_CASE("DocumentState clear history", "[documentstate]") {
 
 TEST_CASE("DocumentState replay operations", "[documentstate]") {
     DocumentState state;
-    std::vector<Operation> ops = {
-        {"brightness", {{"value", 50.0}}},
-        {"contrast", {{"value", 25.0}}}
-    };
+    std::vector<Operation> ops = {{"brightness", {{"value", 50.0}}}, {"contrast", {{"value", 25.0}}}};
 
     auto result = state.ReplayOperations(ops);
     REQUIRE(result.has_value());

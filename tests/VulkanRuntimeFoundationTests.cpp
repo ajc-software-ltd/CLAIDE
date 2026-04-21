@@ -47,10 +47,7 @@ TEST_CASE("VulkanRenderHost attach fails when loader is unavailable", "[vulkan][
     VulkanRuntimeLoader loader;
     VulkanRenderHost host(&loader);
 
-    auto result = host.Attach(RenderHostConfig{
-        .nativeWindowHandle = 0,
-        .width = 640,
-        .height = 480});
+    auto result = host.Attach(RenderHostConfig{.nativeWindowHandle = 0, .width = 640, .height = 480});
     REQUIRE(!result.has_value());
 }
 
@@ -69,10 +66,7 @@ TEST_CASE("VulkanRenderHost attach validates native window handle", "[vulkan][ru
     }
 
     VulkanRenderHost host(&loader);
-    auto attach = host.Attach(RenderHostConfig{
-        .nativeWindowHandle = 0,
-        .width = 640,
-        .height = 480});
+    auto attach = host.Attach(RenderHostConfig{.nativeWindowHandle = 0, .width = 640, .height = 480});
     REQUIRE(!attach.has_value());
     loader.Shutdown();
 }
@@ -98,11 +92,7 @@ TEST_CASE("Vulkan runtime lifecycle remains coherent when available", "[vulkan][
     REQUIRE(initResult == VULKANAI_OK);
     REQUIRE(loader.IsInitialized());
 
-    VulkanAISurfaceDesc desc{
-        .width = 320,
-        .height = 200,
-        .format = 0,
-        .nativeWindowHandle = static_cast<uintptr_t>(1)};
+    VulkanAISurfaceDesc desc{.width = 320, .height = 200, .format = 0, .nativeWindowHandle = static_cast<uintptr_t>(1)};
     auto surface = loader.CreateSurface(desc);
     REQUIRE(surface != nullptr);
 
@@ -131,11 +121,7 @@ TEST_CASE("Vulkan runtime enforces frame ordering when available", "[vulkan][run
         return;
     }
 
-    VulkanAISurfaceDesc desc{
-        .width = 256,
-        .height = 256,
-        .format = 0,
-        .nativeWindowHandle = static_cast<uintptr_t>(1)};
+    VulkanAISurfaceDesc desc{.width = 256, .height = 256, .format = 0, .nativeWindowHandle = static_cast<uintptr_t>(1)};
     auto surface = loader.CreateSurface(desc);
     REQUIRE(surface != nullptr);
 
@@ -175,11 +161,7 @@ TEST_CASE("Vulkan runtime rejects frame calls after shutdown", "[vulkan][runtime
         return;
     }
 
-    VulkanAISurfaceDesc desc{
-        .width = 128,
-        .height = 128,
-        .format = 0,
-        .nativeWindowHandle = static_cast<uintptr_t>(1)};
+    VulkanAISurfaceDesc desc{.width = 128, .height = 128, .format = 0, .nativeWindowHandle = static_cast<uintptr_t>(1)};
     auto surface = loader.CreateSurface(desc);
     REQUIRE(surface != nullptr);
 
@@ -223,10 +205,7 @@ TEST_CASE("Vulkan runtime rejects invalid surface descriptor", "[vulkan][runtime
     }
 
     VulkanAISurfaceDesc invalidDesc{
-        .width = 0,
-        .height = 128,
-        .format = 0,
-        .nativeWindowHandle = static_cast<uintptr_t>(1)};
+        .width = 0, .height = 128, .format = 0, .nativeWindowHandle = static_cast<uintptr_t>(1)};
     auto surface = loader.CreateSurface(invalidDesc);
     REQUIRE(surface == nullptr);
     loader.Shutdown();

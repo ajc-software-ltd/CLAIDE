@@ -7,8 +7,9 @@
 
 namespace Core {
 
-class AudioProvider {
-public:
+class AudioProvider
+{
+  public:
     virtual ~AudioProvider() = default;
 
     virtual std::expected<void, std::string> Open(std::string_view filePath) = 0;

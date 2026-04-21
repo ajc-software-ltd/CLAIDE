@@ -8,19 +8,20 @@
 
 #pragma once
 
-#include <wx/frame.h>
-#include <wx/bitmap.h>
-#include <wx/panel.h>
 #include <wx/aui/aui.h>
+#include <wx/bitmap.h>
+#include <wx/frame.h>
+#include <wx/panel.h>
 
-#include <functional>
 #include <deque>
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 
 #include "core/Document.hpp"
+#include "core/DocumentWorkflowService.hpp"
 #include "core/VulkanRuntimeLoader.hpp"
 #include "core/runtime/VulkanRenderHost.hpp"
 #include "ui/ActivityBar.hpp"
@@ -35,12 +36,13 @@ class ImageViewer;
 class PropertiesPanel;
 class PromptBar;
 
-class MainFrame : public wxFrame {
-public:
+class MainFrame : public wxFrame
+{
+  public:
     MainFrame();
     void OpenDroppedFile(const std::filesystem::path& path);
 
-private:
+  private:
     void OnNew(wxCommandEvent& event);
     void OnOpen(wxCommandEvent& event);
     void OnOpenRecent(wxCommandEvent& event);
@@ -48,6 +50,9 @@ private:
     void OnSave(wxCommandEvent& event);
     void OnSaveAs(wxCommandEvent& event);
     void OnDeleteFile(wxCommandEvent& event);
+    void OnUpdateSaveUi(wxUpdateUIEvent& event);
+    void OnUpdateSaveAsUi(wxUpdateUIEvent& event);
+    void OnUpdateDeleteFileUi(wxUpdateUIEvent& event);
     void OnRuntimeDiagnostics(wxCommandEvent& event);
     void OnRetryRuntime(wxCommandEvent& event);
     void OnExit(wxCommandEvent& event);
@@ -85,6 +90,7 @@ private:
     wxMenu* m_openRecentMenu;
     std::deque<std::filesystem::path> m_recentFiles;
     ActivityMode m_currentMode;
+    Core::DocumentWorkflowService m_documentWorkflowService;
     Core::VulkanRuntimeLoader m_vulkanRuntime;
     std::unique_ptr<Core::VulkanRenderHost> m_vulkanRenderHost;
     std::string m_vulkanStatus;

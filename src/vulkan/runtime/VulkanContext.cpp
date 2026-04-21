@@ -29,11 +29,9 @@ namespace Render {
 
 namespace {
 
-VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
-    void* userData) {
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                             VkDebugUtilsMessageTypeFlagsEXT messageType,
+                                             const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData) {
     (void)messageType;
     (void)userData;
 
@@ -48,8 +46,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
     return VK_FALSE;
 }
 
-std::expected<VkDebugUtilsMessengerEXT, std::string> CreateDebugMessenger(
-    VkInstance instance, bool enableValidation) {
+std::expected<VkDebugUtilsMessengerEXT, std::string> CreateDebugMessenger(VkInstance instance, bool enableValidation) {
     if (!enableValidation) {
         return std::expected<VkDebugUtilsMessengerEXT, std::string>(VK_NULL_HANDLE);
     }
@@ -80,11 +77,13 @@ std::expected<VkDebugUtilsMessengerEXT, std::string> CreateDebugMessenger(
 
 } // namespace
 
-struct VulkanContext::Impl {
+struct VulkanContext::Impl
+{
     VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
 };
 
-VulkanContext::VulkanContext() : m_impl(std::make_unique<Impl>()) {}
+VulkanContext::VulkanContext() : m_impl(std::make_unique<Impl>()) {
+}
 VulkanContext::~VulkanContext() {
     if (m_impl->debugMessenger != VK_NULL_HANDLE) {
         auto destroyDebugMessenger = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
@@ -93,27 +92,35 @@ VulkanContext::~VulkanContext() {
             destroyDebugMessenger(m_instance, m_impl->debugMessenger, nullptr);
         }
     }
-    if (m_commandPool) vkDestroyCommandPool(m_device, m_commandPool, nullptr);
-    if (m_device) vkDestroyDevice(m_device, nullptr);
-    if (m_instance) vkDestroyInstance(m_instance, nullptr);
+    if (m_commandPool)
+        vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+    if (m_device)
+        vkDestroyDevice(m_device, nullptr);
+    if (m_instance)
+        vkDestroyInstance(m_instance, nullptr);
 }
 
 std::expected<void, std::string> VulkanContext::Initialize(bool enableValidation) {
-    if (m_initialized) return {};
+    if (m_initialized)
+        return {};
 
     auto result = CreateInstance(enableValidation);
-    if (!result) return result;
+    if (!result)
+        return result;
 
     m_impl->debugMessenger = *CreateDebugMessenger(m_instance, enableValidation);
 
     result = SelectPhysicalDevice();
-    if (!result) return result;
+    if (!result)
+        return result;
 
     result = CreateDevice();
-    if (!result) return result;
+    if (!result)
+        return result;
 
     result = CreateCommandPool();
-    if (!result) return result;
+    if (!result)
+        return result;
 
     m_initialized = true;
     spdlog::info("VulkanContext: initialized, device: {}", m_deviceName);
@@ -132,11 +139,9 @@ std::expected<void, std::string> VulkanContext::CreateInstance(bool enableValida
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "CLIADE";
-    appInfo.applicationVersion = VK_MAKE_VERSION(
-        CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
+    appInfo.applicationVersion = VK_MAKE_VERSION(CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
     appInfo.pEngineName = "CLIADE Vulkan Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(
-        CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
+    appInfo.engineVersion = VK_MAKE_VERSION(CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
     appInfo.apiVersion = VK_API_VERSION_1_2;
 
     VkInstanceCreateInfo createInfo = {};
@@ -182,10 +187,18 @@ std::expected<void, std::string> VulkanContext::SelectPhysicalDevice() {
 
         int score = 0;
         switch (props.deviceType) {
-        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU: score = 100; break;
-        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: score = 50; break;
-        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU: score = 25; break;
-        default: score = 0; break;
+        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+            score = 100;
+            break;
+        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+            score = 50;
+            break;
+        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+            score = 25;
+            break;
+        default:
+            score = 0;
+            break;
         }
 
         if (score > bestScore) {

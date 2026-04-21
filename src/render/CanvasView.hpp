@@ -2,8 +2,9 @@
 
 namespace Render {
 
-class CanvasView {
-public:
+class CanvasView
+{
+  public:
     void SetZoom(float zoom);
     float GetZoom() const;
 
@@ -11,7 +12,7 @@ public:
     float GetPanX() const;
     float GetPanY() const;
 
-private:
+  private:
     float m_zoom{1.0F};
     float m_panX{0.0F};
     float m_panY{0.0F};

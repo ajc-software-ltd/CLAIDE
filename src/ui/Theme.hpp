@@ -12,7 +12,8 @@
 
 namespace Ui {
 
-struct ThemeColours {
+struct ThemeColours
+{
     wxColour background;
     wxColour text;
     wxColour menuBackground;
@@ -26,8 +27,9 @@ struct ThemeColours {
     wxColour border;
 };
 
-class Theme {
-public:
+class Theme
+{
+  public:
     static ThemeColours GetDarkTheme();
     static void ApplyDarkTheme();
 };

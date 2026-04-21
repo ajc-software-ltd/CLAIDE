@@ -6,15 +6,16 @@
 
 namespace Ui {
 
-class CanvasPanel : public wxPanel {
-public:
+class CanvasPanel : public wxPanel
+{
+  public:
     explicit CanvasPanel(wxWindow* parent);
 
     void SetStatusText(wxString text);
     void SetDocument(Render::CanvasDocument document);
     const Render::Canvas& GetCanvas() const;
 
-private:
+  private:
     void OnPaint(wxPaintEvent& event);
 
     Render::Canvas m_canvas;

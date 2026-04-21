@@ -19,9 +19,9 @@
 
 #ifdef __linux__
 #include <csignal>
-#include <cxxabi.h>
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
+#include <cxxabi.h>
 #include <execinfo.h>
 #include <unistd.h>
 #endif
@@ -40,17 +40,17 @@ void CrashHandler::Initialize(const std::filesystem::path& logDir) {
     std::filesystem::create_directories(s_crashDir);
 
 #ifdef __linux__
-    struct sigaction sa {};
+    struct sigaction sa{};
     sa.sa_sigaction = HandleSignal;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESETHAND | SA_SIGINFO;
 
-    sigaction(SIGSEGV, &sa, nullptr);  // Segmentation fault
-    sigaction(SIGABRT, &sa, nullptr);  // Abort
-    sigaction(SIGFPE, &sa, nullptr);   // Floating point exception
-    sigaction(SIGILL, &sa, nullptr);   // Illegal instruction
-    sigaction(SIGBUS, &sa, nullptr);   // Bus error
-    sigaction(SIGSYS, &sa, nullptr);   // Bad system call
+    sigaction(SIGSEGV, &sa, nullptr); // Segmentation fault
+    sigaction(SIGABRT, &sa, nullptr); // Abort
+    sigaction(SIGFPE, &sa, nullptr);  // Floating point exception
+    sigaction(SIGILL, &sa, nullptr);  // Illegal instruction
+    sigaction(SIGBUS, &sa, nullptr);  // Bus error
+    sigaction(SIGSYS, &sa, nullptr);  // Bad system call
 
     std::set_terminate(HandleTerminate);
 
@@ -62,13 +62,20 @@ void CrashHandler::Initialize(const std::filesystem::path& logDir) {
 
 static const char* SignalName(int signal) {
     switch (signal) {
-    case SIGSEGV: return "SIGSEGV (Segmentation fault)";
-    case SIGABRT: return "SIGABRT (Abort)";
-    case SIGFPE:  return "SIGFPE (Floating point exception)";
-    case SIGILL:  return "SIGILL (Illegal instruction)";
-    case SIGBUS:  return "SIGBUS (Bus error)";
-    case SIGSYS:  return "SIGSYS (Bad system call)";
-    default:      return "Unknown signal";
+    case SIGSEGV:
+        return "SIGSEGV (Segmentation fault)";
+    case SIGABRT:
+        return "SIGABRT (Abort)";
+    case SIGFPE:
+        return "SIGFPE (Floating point exception)";
+    case SIGILL:
+        return "SIGILL (Illegal instruction)";
+    case SIGBUS:
+        return "SIGBUS (Bus error)";
+    case SIGSYS:
+        return "SIGSYS (Bad system call)";
+    default:
+        return "Unknown signal";
     }
 }
 
@@ -99,9 +106,7 @@ static void WriteStackTrace(std::ofstream& dump) {
             int status = 0;
             char* demangled = abi::__cxa_demangle(mangled.c_str(), nullptr, nullptr, &status);
             if (status == 0 && demangled) {
-                dump << "  #" << std::setw(3) << i << " "
-                     << rawSymbol.substr(0, start + 1)
-                     << demangled
+                dump << "  #" << std::setw(3) << i << " " << rawSymbol.substr(0, start + 1) << demangled
                      << rawSymbol.substr(end) << std::endl;
                 free(demangled);
             } else {
@@ -112,7 +117,8 @@ static void WriteStackTrace(std::ofstream& dump) {
         }
     }
 
-    if (symbols) free(symbols);
+    if (symbols)
+        std::free(static_cast<void*>(symbols));
 }
 
 void CrashHandler::WriteCrashDump(int signal) {
@@ -123,8 +129,7 @@ void CrashHandler::WriteCrashDump(int signal) {
     std::ofstream dump(crashPath);
     if (!dump.is_open()) {
         // Fallback: write to stderr
-        fprintf(stderr, "CRASH: %s — failed to write dump to %s\n",
-                SignalName(signal), crashPath.c_str());
+        fprintf(stderr, "CRASH: %s — failed to write dump to %s\n", SignalName(signal), crashPath.c_str());
         return;
     }
 

@@ -2,8 +2,8 @@
 
 namespace Core {
 
-VulkanRenderHost::VulkanRenderHost(VulkanRuntimeLoader* loader)
-    : m_loader(loader), m_surface(nullptr) {}
+VulkanRenderHost::VulkanRenderHost(VulkanRuntimeLoader* loader) : m_loader(loader), m_surface(nullptr) {
+}
 
 std::expected<void, std::string> VulkanRenderHost::Attach(const RenderHostConfig& config) {
     if (m_loader == nullptr || !m_loader->IsLoaded() || !m_loader->IsApiCompatible()) {
@@ -19,10 +19,7 @@ std::expected<void, std::string> VulkanRenderHost::Attach(const RenderHostConfig
 
     m_config = config;
     VulkanAISurfaceDesc desc{
-        .width = config.width,
-        .height = config.height,
-        .format = 0,
-        .nativeWindowHandle = config.nativeWindowHandle};
+        .width = config.width, .height = config.height, .format = 0, .nativeWindowHandle = config.nativeWindowHandle};
     m_surface = m_loader->CreateSurface(desc);
     if (m_surface == nullptr) {
         return std::unexpected("VulkanRenderHost: failed to create runtime surface");
@@ -37,10 +34,7 @@ std::expected<void, std::string> VulkanRenderHost::Resize(uint32_t width, uint32
     if (m_surface != nullptr && m_loader != nullptr) {
         m_loader->DestroySurface(m_surface);
         VulkanAISurfaceDesc desc{
-            .width = width,
-            .height = height,
-            .format = 0,
-            .nativeWindowHandle = m_config.nativeWindowHandle};
+            .width = width, .height = height, .format = 0, .nativeWindowHandle = m_config.nativeWindowHandle};
         m_surface = m_loader->CreateSurface(desc);
         if (m_surface == nullptr) {
             return std::unexpected("VulkanRenderHost: failed to recreate runtime surface after resize");
@@ -56,8 +50,7 @@ std::expected<void, std::string> VulkanRenderHost::BeginFrame() {
 
     auto result = m_loader->BeginFrame(m_surface);
     if (result != VULKANAI_OK) {
-        return std::unexpected("VulkanRenderHost: BeginFrame failed: " +
-                               m_loader->GetLastError());
+        return std::unexpected("VulkanRenderHost: BeginFrame failed: " + m_loader->GetLastError());
     }
     return {};
 }
@@ -69,8 +62,7 @@ std::expected<void, std::string> VulkanRenderHost::EndFrame() {
 
     auto result = m_loader->EndFrame(m_surface);
     if (result != VULKANAI_OK) {
-        return std::unexpected("VulkanRenderHost: EndFrame failed: " +
-                               m_loader->GetLastError());
+        return std::unexpected("VulkanRenderHost: EndFrame failed: " + m_loader->GetLastError());
     }
     return {};
 }
@@ -82,8 +74,7 @@ std::expected<void, std::string> VulkanRenderHost::Present() {
 
     auto result = m_loader->PresentFrame(m_surface);
     if (result != VULKANAI_OK) {
-        return std::unexpected("VulkanRenderHost: Present failed: " +
-                               m_loader->GetLastError());
+        return std::unexpected("VulkanRenderHost: Present failed: " + m_loader->GetLastError());
     }
     return {};
 }

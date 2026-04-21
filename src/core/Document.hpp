@@ -16,8 +16,9 @@
 
 namespace Core {
 
-class Document {
-public:
+class Document
+{
+  public:
     Document();
 
     [[nodiscard]] std::string_view GetContent() const;
@@ -38,7 +39,7 @@ public:
 
     [[nodiscard]] std::string GetDisplayName() const;
 
-private:
+  private:
     std::string m_content;
     std::optional<std::filesystem::path> m_filePath;
     bool m_modified;

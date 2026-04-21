@@ -18,49 +18,40 @@
 
 namespace Core {
 
-enum class TextEncoding {
-    Utf8,
-    Utf8Bom,
-    Utf16Le,
-    Utf16Be,
-    Ascii,
-    Unknown
-};
+enum class TextEncoding { Utf8, Utf8Bom, Utf16Le, Utf16Be, Ascii, Unknown };
 
-struct DecodeResult {
+struct DecodeResult
+{
     std::string text;
     TextEncoding detectedEncoding;
     bool hadBom;
     std::optional<std::string> warning;
 };
 
-struct EncodeResult {
+struct EncodeResult
+{
     std::vector<std::uint8_t> bytes;
 };
 
-class Encoding {
-public:
+class Encoding
+{
+  public:
     static TextEncoding DetectEncoding(std::span<const std::uint8_t> data);
 
-    static std::expected<DecodeResult, std::string> Decode(
-        std::span<const std::uint8_t> data);
+    static std::expected<DecodeResult, std::string> Decode(std::span<const std::uint8_t> data);
 
-    static std::expected<EncodeResult, std::string> Encode(
-        std::string_view text, TextEncoding encoding);
+    static std::expected<EncodeResult, std::string> Encode(std::string_view text, TextEncoding encoding);
 
     static std::string_view EncodingName(TextEncoding encoding);
 
     static bool HasBom(TextEncoding encoding);
 
-private:
+  private:
     static TextEncoding DetectBom(std::span<const std::uint8_t> data);
     static bool IsValidUtf8(std::string_view text);
-    static std::expected<std::string, std::string> DecodeUtf8(
-        std::span<const std::uint8_t> data, bool stripBom);
-    static std::expected<std::string, std::string> DecodeUtf16(
-        std::span<const std::uint8_t> data, bool isLittleEndian);
-    static std::expected<EncodeResult, std::string> EncodeUtf16(
-        std::string_view text, bool isLittleEndian);
+    static std::expected<std::string, std::string> DecodeUtf8(std::span<const std::uint8_t> data, bool stripBom);
+    static std::expected<std::string, std::string> DecodeUtf16(std::span<const std::uint8_t> data, bool isLittleEndian);
+    static std::expected<EncodeResult, std::string> EncodeUtf16(std::string_view text, bool isLittleEndian);
 };
 
 } // namespace Core

@@ -8,8 +8,7 @@
 
 namespace Ui {
 
-CanvasPanel::CanvasPanel(wxWindow* parent)
-    : wxPanel(parent), m_statusText("Canvas ready") {
+CanvasPanel::CanvasPanel(wxWindow* parent) : wxPanel(parent), m_statusText("Canvas ready") {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(Theme::GetDarkTheme().background);
     Bind(wxEVT_PAINT, &CanvasPanel::OnPaint, this);

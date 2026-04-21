@@ -4,12 +4,13 @@
 
 namespace Render {
 
-class CPURenderer {
-public:
+class CPURenderer
+{
+  public:
     void SetStatus(std::string status);
     const std::string& GetStatus() const;
 
-private:
+  private:
     std::string m_status{"CPU fallback renderer idle"};
 };
 

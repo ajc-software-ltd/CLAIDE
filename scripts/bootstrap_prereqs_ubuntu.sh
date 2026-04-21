@@ -21,6 +21,7 @@ fi
 packages=(
   build-essential
   cmake
+  clang-tidy
   ninja-build
   pkg-config
   libwxgtk3.2-dev
@@ -49,6 +50,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y "${missing[@]}"
 
 echo "[bootstrap] Verifying toolchain..."
 command -v cmake >/dev/null
+command -v clang-tidy >/dev/null
 command -v glslangValidator >/dev/null
 command -v ctest >/dev/null
 

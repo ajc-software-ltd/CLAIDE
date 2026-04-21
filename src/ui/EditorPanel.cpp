@@ -13,8 +13,7 @@
 namespace Ui {
 
 EditorPanel::EditorPanel(wxWindow* parent, wxWindowID id)
-    : wxTextCtrl(parent, id, wxEmptyString, wxDefaultPosition,
-                 wxDefaultSize,
+    : wxTextCtrl(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize,
                  wxTE_MULTILINE | wxTE_PROCESS_ENTER | wxHSCROLL) {
     auto theme = Theme::GetDarkTheme();
 
@@ -32,8 +31,8 @@ void EditorPanel::SetEditorFont(const wxFont& font) {
     Refresh();
 }
 
-void EditorPanel::SetEditorColours(const wxColour& foreground,
-                                   const wxColour& background) {
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+void EditorPanel::SetEditorColours(const wxColour& foreground, const wxColour& background) {
     SetForegroundColour(foreground);
     SetBackgroundColour(background);
     Refresh();

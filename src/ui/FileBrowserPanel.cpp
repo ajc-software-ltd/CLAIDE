@@ -8,11 +8,11 @@
 
 #include "ui/FileBrowserPanel.hpp"
 
-#include <wx/dcclient.h>
 #include <wx/dcbuffer.h>
+#include <wx/dcclient.h>
 #include <wx/image.h>
-#include <wx/sizer.h>
 #include <wx/renderer.h>
+#include <wx/sizer.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -22,10 +22,8 @@
 namespace Ui {
 
 FileBrowserPanel::FileBrowserPanel(wxWindow* parent)
-    : wxPanel(parent, wxID_ANY),
-      m_toolbar(nullptr), m_grid(nullptr),
-      m_pathBar(nullptr), m_backBtn(nullptr), m_forwardBtn(nullptr),
-      m_upBtn(nullptr), m_filterChoice(nullptr), m_filterIndex(0) {
+    : wxPanel(parent, wxID_ANY), m_toolbar(nullptr), m_grid(nullptr), m_pathBar(nullptr), m_backBtn(nullptr),
+      m_forwardBtn(nullptr), m_upBtn(nullptr), m_filterChoice(nullptr), m_filterIndex(0) {
     SetBackgroundColour(wxColour(30, 30, 30));
 
     const char* home = nullptr;
@@ -34,8 +32,7 @@ FileBrowserPanel::FileBrowserPanel(wxWindow* parent)
 #else
     home = std::getenv("HOME");
 #endif
-    m_homePath = home ? std::filesystem::path(home)
-                      : std::filesystem::current_path();
+    m_homePath = home ? std::filesystem::path(home) : std::filesystem::current_path();
     m_currentPath = m_homePath;
 
     // Toolbar
@@ -45,26 +42,22 @@ FileBrowserPanel::FileBrowserPanel(wxWindow* parent)
 
     auto toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
 
-    m_backBtn = new wxButton(m_toolbar, wxID_ANY, "Back",
-                             wxDefaultPosition, wxSize(60, 28));
+    m_backBtn = new wxButton(m_toolbar, wxID_ANY, "Back", wxDefaultPosition, wxSize(60, 28));
     m_backBtn->SetBackgroundColour(wxColour(60, 60, 60));
     m_backBtn->SetForegroundColour(wxColour(200, 200, 200));
     toolbarSizer->Add(m_backBtn, 0, wxALL | wxALIGN_CENTER_VERTICAL, 4);
 
-    m_forwardBtn = new wxButton(m_toolbar, wxID_ANY, "Forward",
-                                wxDefaultPosition, wxSize(60, 28));
+    m_forwardBtn = new wxButton(m_toolbar, wxID_ANY, "Forward", wxDefaultPosition, wxSize(60, 28));
     m_forwardBtn->SetBackgroundColour(wxColour(60, 60, 60));
     m_forwardBtn->SetForegroundColour(wxColour(200, 200, 200));
     toolbarSizer->Add(m_forwardBtn, 0, wxALL | wxALIGN_CENTER_VERTICAL, 4);
 
-    m_upBtn = new wxButton(m_toolbar, wxID_ANY, "Up",
-                           wxDefaultPosition, wxSize(50, 28));
+    m_upBtn = new wxButton(m_toolbar, wxID_ANY, "Up", wxDefaultPosition, wxSize(50, 28));
     m_upBtn->SetBackgroundColour(wxColour(60, 60, 60));
     m_upBtn->SetForegroundColour(wxColour(200, 200, 200));
     toolbarSizer->Add(m_upBtn, 0, wxALL | wxALIGN_CENTER_VERTICAL, 4);
 
-    m_pathBar = new wxTextCtrl(m_toolbar, wxID_ANY, m_currentPath.string(),
-                               wxDefaultPosition, wxDefaultSize,
+    m_pathBar = new wxTextCtrl(m_toolbar, wxID_ANY, m_currentPath.string(), wxDefaultPosition, wxDefaultSize,
                                wxTE_PROCESS_ENTER);
     m_pathBar->SetBackgroundColour(wxColour(40, 40, 40));
     m_pathBar->SetForegroundColour(wxColour(220, 220, 220));
@@ -83,9 +76,7 @@ FileBrowserPanel::FileBrowserPanel(wxWindow* parent)
     m_toolbar->SetSizer(toolbarSizer);
 
     // Grid (scrollable area)
-    m_grid = new wxScrolledWindow(this, wxID_ANY,
-                                  wxDefaultPosition, wxDefaultSize,
-                                  wxHSCROLL | wxVSCROLL);
+    m_grid = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
     m_grid->SetBackgroundColour(wxColour(30, 30, 30));
     m_grid->SetBackgroundStyle(wxBG_STYLE_PAINT);
     m_grid->SetScrollRate(20, 20);
@@ -139,7 +130,9 @@ void FileBrowserPanel::NavigateTo(const std::filesystem::path& path) {
 }
 
 void FileBrowserPanel::GoBack() {
-    if (m_backHistory.empty()) return;
+    if (m_backHistory.empty()) {
+        return;
+    }
 
     m_forwardHistory.push_back(m_currentPath);
     m_currentPath = m_backHistory.back();
@@ -148,7 +141,9 @@ void FileBrowserPanel::GoBack() {
 }
 
 void FileBrowserPanel::GoForward() {
-    if (m_forwardHistory.empty()) return;
+    if (m_forwardHistory.empty()) {
+        return;
+    }
 
     m_backHistory.push_back(m_currentPath);
     m_currentPath = m_forwardHistory.back();
@@ -157,7 +152,9 @@ void FileBrowserPanel::GoForward() {
 }
 
 void FileBrowserPanel::GoUp() {
-    if (m_currentPath == m_homePath) return;
+    if (m_currentPath == m_homePath) {
+        return;
+    }
 
     auto parent = m_currentPath.parent_path();
     if (!parent.empty() && parent != m_currentPath) {
@@ -170,9 +167,7 @@ void FileBrowserPanel::LoadDirectory(std::filesystem::path path) {
     auto itemsResult = Core::FileBrowserService::ListDirectory(path, filter);
     if (!itemsResult) {
         m_items.clear();
-        spdlog::warn("FileBrowserPanel: failed to read {}: {}",
-                     path.string(),
-                     itemsResult.error());
+        spdlog::warn("FileBrowserPanel: failed to read {}: {}", path.string(), itemsResult.error());
         return;
     }
     m_items = std::move(*itemsResult);
@@ -187,15 +182,16 @@ void FileBrowserPanel::LoadDirectory(std::filesystem::path path) {
 
 void FileBrowserPanel::UpdateLayout() {
     wxSize clientSize = m_grid->GetClientSize();
-    if (clientSize.GetWidth() <= 0) return;
+    if (clientSize.GetWidth() <= 0) {
+        return;
+    }
 
     int availableWidth = clientSize.GetWidth() - 8;
     m_columns = std::max(1, availableWidth / m_cellSize);
-    int rows = (m_items.empty()) ? 1 :
-               (static_cast<int>(m_items.size()) + m_columns - 1) / m_columns;
+    int rows = (m_items.empty()) ? 1 : (static_cast<int>(m_items.size()) + m_columns - 1) / m_columns;
 
     int totalHeight = rows * m_rowHeight + 60;
-    
+
     // Only update if size actually changed
     int currentW = 0, currentH = 0;
     m_grid->GetVirtualSize(&currentW, &currentH);
@@ -227,8 +223,7 @@ void FileBrowserPanel::OnGridPaint([[maybe_unused]] wxPaintEvent& event) {
         try {
             thumb = m_thumbnailCache.GetThumbnail(item, iconSize);
         } catch (const std::exception& e) {
-            spdlog::warn("FileBrowserPanel: thumbnail error for {}: {}",
-                         item.filename().string(), e.what());
+            spdlog::warn("FileBrowserPanel: thumbnail error for {}: {}", item.filename().string(), e.what());
         }
 
         if (thumb.IsOk()) {
@@ -243,8 +238,7 @@ void FileBrowserPanel::OnGridPaint([[maybe_unused]] wxPaintEvent& event) {
         }
 
         dc.SetTextForeground(wxColour(200, 200, 200));
-        dc.SetFont(wxFont(9, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
-                          wxFONTWEIGHT_NORMAL));
+        dc.SetFont(wxFont(9, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
 
         wxCoord textW = 0, textH = 0;
         dc.GetTextExtent(name, &textW, &textH);
@@ -283,10 +277,12 @@ void FileBrowserPanel::OnGridLeftDClick(wxMouseEvent& event) {
         int col = (adjX - startX) / m_cellSize;
         int row = (adjY - startY) / m_rowHeight;
 
-        if (col < 0 || col >= m_columns || row < 0) return;
+        if (col < 0 || col >= m_columns || row < 0)
+            return;
 
         int index = row * m_columns + col;
-        if (index < 0 || index >= static_cast<int>(m_items.size())) return;
+        if (index < 0 || index >= static_cast<int>(m_items.size()))
+            return;
 
         const auto& item = m_items[index];
         spdlog::info("FileBrowserPanel: double-clicked {}", item.path.string());

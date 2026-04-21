@@ -8,8 +8,9 @@
 
 namespace Core {
 
-class VulkanRuntimeLoader {
-public:
+class VulkanRuntimeLoader
+{
+  public:
     VulkanRuntimeLoader();
     ~VulkanRuntimeLoader();
 
@@ -39,7 +40,7 @@ public:
     std::string GetAvailabilityReason() const;
     std::string GetInstallHelpUrl() const;
 
-private:
+  private:
     void* m_module;
 
     using InitializeFn = VulkanAIResult (*)();

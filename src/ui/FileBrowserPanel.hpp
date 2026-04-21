@@ -8,12 +8,12 @@
 
 #pragma once
 
-#include <wx/panel.h>
-#include <wx/scrolwin.h>
 #include <wx/bitmap.h>
-#include <wx/textctrl.h>
 #include <wx/button.h>
 #include <wx/choice.h>
+#include <wx/panel.h>
+#include <wx/scrolwin.h>
+#include <wx/textctrl.h>
 
 #include <filesystem>
 #include <functional>
@@ -24,8 +24,9 @@
 
 namespace Ui {
 
-class FileBrowserPanel : public wxPanel {
-public:
+class FileBrowserPanel : public wxPanel
+{
+  public:
     FileBrowserPanel(wxWindow* parent);
 
     void SetFileOpenCallback(std::function<void(const std::string&)> cb) {
@@ -37,7 +38,7 @@ public:
     void GoForward();
     void GoUp();
 
-private:
+  private:
     void OnBack(wxCommandEvent& event);
     void OnForward(wxCommandEvent& event);
     void OnUp(wxCommandEvent& event);

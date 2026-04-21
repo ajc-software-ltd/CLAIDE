@@ -12,27 +12,29 @@ Checks: >
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-non-private-member-variables-in-classes,
   -modernize-use-trailing-return-type,
+  -modernize-use-std-print,
   -readability-identifier-length,
   -readability-magic-numbers
 WarningsAsErrors: ''
-HeaderFilterRegex: '.*'
+HeaderFilterRegex: '^(.*\\/)?(src|include|tests)\\/.*'
+SystemHeaders: false
 CheckOptions:
   - key: readability-identifier-naming.NamespaceCase
-    value: PascalCase
+    value: CamelCase
   - key: readability-identifier-naming.ClassCase
-    value: PascalCase
+    value: CamelCase
   - key: readability-identifier-naming.StructCase
-    value: PascalCase
+    value: CamelCase
   - key: readability-identifier-naming.EnumCase
-    value: PascalCase
+    value: CamelCase
   - key: readability-identifier-naming.FunctionCase
-    value: camelCase
+    value: camelBack
   - key: readability-identifier-naming.MethodCase
-    value: camelCase
+    value: camelBack
   - key: readability-identifier-naming.VariableCase
-    value: camelCase
+    value: camelBack
   - key: readability-identifier-naming.ParameterCase
-    value: camelCase
+    value: camelBack
   - key: readability-identifier-naming.PrivateMemberPrefix
     value: m_
   - key: readability-identifier-naming.PrivateMemberSuffix

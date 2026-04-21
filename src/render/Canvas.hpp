@@ -7,8 +7,9 @@
 
 namespace Render {
 
-class Canvas {
-public:
+class Canvas
+{
+  public:
     CanvasDocument& Document();
     const CanvasDocument& Document() const;
 
@@ -19,7 +20,7 @@ public:
     bool IsRuntimeReady() const;
     const std::string& GetRuntimeStatus() const;
 
-private:
+  private:
     CanvasDocument m_document;
     CanvasView m_view;
     bool m_runtimeReady{false};

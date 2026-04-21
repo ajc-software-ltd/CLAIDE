@@ -8,17 +8,18 @@
 
 #pragma once
 
+#include <wx/button.h>
 #include <wx/panel.h>
 #include <wx/textctrl.h>
-#include <wx/button.h>
 
 #include <functional>
 #include <string>
 
 namespace Ui {
 
-class PromptBar : public wxPanel {
-public:
+class PromptBar : public wxPanel
+{
+  public:
     PromptBar(wxWindow* parent);
 
     void SetSendCallback(std::function<void(std::string)> cb) {
@@ -28,7 +29,7 @@ public:
         m_clearCb = std::move(cb);
     }
 
-private:
+  private:
     void OnSend(wxCommandEvent& event);
     void OnClear(wxCommandEvent& event);
 

@@ -6,14 +6,16 @@
 
 namespace Core {
 
-struct RenderHostConfig {
+struct RenderHostConfig
+{
     std::uintptr_t nativeWindowHandle = 0;
     uint32_t width = 0;
     uint32_t height = 0;
 };
 
-class RenderHost {
-public:
+class RenderHost
+{
+  public:
     virtual ~RenderHost() = default;
 
     virtual std::expected<void, std::string> Attach(const RenderHostConfig& config) = 0;

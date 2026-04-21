@@ -16,7 +16,8 @@
 
 namespace Core {
 
-struct TileKey {
+struct TileKey
+{
     int x;
     int y;
     int level;
@@ -26,14 +27,16 @@ struct TileKey {
     }
 };
 
-struct TileData {
+struct TileData
+{
     std::vector<std::uint8_t> pixels;
     int width;
     int height;
 };
 
-class TileCache {
-public:
+class TileCache
+{
+  public:
     TileCache(std::size_t maxMemoryBytes = 512 * 1024 * 1024);
 
     void SetTile(const TileKey& key, TileData data);
@@ -45,12 +48,13 @@ public:
 
     void SetSwapDirectory(const std::filesystem::path& dir);
 
-private:
+  private:
     void EvictOldest();
     void SwapToDisk(const TileKey& key, const TileData& data);
     std::optional<TileData> LoadFromDisk(const TileKey& key) const;
 
-    struct CacheEntry {
+    struct CacheEntry
+    {
         TileData data;
         mutable std::size_t accessOrder;
     };
