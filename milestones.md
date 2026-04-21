@@ -14,7 +14,7 @@ After each milestone is complete:
 3. `git tag v0.0.<commit_count>-dev`
 4. `git push origin main --tags`
 
-Current versioning baseline: `v0.0.56-dev` (commit-count based).
+Current versioning baseline: `v0.0.104-dev` (commit-count based).
 
 | Milestone | Status |
 |-----------|--------|
