@@ -45,7 +45,7 @@
 namespace Ui {
 
 #ifndef CLIADE_VERSION_STRING
-#define CLIADE_VERSION_STRING "0.0.104-dev"
+#define CLIADE_VERSION_STRING "0.0.105-dev"
 #endif
 
 namespace {
