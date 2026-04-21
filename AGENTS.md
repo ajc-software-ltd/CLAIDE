@@ -48,8 +48,8 @@ When the user asks to merge a branch into `main`, complete all of the following 
 ## Build / Lint / Test Commands
 
 ```bash
-# Preflight Ubuntu/Debian prerequisites (installs missing packages, including ninja-build)
-./scripts/bootstrap_prereqs_ubuntu.sh
+# First-time Ubuntu/Debian prerequisite bootstrap (installs missing packages, including ninja-build + ccache)
+make bootstrap
 
 # Configure (primary fast preset uses Ninja)
 cmake --preset dev
@@ -58,6 +58,9 @@ cmake --build build
 # Fallback configure when Ninja is unavailable
 cmake --preset dev-make
 cmake --build build-make
+
+# Day-to-day incremental build without bootstrap
+make dev-build
 
 # Run a single test
 ctest --test-dir build -R <test_name_pattern> --output-on-failure

@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.111-dev`**
+- Current build version: **`0.0.112-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.111-dev`**
+- Example for current state: **`v0.0.112-dev`**
 
 ## Repository Rename Readiness
 
@@ -100,9 +100,12 @@ Install via vcpkg or package manager:
 ```bash
 # REQUIRED FIRST STEP on Ubuntu/Debian:
 # installs and verifies wxWidgets, Vulkan headers/tools, ImageMagick++, spdlog, Catch2
-./scripts/build_with_prereqs.sh Debug
+./scripts/build_with_prereqs.sh Debug on off on
 
-# or (same flow)
+# or (same first-time flow)
+make dev-build-first-time
+
+# Day-to-day build (skip prereq bootstrap)
 make dev-build
 
 # Configure (recommended preset for LSP/clangd compatibility)
@@ -122,7 +125,7 @@ cmake --build build
 
 ```bash
 # Bootstrap+verify dependencies, then build release
-./scripts/build_with_prereqs.sh Release
+./scripts/build_with_prereqs.sh Release off off on
 
 # or
 make dev-release
@@ -141,15 +144,16 @@ cmake --build build
 
 - `dev` preset uses **Ninja** as the primary fast path for local/Codex workflows.
 - `dev-make` preset is a fallback when Ninja is unavailable.
-- If configuration fails due to missing tools/libraries, run `./scripts/bootstrap_prereqs_ubuntu.sh` then re-run configure/build.
+- If configuration fails due to missing tools/libraries, run `make bootstrap` (or `./scripts/bootstrap_prereqs_ubuntu.sh`) then re-run configure/build.
+- `ccache` is enabled in `dev`/`dev-make` presets; use `ccache -s` to monitor cache hit rates.
 
 ## Testing
 
 ```bash
-# Preflight dependencies before any build/test in a fresh Ubuntu workspace
-./scripts/bootstrap_prereqs_ubuntu.sh
+# First-time setup only
+make bootstrap
 
-# or
+# Run tests (normal day-to-day)
 make dev-test
 
 # Run all tests

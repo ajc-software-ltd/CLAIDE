@@ -6,8 +6,13 @@ BUILD_DIR="${ROOT_DIR}/build"
 BUILD_TYPE="${1:-Debug}"
 RUN_TESTS="${2:-on}"
 RUN_VALIDATE="${3:-off}"
+RUN_PREREQS="${4:-on}"
 
-"${ROOT_DIR}/scripts/bootstrap_prereqs_ubuntu.sh"
+if [[ "${RUN_PREREQS}" == "on" ]]; then
+  "${ROOT_DIR}/scripts/bootstrap_prereqs_ubuntu.sh"
+else
+  echo "[build] Skipping prerequisite bootstrap (RUN_PREREQS=${RUN_PREREQS})."
+fi
 
 cmake -B "${BUILD_DIR}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
 cmake --build "${BUILD_DIR}" -j"$(nproc)"
