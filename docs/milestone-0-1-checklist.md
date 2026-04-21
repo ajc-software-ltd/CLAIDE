@@ -51,6 +51,18 @@ This checklist is the practical signoff artifact for:
 - [ ] CI-level enforcement of preflight-first build path
 - [ ] Finalize milestone status narrative and publish milestone signoff
 
+### Bucket B burn-down ownership (clang-analyzer + bugprone)
+
+| Scope | Owner | Baseline unique count | Target |
+|------|-------|-----------------------|--------|
+| `src/core/*` | Core maintainers | 0 | 0 ✅ |
+| `src/vulkan/*` | Vulkan runtime maintainers | 0 | 0 ✅ |
+| `src/ui/*` | UI maintainers | 3 | 0 |
+| `tests/*` | Test maintainers | 15 | ≤ 10 (tracked, non-blocking during Bucket B core cleanup) |
+
+> Baseline source: `build/reports/clang-tidy.summary.md` and `build/reports/clang-tidy.unique.txt` from the current lint report pass.
+> Current lint gate status: **pass** (`LINT_MAX_BUCKET_A=0`, `LINT_MAX_SRC_BUCKET_B=24`).
+
 ---
 
 ## Acceptance gates

@@ -8,37 +8,35 @@
 
 #pragma once
 
-#include <wx/panel.h>
 #include <wx/bitmap.h>
+#include <wx/panel.h>
 
 #include <functional>
 #include <vector>
 
 namespace Ui {
 
-enum class ActivityMode {
-    Notepad,
-    Images,
-    Video,
-    Audio,
-    Models,
-    AI,
-    Settings
-};
+enum class ActivityMode { Notepad, Images, Video, Audio, Models, AI, Settings };
 
-class ActivityBar : public wxPanel {
-public:
+class ActivityBar : public wxPanel
+{
+  public:
     ActivityBar(wxWindow* parent);
 
-    void SetModeCallback(std::function<void(ActivityMode)> cb) { m_modeCb = std::move(cb); }
+    void SetModeCallback(std::function<void(ActivityMode)> cb) {
+        m_modeCb = std::move(cb);
+    }
     void SetActiveMode(ActivityMode mode);
-    ActivityMode GetActiveMode() const { return m_activeMode; }
+    ActivityMode GetActiveMode() const {
+        return m_activeMode;
+    }
 
-private:
+  private:
     void OnMouse(wxMouseEvent& event);
     void OnPaint(wxPaintEvent& event);
 
-    struct IconEntry {
+    struct IconEntry
+    {
         wxBitmap bitmap;
         wxBitmap activeBitmap;
         wxBitmap inactiveBitmap;

@@ -9,15 +9,17 @@
 
 namespace Core {
 
-struct VideoFrame {
+struct VideoFrame
+{
     uint32_t width = 0;
     uint32_t height = 0;
     uint64_t timestampMs = 0;
     std::vector<std::uint8_t> rgba;
 };
 
-class VideoFrameProvider {
-public:
+class VideoFrameProvider
+{
+  public:
     virtual ~VideoFrameProvider() = default;
 
     virtual std::expected<void, std::string> Open(std::string_view filePath) = 0;

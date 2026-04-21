@@ -17,30 +17,34 @@
 #include <wx/window.h>
 
 #include "core/Document.hpp"
+#include "core/DocumentWorkflowService.hpp"
 
 namespace Ui {
 
 class EditorPanel;
 
-class EditorDocumentController {
-public:
-    EditorDocumentController(
-        wxWindow* parent,
-        wxAuiNotebook* notebook,
-        std::unordered_map<wxWindow*, Core::Document>& documents);
+class EditorDocumentController
+{
+  public:
+    enum class SaveOutcome { Saved, Cancelled };
+
+    using SaveDocumentResult = std::expected<SaveOutcome, std::string>;
+
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+    EditorDocumentController(wxWindow* parent, wxAuiNotebook* notebook,
+                             std::unordered_map<wxWindow*, Core::Document>& documents,
+                             Core::DocumentWorkflowService& workflowService);
 
     void BindEditorEvents(EditorPanel* editor);
     void RefreshEditorTabTitle(wxWindow* page);
-    std::expected<void, std::string> SaveDocumentForPage(
-        wxWindow* page,
-        bool forceSaveAs,
-        const std::function<void()>& onSaved);
+    SaveDocumentResult SaveDocumentForPage(wxWindow* page, bool forceSaveAs, const std::function<void()>& onSaved);
     bool ConfirmClosePage(wxWindow* page);
 
-private:
+  private:
     wxWindow* m_parent;
     wxAuiNotebook* m_notebook;
     std::unordered_map<wxWindow*, Core::Document>& m_documents;
+    Core::DocumentWorkflowService& m_workflowService;
 };
 
 } // namespace Ui

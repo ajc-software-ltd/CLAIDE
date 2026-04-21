@@ -16,16 +16,18 @@
 
 namespace Ui {
 
-class ThumbnailCache {
-public:
+class ThumbnailCache
+{
+  public:
     ThumbnailCache();
 
     wxBitmap GetThumbnail(const std::filesystem::path& path, int size = 128);
     bool HasThumbnail(const std::filesystem::path& path) const;
     void Clear();
 
-private:
+  private:
     wxBitmap GenerateImageThumbnail(const std::filesystem::path& path, int size);
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     wxBitmap GenerateDefaultThumbnail(const std::string& type, int size);
 
     std::string GetCacheKey(const std::filesystem::path& path) const;

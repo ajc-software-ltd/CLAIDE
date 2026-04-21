@@ -3,13 +3,14 @@
 #include <expected>
 #include <string>
 
-#include "core/runtime/RenderHost.hpp"
 #include "core/VulkanRuntimeLoader.hpp"
+#include "core/runtime/RenderHost.hpp"
 
 namespace Core {
 
-class VulkanRenderHost final : public RenderHost {
-public:
+class VulkanRenderHost final : public RenderHost
+{
+  public:
     explicit VulkanRenderHost(VulkanRuntimeLoader* loader);
 
     std::expected<void, std::string> Attach(const RenderHostConfig& config) override;
@@ -19,7 +20,7 @@ public:
     std::expected<void, std::string> Present() override;
     void Detach() override;
 
-private:
+  private:
     VulkanRuntimeLoader* m_loader;
     VulkanAISurfaceHandle m_surface;
     RenderHostConfig m_config;

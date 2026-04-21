@@ -12,40 +12,41 @@
 #include <wx/bmpbuttn.h>
 #include <wx/button.h>
 #include <wx/dcclient.h>
+#include <wx/dnd.h>
 #include <wx/filedlg.h>
 #include <wx/image.h>
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
-#include <wx/dnd.h>
 #include <wx/sizer.h>
 #include <wx/string.h>
 #include <wx/textdlg.h>
 #include <wx/tglbtn.h>
 
-#include <filesystem>
-#include <functional>
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
+#include <functional>
 
 #include <spdlog/spdlog.h>
 
 #include "core/FileService.hpp"
+#include "core/FileSystemService.hpp"
 #include "core/MediaService.hpp"
 #include "platform/PlatformPaths.hpp"
 #include "ui/ActivityBar.hpp"
 #include "ui/BackgroundPanel.hpp"
 #include "ui/CanvasPanel.hpp"
-#include "ui/EditorPanel.hpp"
 #include "ui/EditorDocumentController.hpp"
+#include "ui/EditorPanel.hpp"
 #include "ui/ImageViewer.hpp"
-#include "ui/PropertiesPanel.hpp"
 #include "ui/PromptBar.hpp"
+#include "ui/PropertiesPanel.hpp"
 #include "ui/Theme.hpp"
 
 namespace Ui {
 
 #ifndef CLIADE_VERSION_STRING
-#define CLIADE_VERSION_STRING "0.0.47-dev"
+#define CLIADE_VERSION_STRING "0.0.56-dev"
 #endif
 
 namespace {
@@ -57,14 +58,17 @@ constexpr int kRuntimeDiagnosticsMenuId = wxID_HIGHEST + 2001;
 constexpr int kRetryRuntimeMenuId = wxID_HIGHEST + 2002;
 constexpr int kDeleteFileMenuId = wxID_HIGHEST + 2003;
 
-class MainFrameFileDropTarget : public wxFileDropTarget {
-public:
-    explicit MainFrameFileDropTarget(MainFrame* frame) : m_frame(frame) {}
+class MainFrameFileDropTarget : public wxFileDropTarget
+{
+  public:
+    explicit MainFrameFileDropTarget(MainFrame* frame) : m_frame(frame) {
+    }
 
-    bool OnDropFiles([[maybe_unused]] wxCoord x,
-                     [[maybe_unused]] wxCoord y,
-                     const wxArrayString& filenames) override {
-        if (m_frame == nullptr) return false;
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+    bool OnDropFiles([[maybe_unused]] wxCoord x, [[maybe_unused]] wxCoord y, const wxArrayString& filenames) override {
+        if (m_frame == nullptr) {
+            return false;
+        }
 
         for (const auto& file : filenames) {
             m_frame->OpenDroppedFile(std::filesystem::path(file.ToStdString()));
@@ -72,7 +76,7 @@ public:
         return true;
     }
 
-private:
+  private:
     MainFrame* m_frame;
 };
 
@@ -93,22 +97,19 @@ const char* AvailabilityReasonCodeName(VulkanAIAvailabilityReasonCode code) {
 } // namespace
 
 MainFrame::MainFrame()
-    : wxFrame(nullptr, wxID_ANY, "CLIADE", wxDefaultPosition,
-              wxSize(1400, 900)),
-      m_editorTabs(nullptr), m_imageViewer(nullptr), m_canvasPanel(nullptr), m_bgPanel(nullptr),
-      m_activityBar(nullptr), m_propertiesPanel(nullptr),
-      m_promptBar(nullptr), m_editorController(nullptr), m_openRecentMenu(nullptr),
-      m_currentMode(ActivityMode::Notepad),
-      m_vulkanRenderHost(nullptr),
-      m_vulkanStatus("Vulkan runtime: not initialized"),
-      m_vulkanFrameLoopDisabled(false) {
+    : wxFrame(nullptr, wxID_ANY, "CLIADE", wxDefaultPosition, wxSize(1400, 900)), m_editorTabs(nullptr),
+      m_imageViewer(nullptr), m_canvasPanel(nullptr), m_bgPanel(nullptr), m_activityBar(nullptr),
+      m_propertiesPanel(nullptr), m_promptBar(nullptr), m_editorController(nullptr), m_openRecentMenu(nullptr),
+      m_currentMode(ActivityMode::Notepad), m_vulkanRenderHost(nullptr),
+      m_vulkanStatus("Vulkan runtime: not initialized"), m_vulkanFrameLoopDisabled(false) {
     SetBackgroundColour(Theme::GetDarkTheme().background);
     SetMinSize(wxSize(800, 600));
 
     CreateMenuBar();
     CreateStatusBar(3);
     CreateDockingSystem();
-    m_editorController = std::make_unique<EditorDocumentController>(this, m_editorTabs, m_documents);
+    m_editorController =
+        std::make_unique<EditorDocumentController>(this, m_editorTabs, m_documents, m_documentWorkflowService);
     LoadBackgroundImage();
     LoadAppIcon();
 
@@ -166,6 +167,9 @@ void MainFrame::CreateMenuBar() {
     Bind(wxEVT_MENU, &MainFrame::OnSave, this, wxID_SAVE);
     Bind(wxEVT_MENU, &MainFrame::OnSaveAs, this, wxID_SAVEAS);
     Bind(wxEVT_MENU, &MainFrame::OnDeleteFile, this, kDeleteFileMenuId);
+    Bind(wxEVT_UPDATE_UI, &MainFrame::OnUpdateSaveUi, this, wxID_SAVE);
+    Bind(wxEVT_UPDATE_UI, &MainFrame::OnUpdateSaveAsUi, this, wxID_SAVEAS);
+    Bind(wxEVT_UPDATE_UI, &MainFrame::OnUpdateDeleteFileUi, this, kDeleteFileMenuId);
     Bind(wxEVT_MENU, &MainFrame::OnOpenRecent, this, kOpenRecentBaseId, kOpenRecentBaseId + 50);
     Bind(wxEVT_MENU, &MainFrame::OnExit, this, wxID_EXIT);
     Bind(wxEVT_MENU, &MainFrame::OnRuntimeDiagnostics, this, kRuntimeDiagnosticsMenuId);
@@ -180,131 +184,113 @@ void MainFrame::CreateDockingSystem() {
 
     // Background panel (center, shows canvas.png when empty)
     m_bgPanel = new BackgroundPanel(this);
-    m_auiManager.AddPane(m_bgPanel,
-                         wxAuiPaneInfo()
-                             .Name("Background")
-                             .CenterPane()
-                             .CaptionVisible(false)
-                             .CloseButton(false)
-                             .MaximizeButton(false)
-                             .MinimizeButton(false)
-                             .PaneBorder(false));
+    m_auiManager.AddPane(m_bgPanel, wxAuiPaneInfo()
+                                        .Name("Background")
+                                        .CenterPane()
+                                        .CaptionVisible(false)
+                                        .CloseButton(false)
+                                        .MaximizeButton(false)
+                                        .MinimizeButton(false)
+                                        .PaneBorder(false));
 
     // Activity bar (far left, 48px, fixed)
     m_activityBar = new ActivityBar(this);
-    m_activityBar->SetModeCallback([this](ActivityMode mode) {
-        OnActivityModeChanged(mode);
-    });
-    m_auiManager.AddPane(m_activityBar,
-                         wxAuiPaneInfo()
-                             .Name("ActivityBar")
-                             .Left()
-                             .Layer(0)
-                             .MinSize(wxSize(48, -1))
-                             .BestSize(wxSize(48, -1))
-                             .MaxSize(wxSize(48, -1))
-                             .CaptionVisible(false)
-                             .CloseButton(false)
-                             .Gripper(false)
-                             .Resizable(false)
-                             .Floatable(false)
-                             .Dockable(true)
-                             .PaneBorder(false));
+    m_activityBar->SetModeCallback([this](ActivityMode mode) { OnActivityModeChanged(mode); });
+    m_auiManager.AddPane(m_activityBar, wxAuiPaneInfo()
+                                            .Name("ActivityBar")
+                                            .Left()
+                                            .Layer(0)
+                                            .MinSize(wxSize(48, -1))
+                                            .BestSize(wxSize(48, -1))
+                                            .MaxSize(wxSize(48, -1))
+                                            .CaptionVisible(false)
+                                            .CloseButton(false)
+                                            .Gripper(false)
+                                            .Resizable(false)
+                                            .Floatable(false)
+                                            .Dockable(true)
+                                            .PaneBorder(false));
 
     // Image viewer (center, hidden until image opened)
     m_imageViewer = new ImageViewer(this, "");
-    m_auiManager.AddPane(m_imageViewer,
-                         wxAuiPaneInfo()
-                             .Name("ImageViewer")
-                             .Center()
-                             .CaptionVisible(false)
-                             .CloseButton(false)
-                             .MaximizeButton(false)
-                             .MinimizeButton(false)
-                             .Resizable(true)
-                             .Floatable(false)
-                             .Dockable(true)
-                             .PaneBorder(false)
-                             .Hide());
+    m_auiManager.AddPane(m_imageViewer, wxAuiPaneInfo()
+                                            .Name("ImageViewer")
+                                            .Center()
+                                            .CaptionVisible(false)
+                                            .CloseButton(false)
+                                            .MaximizeButton(false)
+                                            .MinimizeButton(false)
+                                            .Resizable(true)
+                                            .Floatable(false)
+                                            .Dockable(true)
+                                            .PaneBorder(false)
+                                            .Hide());
 
     m_canvasPanel = new CanvasPanel(this);
-    m_auiManager.AddPane(m_canvasPanel,
-                         wxAuiPaneInfo()
-                             .Name("CanvasPanel")
-                             .Center()
-                             .CaptionVisible(false)
-                             .CloseButton(false)
-                             .MaximizeButton(false)
-                             .MinimizeButton(false)
-                             .Resizable(true)
-                             .Floatable(false)
-                             .Dockable(true)
-                             .PaneBorder(false)
-                             .Hide());
+    m_auiManager.AddPane(m_canvasPanel, wxAuiPaneInfo()
+                                            .Name("CanvasPanel")
+                                            .Center()
+                                            .CaptionVisible(false)
+                                            .CloseButton(false)
+                                            .MaximizeButton(false)
+                                            .MinimizeButton(false)
+                                            .Resizable(true)
+                                            .Floatable(false)
+                                            .Dockable(true)
+                                            .PaneBorder(false)
+                                            .Hide());
 
     // Editor tabs (center, hidden until text opened)
-    m_editorTabs = new wxAuiNotebook(this, wxID_ANY,
-                                     wxDefaultPosition, wxDefaultSize,
-                                     wxAUI_NB_TAB_MOVE |
-                                     wxAUI_NB_TAB_SPLIT |
-                                     wxAUI_NB_SCROLL_BUTTONS |
-                                     wxAUI_NB_CLOSE_ON_ACTIVE_TAB |
-                                     wxAUI_NB_WINDOWLIST_BUTTON);
-    m_auiManager.AddPane(m_editorTabs,
-                         wxAuiPaneInfo()
-                             .Name("EditorTabs")
-                             .Center()
-                             .CaptionVisible(false)
-                             .CloseButton(false)
-                             .MaximizeButton(true)
-                             .MinimizeButton(false)
-                             .Resizable(true)
-                             .Floatable(true)
-                             .Dockable(true)
-                             .PaneBorder(false)
-                             .Show(false));
-    m_editorTabs->Bind(wxEVT_AUINOTEBOOK_PAGE_CLOSE,
-                       &MainFrame::OnEditorTabClosed, this);
+    m_editorTabs = new wxAuiNotebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                     wxAUI_NB_TAB_MOVE | wxAUI_NB_TAB_SPLIT | wxAUI_NB_SCROLL_BUTTONS |
+                                         wxAUI_NB_CLOSE_ON_ACTIVE_TAB | wxAUI_NB_WINDOWLIST_BUTTON);
+    m_auiManager.AddPane(m_editorTabs, wxAuiPaneInfo()
+                                           .Name("EditorTabs")
+                                           .Center()
+                                           .CaptionVisible(false)
+                                           .CloseButton(false)
+                                           .MaximizeButton(true)
+                                           .MinimizeButton(false)
+                                           .Resizable(true)
+                                           .Floatable(true)
+                                           .Dockable(true)
+                                           .PaneBorder(false)
+                                           .Show(false));
+    m_editorTabs->Bind(wxEVT_AUINOTEBOOK_PAGE_CLOSE, &MainFrame::OnEditorTabClosed, this);
 
     // Properties panel (right)
     m_propertiesPanel = new PropertiesPanel(this);
-    m_auiManager.AddPane(m_propertiesPanel,
-                         wxAuiPaneInfo()
-                             .Name("Properties")
-                             .Right()
-                             .MinSize(wxSize(250, -1))
-                             .BestSize(wxSize(280, -1))
-                             .Caption("Properties")
-                             .CloseButton(false)
-                             .Gripper(true)
-                             .Resizable(true)
-                             .Floatable(true)
-                             .Dockable(true)
-                             .PinButton(true)
-                             .PaneBorder(false));
+    m_auiManager.AddPane(m_propertiesPanel, wxAuiPaneInfo()
+                                                .Name("Properties")
+                                                .Right()
+                                                .MinSize(wxSize(250, -1))
+                                                .BestSize(wxSize(280, -1))
+                                                .Caption("Properties")
+                                                .CloseButton(false)
+                                                .Gripper(true)
+                                                .Resizable(true)
+                                                .Floatable(true)
+                                                .Dockable(true)
+                                                .PinButton(true)
+                                                .PaneBorder(false));
 
     // Prompt bar (bottom)
     m_promptBar = new PromptBar(this);
-    m_promptBar->SetSendCallback([this](std::string text) {
-        spdlog::info("PromptBar: send: {}", text);
-    });
-    m_promptBar->SetClearCallback([this]() {
-        spdlog::info("PromptBar: cleared");
-    });
-    m_auiManager.AddPane(m_promptBar,
-                         wxAuiPaneInfo()
-                             .Name("PromptBar")
-                             .Bottom()
-                             .MinSize(wxSize(-1, 40))
-                             .BestSize(wxSize(-1, 48))
-                             .MaxSize(wxSize(-1, 48))
-                             .CaptionVisible(false)
-                             .CloseButton(false)
-                             .Gripper(false)
-                             .Resizable(false)
-                             .Floatable(false)
-                             .Dockable(true)
-                             .PaneBorder(false));
+    m_promptBar->SetSendCallback([this](std::string text) { spdlog::info("PromptBar: send: {}", text); });
+    m_promptBar->SetClearCallback([this]() { spdlog::info("PromptBar: cleared"); });
+    m_auiManager.AddPane(m_promptBar, wxAuiPaneInfo()
+                                          .Name("PromptBar")
+                                          .Bottom()
+                                          .MinSize(wxSize(-1, 40))
+                                          .BestSize(wxSize(-1, 48))
+                                          .MaxSize(wxSize(-1, 48))
+                                          .CaptionVisible(false)
+                                          .CloseButton(false)
+                                          .Gripper(false)
+                                          .Resizable(false)
+                                          .Floatable(false)
+                                          .Dockable(true)
+                                          .PaneBorder(false));
 
     m_auiManager.Update();
 }
@@ -315,8 +301,7 @@ void MainFrame::InitializeVulkanRuntime() {
     auto loadResult = m_vulkanRuntime.Load();
     if (!loadResult) {
         m_vulkanStatus = "Vulkan runtime module missing";
-        spdlog::warn("MainFrame: {}. Install Vulkan runtime: {}",
-                     loadResult.error(),
+        spdlog::warn("MainFrame: {}. Install Vulkan runtime: {}", loadResult.error(),
                      "https://vulkan.lunarg.com/sdk/home");
         return;
     }
@@ -329,8 +314,7 @@ void MainFrame::InitializeVulkanRuntime() {
 
     if (!m_vulkanRuntime.IsVulkanAvailable()) {
         m_vulkanStatus = "Vulkan unavailable";
-        spdlog::warn("MainFrame: Vulkan unavailable: {}. Install info: {}",
-                     m_vulkanRuntime.GetAvailabilityReason(),
+        spdlog::warn("MainFrame: Vulkan unavailable: {}. Install info: {}", m_vulkanRuntime.GetAvailabilityReason(),
                      m_vulkanRuntime.GetInstallHelpUrl());
         return;
     }
@@ -338,17 +322,16 @@ void MainFrame::InitializeVulkanRuntime() {
     auto initResult = m_vulkanRuntime.Initialize();
     if (initResult != VULKANAI_OK) {
         m_vulkanStatus = "Vulkan init failed";
-        spdlog::warn("MainFrame: Vulkan runtime initialization failed: {}",
-                     m_vulkanRuntime.GetLastError());
+        spdlog::warn("MainFrame: Vulkan runtime initialization failed: {}", m_vulkanRuntime.GetLastError());
         return;
     }
 
     m_vulkanStatus = "Vulkan runtime ready";
     m_vulkanRenderHost = std::make_unique<Core::VulkanRenderHost>(&m_vulkanRuntime);
-    auto attachResult = m_vulkanRenderHost->Attach(Core::RenderHostConfig{
-        .nativeWindowHandle = reinterpret_cast<std::uintptr_t>(GetHandle()),
-        .width = static_cast<uint32_t>(std::max(1, GetClientSize().GetWidth())),
-        .height = static_cast<uint32_t>(std::max(1, GetClientSize().GetHeight()))});
+    auto attachResult = m_vulkanRenderHost->Attach(
+        Core::RenderHostConfig{.nativeWindowHandle = reinterpret_cast<std::uintptr_t>(GetHandle()),
+                               .width = static_cast<uint32_t>(std::max(1, GetClientSize().GetWidth())),
+                               .height = static_cast<uint32_t>(std::max(1, GetClientSize().GetHeight()))});
     if (!attachResult) {
         m_vulkanStatus = "Vulkan host attach failed";
         spdlog::warn("MainFrame: {}", attachResult.error());
@@ -372,9 +355,8 @@ void MainFrame::ResetVulkanRuntimeState() {
 void MainFrame::OnWindowResized(wxSizeEvent& event) {
     if (m_vulkanRenderHost != nullptr) {
         auto size = event.GetSize();
-        auto resizeResult = m_vulkanRenderHost->Resize(
-            static_cast<uint32_t>(std::max(1, size.GetWidth())),
-            static_cast<uint32_t>(std::max(1, size.GetHeight())));
+        auto resizeResult = m_vulkanRenderHost->Resize(static_cast<uint32_t>(std::max(1, size.GetWidth())),
+                                                       static_cast<uint32_t>(std::max(1, size.GetHeight())));
         if (!resizeResult) {
             spdlog::warn("MainFrame::OnWindowResized: {}", resizeResult.error());
         }
@@ -416,8 +398,7 @@ void MainFrame::HandleVulkanFrameFailure(std::string_view reason) {
     }
     m_vulkanStatus = "Vulkan disabled: " + reasonText;
     UpdateStatusBar();
-    spdlog::warn("MainFrame: disabling Vulkan frame loop after runtime error: {}",
-                 reason);
+    spdlog::warn("MainFrame: disabling Vulkan frame loop after runtime error: {}", reason);
 
     if (m_vulkanRenderHost != nullptr) {
         m_vulkanRenderHost->Detach();
@@ -431,12 +412,11 @@ void MainFrame::LoadBackgroundImage() {
     auto projectRoot = Platform::GetProjectRoot();
     auto imgPath = projectRoot / "assets" / "canvas.png";
 
-    if (std::filesystem::exists(imgPath)) {
+    if (Core::FileSystemService::PathExists(imgPath)) {
         wxImage img(imgPath.string(), wxBITMAP_TYPE_PNG);
         if (img.IsOk()) {
             m_bgPanel->SetBackgroundBitmap(wxBitmap(img));
-            spdlog::debug("MainFrame: loaded background image: {}",
-                          imgPath.string());
+            spdlog::debug("MainFrame: loaded background image: {}", imgPath.string());
         }
     }
 }
@@ -445,7 +425,7 @@ void MainFrame::LoadAppIcon() {
     auto projectRoot = Platform::GetProjectRoot();
     auto iconPath = projectRoot / "assets" / "icons" / "app_icon.png";
 
-    if (!std::filesystem::exists(iconPath)) {
+    if (!Core::FileSystemService::PathExists(iconPath)) {
         spdlog::warn("MainFrame: app icon not found at {}", iconPath.string());
         return;
     }
@@ -464,8 +444,7 @@ void MainFrame::LoadAppIcon() {
         SetIcon(icon);
     }
 
-    spdlog::info("MainFrame: loaded app icon: {} ({}x{})",
-                 iconPath.string(), img.GetWidth(), img.GetHeight());
+    spdlog::info("MainFrame: loaded app icon: {} ({}x{})", iconPath.string(), img.GetWidth(), img.GetHeight());
 }
 
 void MainFrame::OnActivityModeChanged(ActivityMode mode) {
@@ -477,8 +456,10 @@ void MainFrame::OnActivityModeChanged(ActivityMode mode) {
     m_auiManager.GetPane("EditorTabs").Hide();
     m_auiManager.GetPane("Background").Hide();
 
+    // NOLINTNEXTLINE(bugprone-branch-clone)
     switch (mode) {
     case ActivityMode::Notepad:
+        // NOLINTNEXTLINE(bugprone-branch-clone)
         if (m_editorTabs && m_editorTabs->GetPageCount() > 0) {
             m_auiManager.GetPane("EditorTabs").Show();
         } else {
@@ -498,8 +479,7 @@ void MainFrame::OnActivityModeChanged(ActivityMode mode) {
     m_auiManager.Update();
     UpdateStatusBar();
 
-    spdlog::info("MainFrame: activity mode changed to {}",
-                 static_cast<int>(mode));
+    spdlog::info("MainFrame: activity mode changed to {}", static_cast<int>(mode));
 }
 
 void MainFrame::OpenImage(const std::filesystem::path& path) {
@@ -517,8 +497,7 @@ void MainFrame::OpenImage(const std::filesystem::path& path) {
         auto meta = Core::MediaService::GetImageMetadata(path);
         auto statusBar = GetStatusBar();
         if (meta && statusBar) {
-            statusBar->SetStatusText(
-                std::to_string(meta->width) + "x" + std::to_string(meta->height), 0);
+            statusBar->SetStatusText(std::to_string(meta->width) + "x" + std::to_string(meta->height), 0);
             statusBar->SetStatusText(meta->format, 1);
             statusBar->SetStatusText(path.filename().string(), 2);
         }
@@ -526,13 +505,12 @@ void MainFrame::OpenImage(const std::filesystem::path& path) {
         spdlog::info("MainFrame: opened image: {}", path.string());
     } catch (const std::exception& e) {
         spdlog::error("MainFrame: failed to open image {}: {}", path.string(), e.what());
-        wxMessageBox("Failed to open image: " + std::string(e.what()),
-                     "Image Error", wxOK | wxICON_ERROR, this);
+        wxMessageBox("Failed to open image: " + std::string(e.what()), "Image Error", wxOK | wxICON_ERROR, this);
     }
 }
 
 void MainFrame::OpenTextFile(const std::filesystem::path& path) {
-    auto result = Core::FileService::LoadFile(path);
+    auto result = m_documentWorkflowService.LoadTextDocument(path);
     if (!result) {
         wxMessageBox(result.error(), "Open Error", wxOK | wxICON_ERROR, this);
         return;
@@ -545,7 +523,7 @@ void MainFrame::OpenTextFile(const std::filesystem::path& path) {
     m_auiManager.Update();
 
     auto editor = new EditorPanel(m_editorTabs, wxID_ANY);
-    editor->SetValue(wxString::FromUTF8(std::string(result->text)));
+    editor->SetValue(wxString::FromUTF8(result->content));
     if (m_editorController != nullptr) {
         m_editorController->BindEditorEvents(editor);
     }
@@ -556,15 +534,14 @@ void MainFrame::OpenTextFile(const std::filesystem::path& path) {
     auto* activePage = m_editorTabs->GetCurrentPage();
     if (activePage == nullptr) {
         spdlog::error("MainFrame: failed to obtain active editor page for {}", path.string());
-        wxMessageBox("Opened file but failed to attach document state.",
-                     "Internal Error", wxOK | wxICON_ERROR, this);
+        wxMessageBox("Opened file but failed to attach document state.", "Internal Error", wxOK | wxICON_ERROR, this);
         return;
     }
 
     auto& doc = m_documents[activePage];
-    doc.SetContent(result->text);
+    doc.SetContent(result->content);
     doc.SetFilePath(path);
-    doc.SetEncoding(result->detectedEncoding);
+    doc.SetEncoding(result->encoding);
     doc.SetModified(false);
 
     m_currentMode = ActivityMode::Notepad;
@@ -575,9 +552,8 @@ void MainFrame::OpenTextFile(const std::filesystem::path& path) {
 }
 
 void MainFrame::OpenPathUnified(const std::filesystem::path& path, bool addToRecent) {
-    if (!std::filesystem::exists(path)) {
-        wxMessageBox("File does not exist: " + path.string(),
-                     "Open Error", wxOK | wxICON_ERROR, this);
+    if (!m_documentWorkflowService.PathExists(path)) {
+        wxMessageBox("File does not exist: " + path.string(), "Open Error", wxOK | wxICON_ERROR, this);
         return;
     }
 
@@ -623,8 +599,7 @@ void MainFrame::OpenPathUnified(const std::filesystem::path& path, bool addToRec
         UpdateStatusBar();
         break;
     default:
-        wxMessageBox("Unsupported file type: " + path.string(),
-                     "Open Error", wxOK | wxICON_ERROR, this);
+        wxMessageBox("Unsupported file type: " + path.string(), "Open Error", wxOK | wxICON_ERROR, this);
         return;
     }
 
@@ -635,9 +610,7 @@ void MainFrame::OpenPathUnified(const std::filesystem::path& path, bool addToRec
 
 void MainFrame::AddRecentFile(const std::filesystem::path& path) {
     auto canonical = path.lexically_normal();
-    m_recentFiles.erase(
-        std::remove(m_recentFiles.begin(), m_recentFiles.end(), canonical),
-        m_recentFiles.end());
+    m_recentFiles.erase(std::remove(m_recentFiles.begin(), m_recentFiles.end(), canonical), m_recentFiles.end());
     m_recentFiles.push_front(canonical);
     while (m_recentFiles.size() > kOpenRecentMaxItems) {
         m_recentFiles.pop_back();
@@ -646,11 +619,13 @@ void MainFrame::AddRecentFile(const std::filesystem::path& path) {
 }
 
 void MainFrame::RebuildOpenRecentMenu() {
-    if (m_openRecentMenu == nullptr) return;
+    if (m_openRecentMenu == nullptr)
+        return;
 
     while (m_openRecentMenu->GetMenuItemCount() > 0) {
         auto* item = m_openRecentMenu->FindItemByPosition(0);
-        if (item == nullptr) break;
+        if (item == nullptr)
+            break;
         m_openRecentMenu->Destroy(item);
     }
     if (m_recentFiles.empty()) {
@@ -667,7 +642,8 @@ void MainFrame::RebuildOpenRecentMenu() {
 
 void MainFrame::UpdateStatusBar() {
     auto statusBar = GetStatusBar();
-    if (!statusBar) return;
+    if (!statusBar)
+        return;
 
     switch (m_currentMode) {
     case ActivityMode::Notepad:
@@ -733,7 +709,9 @@ void MainFrame::OnOpen([[maybe_unused]] wxCommandEvent& event) {
                             "*.mp4;*.webm;*.mkv;*.avi;*.mov;*.mp3;*.wav;*.ogg;*.flac;"
                             "*.fbx;*.obj;*.gltf;*.glb;*.stl;*.dae;"
                             "*.txt;*.md;*.cpp;*.hpp;*.c;*.h;*.py;*.js;*.json;*.xml"
-                            "|Image Files (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.webp;*.psd;*.psb)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.tif;*.webp;*.psd;*.psb"
+                            "|Image Files "
+                            "(*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.webp;*.psd;*.psb)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;"
+                            "*.tiff;*.tif;*.webp;*.psd;*.psb"
                             "|Video Files (*.mp4;*.webm;*.mkv;*.avi;*.mov)|*.mp4;*.webm;*.mkv;*.avi;*.mov"
                             "|Audio Files (*.mp3;*.wav;*.ogg;*.flac)|*.mp3;*.wav;*.ogg;*.flac"
                             "|3D Models (*.fbx;*.obj;*.gltf;*.glb)|*.fbx;*.obj;*.gltf;*.glb"
@@ -741,7 +719,8 @@ void MainFrame::OnOpen([[maybe_unused]] wxCommandEvent& event) {
                             "|All Files (*.*)|*.*",
                             wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
 
-    if (openDialog.ShowModal() != wxID_OK) return;
+    if (openDialog.ShowModal() != wxID_OK)
+        return;
 
     wxArrayString paths;
     openDialog.GetPaths(paths);
@@ -752,12 +731,13 @@ void MainFrame::OnOpen([[maybe_unused]] wxCommandEvent& event) {
 
 void MainFrame::OnOpenRecent(wxCommandEvent& event) {
     int index = event.GetId() - kOpenRecentBaseId;
-    if (index < 0 || index >= static_cast<int>(m_recentFiles.size())) return;
+    if (index < 0 || index >= static_cast<int>(m_recentFiles.size()))
+        return;
 
     auto path = m_recentFiles[static_cast<size_t>(index)];
-    if (!std::filesystem::exists(path)) {
-        wxMessageBox("Recent file is no longer available: " + path.string(),
-                     "Open Recent", wxOK | wxICON_WARNING, this);
+    if (!m_documentWorkflowService.PathExists(path)) {
+        wxMessageBox("Recent file is no longer available: " + path.string(), "Open Recent", wxOK | wxICON_WARNING,
+                     this);
         m_recentFiles.erase(m_recentFiles.begin() + index);
         RebuildOpenRecentMenu();
         return;
@@ -767,16 +747,16 @@ void MainFrame::OnOpenRecent(wxCommandEvent& event) {
 }
 
 void MainFrame::OnQuickOpen([[maybe_unused]] wxCommandEvent& event) {
-    wxTextEntryDialog dialog(this,
-                             "Enter part of a file path or a full path to open:",
-                             "Quick Open (Ctrl+P)");
-    if (dialog.ShowModal() != wxID_OK) return;
+    wxTextEntryDialog dialog(this, "Enter part of a file path or a full path to open:", "Quick Open (Ctrl+P)");
+    if (dialog.ShowModal() != wxID_OK)
+        return;
 
     auto query = dialog.GetValue().ToStdString();
-    if (query.empty()) return;
+    if (query.empty())
+        return;
 
     std::filesystem::path directPath(query);
-    if (std::filesystem::exists(directPath)) {
+    if (m_documentWorkflowService.PathExists(directPath)) {
         OpenPathUnified(directPath);
         return;
     }
@@ -795,15 +775,14 @@ void MainFrame::OnQuickOpen([[maybe_unused]] wxCommandEvent& event) {
         }
     }
 
-    wxMessageBox("No matching file found in recent items and path does not exist.",
-                 "Quick Open", wxOK | wxICON_INFORMATION, this);
+    wxMessageBox("No matching file found in recent items and path does not exist.", "Quick Open",
+                 wxOK | wxICON_INFORMATION, this);
 }
 
 void MainFrame::OnSave([[maybe_unused]] wxCommandEvent& event) {
     auto* page = m_editorTabs != nullptr ? m_editorTabs->GetCurrentPage() : nullptr;
     if (page == nullptr) {
-        wxMessageBox("No active text editor tab to save.",
-                     "Save", wxOK | wxICON_INFORMATION, this);
+        wxMessageBox("No active text editor tab to save.", "Save", wxOK | wxICON_INFORMATION, this);
         return;
     }
 
@@ -814,13 +793,15 @@ void MainFrame::OnSave([[maybe_unused]] wxCommandEvent& event) {
         wxMessageBox(saveResult.error(), "Save Error", wxOK | wxICON_ERROR, this);
         return;
     }
+    if (*saveResult == EditorDocumentController::SaveOutcome::Cancelled) {
+        return;
+    }
 }
 
 void MainFrame::OnSaveAs([[maybe_unused]] wxCommandEvent& event) {
     auto* page = m_editorTabs != nullptr ? m_editorTabs->GetCurrentPage() : nullptr;
     if (page == nullptr) {
-        wxMessageBox("No active text editor tab to save.",
-                     "Save As", wxOK | wxICON_INFORMATION, this);
+        wxMessageBox("No active text editor tab to save.", "Save As", wxOK | wxICON_INFORMATION, this);
         return;
     }
 
@@ -831,34 +812,53 @@ void MainFrame::OnSaveAs([[maybe_unused]] wxCommandEvent& event) {
         wxMessageBox(saveResult.error(), "Save As Error", wxOK | wxICON_ERROR, this);
         return;
     }
+    if (*saveResult == EditorDocumentController::SaveOutcome::Cancelled) {
+        return;
+    }
 }
 
 void MainFrame::OnDeleteFile([[maybe_unused]] wxCommandEvent& event) {
     auto* page = m_editorTabs != nullptr ? m_editorTabs->GetCurrentPage() : nullptr;
     if (page == nullptr) {
-        wxMessageBox("No active text editor tab to delete from disk.",
-                     "Delete File", wxOK | wxICON_INFORMATION, this);
+        wxMessageBox("No active text editor tab to delete from disk.", "Delete File", wxOK | wxICON_INFORMATION, this);
         return;
     }
 
     auto docIt = m_documents.find(page);
     if (docIt == m_documents.end() || !docIt->second.GetFilePath().has_value()) {
-        wxMessageBox("Current document has no saved file path.",
-                     "Delete File", wxOK | wxICON_INFORMATION, this);
+        wxMessageBox("Current document has no saved file path.", "Delete File", wxOK | wxICON_INFORMATION, this);
         return;
     }
 
-    auto path = *docIt->second.GetFilePath();
-    auto confirm = wxMessageBox(
-        "Delete this file from disk?\n\n" + path.string(),
-        "Delete File",
-        wxYES_NO | wxCANCEL | wxICON_WARNING,
-        this);
+    const auto filePath = docIt->second.GetFilePath();
+    auto path = *filePath;
+    if (docIt->second.IsModified()) {
+        auto saveAnswer = wxMessageBox("This document has unsaved changes. Save before deleting the file?",
+                                       "Unsaved Changes", wxYES_NO | wxCANCEL | wxICON_WARNING, this);
+        if (saveAnswer == wxCANCEL) {
+            return;
+        }
+        if (saveAnswer == wxYES) {
+            auto saveResult = m_editorController != nullptr
+                                  ? m_editorController->SaveDocumentForPage(page, false, [] {})
+                                  : std::unexpected(std::string("Editor controller is unavailable."));
+            if (!saveResult) {
+                wxMessageBox(saveResult.error(), "Save Error", wxOK | wxICON_ERROR, this);
+                return;
+            }
+            if (*saveResult == EditorDocumentController::SaveOutcome::Cancelled) {
+                return;
+            }
+        }
+    }
+
+    auto confirm = wxMessageBox("Delete this file from disk?\n\n" + path.string(), "Delete File",
+                                wxYES_NO | wxCANCEL | wxICON_WARNING, this);
     if (confirm != wxYES) {
         return;
     }
 
-    auto deleteResult = Core::FileService::DeleteFile(path);
+    auto deleteResult = m_documentWorkflowService.DeleteDocumentFile(path);
     if (!deleteResult) {
         wxMessageBox(deleteResult.error(), "Delete Error", wxOK | wxICON_ERROR, this);
         return;
@@ -873,6 +873,29 @@ void MainFrame::OnDeleteFile([[maybe_unused]] wxCommandEvent& event) {
 
 void MainFrame::OnExit([[maybe_unused]] wxCommandEvent& event) {
     Close(true);
+}
+
+void MainFrame::OnUpdateSaveUi(wxUpdateUIEvent& event) {
+    auto* page = m_editorTabs != nullptr ? m_editorTabs->GetCurrentPage() : nullptr;
+    auto* editor = dynamic_cast<EditorPanel*>(page);
+    event.Enable(editor != nullptr && m_editorController != nullptr);
+}
+
+void MainFrame::OnUpdateSaveAsUi(wxUpdateUIEvent& event) {
+    auto* page = m_editorTabs != nullptr ? m_editorTabs->GetCurrentPage() : nullptr;
+    auto* editor = dynamic_cast<EditorPanel*>(page);
+    event.Enable(editor != nullptr && m_editorController != nullptr);
+}
+
+void MainFrame::OnUpdateDeleteFileUi(wxUpdateUIEvent& event) {
+    auto* page = m_editorTabs != nullptr ? m_editorTabs->GetCurrentPage() : nullptr;
+    auto* editor = dynamic_cast<EditorPanel*>(page);
+    if (editor == nullptr) {
+        event.Enable(false);
+        return;
+    }
+    auto docIt = m_documents.find(page);
+    event.Enable(docIt != m_documents.end() && docIt->second.GetFilePath().has_value());
 }
 
 void MainFrame::OnEditorTabClosed(wxAuiNotebookEvent& event) {
@@ -902,12 +925,12 @@ void MainFrame::OnEditorTabClosed(wxAuiNotebookEvent& event) {
 
 void MainFrame::OnAbout([[maybe_unused]] wxCommandEvent& event) {
     wxMessageDialog dlg(this,
-        wxString::Format("CLIADE AI Content Creator\nVersion v%s\n\n"
-                           "AJC-Software Ltd \xC2\xA9 2026\n\n"
-                           "Cross-platform AIO IDE for code editing, media "
-                           "workflows, and AI-powered content generation.",
-                           CLIADE_VERSION_STRING),
-        "About CLIADE", wxOK | wxICON_INFORMATION);
+                        wxString::Format("CLIADE AI Content Creator\nVersion v%s\n\n"
+                                         "AJC-Software Ltd \xC2\xA9 2026\n\n"
+                                         "Cross-platform AIO IDE for code editing, media "
+                                         "workflows, and AI-powered content generation.",
+                                         CLIADE_VERSION_STRING),
+                        "About CLIADE", wxOK | wxICON_INFORMATION);
     dlg.ShowModal();
 }
 
@@ -918,8 +941,7 @@ void MainFrame::OnRuntimeDiagnostics([[maybe_unused]] wxCommandEvent& event) {
     const char* api = m_vulkanRuntime.IsApiCompatible() ? "Compatible" : "Not compatible";
     auto availabilityReason = m_vulkanRuntime.GetAvailabilityReason();
     auto availabilityReasonCode = m_vulkanRuntime.GetAvailabilityReasonCode();
-    auto availabilityReasonCodeName =
-        wxString::FromUTF8(AvailabilityReasonCodeName(availabilityReasonCode));
+    auto availabilityReasonCodeName = wxString::FromUTF8(AvailabilityReasonCodeName(availabilityReasonCode));
     auto installHelpUrl = m_vulkanRuntime.GetInstallHelpUrl();
     auto searchPaths = m_vulkanRuntime.GetRuntimeSearchPaths();
     auto loadAttempts = m_vulkanRuntime.GetLastLoadAttempts();
@@ -947,35 +969,23 @@ void MainFrame::OnRuntimeDiagnostics([[maybe_unused]] wxCommandEvent& event) {
         }
     }
 
-    auto message = wxString::Format(
-        "Vulkan runtime status\n\n"
-        "Module: %s\n"
-        "Initialized: %s\n"
-        "API: %s\n"
-        "Runtime API Version: %u.%u\n"
-        "Runtime Version: %u.%u.%u\n"
-        "Vulkan: %s\n"
-        "Reason Code: %u\n"
-        "Reason Name: %s\n"
-        "Details: %s\n"
-        "Search paths:\n%s\n"
-        "Load attempts:\n%s\n"
-        "Install help: %s",
-        loaded,
-        initialized,
-        api,
-        caps.apiVersion.major,
-        caps.apiVersion.minor,
-        caps.runtimeVersion.major,
-        caps.runtimeVersion.minor,
-        caps.runtimeVersion.patch,
-        availability,
-        static_cast<unsigned>(availabilityReasonCode),
-        availabilityReasonCodeName,
-        reason,
-        searchPathsText,
-        attemptsText,
-        helpUrl);
+    auto message = wxString::Format("Vulkan runtime status\n\n"
+                                    "Module: %s\n"
+                                    "Initialized: %s\n"
+                                    "API: %s\n"
+                                    "Runtime API Version: %u.%u\n"
+                                    "Runtime Version: %u.%u.%u\n"
+                                    "Vulkan: %s\n"
+                                    "Reason Code: %u\n"
+                                    "Reason Name: %s\n"
+                                    "Details: %s\n"
+                                    "Search paths:\n%s\n"
+                                    "Load attempts:\n%s\n"
+                                    "Install help: %s",
+                                    loaded, initialized, api, caps.apiVersion.major, caps.apiVersion.minor,
+                                    caps.runtimeVersion.major, caps.runtimeVersion.minor, caps.runtimeVersion.patch,
+                                    availability, static_cast<unsigned>(availabilityReasonCode),
+                                    availabilityReasonCodeName, reason, searchPathsText, attemptsText, helpUrl);
 
     wxMessageDialog dlg(this, message, "Runtime Diagnostics", wxOK | wxICON_INFORMATION);
     dlg.ShowModal();
@@ -988,27 +998,21 @@ void MainFrame::OnRetryRuntime([[maybe_unused]] wxCommandEvent& event) {
     UpdateStatusBar();
 
     if (m_vulkanRenderHost == nullptr) {
-        auto message = wxString::Format(
-            "Vulkan runtime retry did not succeed.\n\nStatus: %s\nError: %s",
-            m_vulkanStatus,
-            m_vulkanRuntime.GetLastError());
-        wxMessageBox(message, "Vulkan Runtime Retry",
-                     wxOK | wxICON_WARNING, this);
+        auto message = wxString::Format("Vulkan runtime retry did not succeed.\n\nStatus: %s\nError: %s",
+                                        m_vulkanStatus, m_vulkanRuntime.GetLastError());
+        wxMessageBox(message, "Vulkan Runtime Retry", wxOK | wxICON_WARNING, this);
     }
 }
 
 void MainFrame::OnClose(wxCloseEvent& event) {
-    for (const auto& [page, doc] : m_documents) {
-        static_cast<void>(page);
-        if (doc.IsModified()) {
-            auto result = wxMessageBox(
-                "There are unsaved changes in open editors. Close anyway?",
-                "Unsaved Changes", wxYES_NO | wxCANCEL | wxICON_WARNING, this);
-            if (result != wxYES) {
+    if (m_editorTabs != nullptr && m_editorController != nullptr) {
+        for (size_t i = 0; i < m_editorTabs->GetPageCount(); ++i) {
+            auto* page = m_editorTabs->GetPage(i);
+            if (!m_editorController->ConfirmClosePage(page)) {
+                spdlog::info("MainFrame: close cancelled by unsaved tab");
                 event.Veto();
                 return;
             }
-            break;
         }
     }
 

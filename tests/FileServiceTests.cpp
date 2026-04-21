@@ -51,8 +51,7 @@ TEST_CASE("LoadFile loads a UTF-8 BOM file", "[fileservice]") {
     auto path = GetTempDir() / "test_bom.txt";
 
     std::ofstream file(path, std::ios::binary);
-    file << static_cast<char>(0xEF) << static_cast<char>(0xBB)
-         << static_cast<char>(0xBF);
+    file << static_cast<char>(0xEF) << static_cast<char>(0xBB) << static_cast<char>(0xBF);
     file << "BOM Test";
     file.close();
 
@@ -75,13 +74,11 @@ TEST_CASE("SaveFile writes content to disk", "[fileservice]") {
     EnsureTempDir();
     auto path = GetTempDir() / "test_save.txt";
 
-    auto result = FileService::SaveFile(path, "Saved content",
-                                        TextEncoding::Utf8);
+    auto result = FileService::SaveFile(path, "Saved content", TextEncoding::Utf8);
     REQUIRE(result.has_value());
 
     std::ifstream file(path, std::ios::binary);
-    std::string content((std::istreambuf_iterator<char>(file)),
-                        std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     REQUIRE(content == "Saved content");
 
     CleanupTempDir();
@@ -91,13 +88,11 @@ TEST_CASE("SaveFile writes UTF-8 BOM content", "[fileservice]") {
     EnsureTempDir();
     auto path = GetTempDir() / "test_save_bom.txt";
 
-    auto result = FileService::SaveFile(path, "BOM Save",
-                                        TextEncoding::Utf8Bom);
+    auto result = FileService::SaveFile(path, "BOM Save", TextEncoding::Utf8Bom);
     REQUIRE(result.has_value());
 
     std::ifstream file(path, std::ios::binary);
-    std::vector<char> data((std::istreambuf_iterator<char>(file)),
-                           std::istreambuf_iterator<char>());
+    std::vector<char> data((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
     REQUIRE(static_cast<unsigned char>(data[0]) == 0xEF);
     REQUIRE(static_cast<unsigned char>(data[1]) == 0xBB);
@@ -110,13 +105,11 @@ TEST_CASE("SaveFile writes UTF-16 LE content", "[fileservice]") {
     EnsureTempDir();
     auto path = GetTempDir() / "test_save_utf16le.txt";
 
-    auto result = FileService::SaveFile(path, "UTF16",
-                                        TextEncoding::Utf16Le);
+    auto result = FileService::SaveFile(path, "UTF16", TextEncoding::Utf16Le);
     REQUIRE(result.has_value());
 
     std::ifstream file(path, std::ios::binary);
-    std::vector<char> data((std::istreambuf_iterator<char>(file)),
-                           std::istreambuf_iterator<char>());
+    std::vector<char> data((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
     REQUIRE(static_cast<unsigned char>(data[0]) == 0xFF);
     REQUIRE(static_cast<unsigned char>(data[1]) == 0xFE);

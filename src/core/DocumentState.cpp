@@ -16,8 +16,8 @@
 
 namespace Core {
 
-DocumentState::DocumentState()
-    : m_currentStep(0), m_maxHistory(20) {}
+DocumentState::DocumentState() : m_currentStep(0), m_maxHistory(20) {
+}
 
 void DocumentState::PushOperation(const Operation& op) {
     if (m_currentStep < m_history.size()) {
@@ -32,23 +32,20 @@ void DocumentState::PushOperation(const Operation& op) {
         m_currentStep = m_history.size();
     }
 
-    spdlog::debug("DocumentState::PushOperation: {} (step {}/{})",
-                  op.type, m_currentStep, m_history.size());
+    spdlog::debug("DocumentState::PushOperation: {} (step {}/{})", op.type, m_currentStep, m_history.size());
 }
 
 void DocumentState::Undo() {
     if (m_currentStep > 0) {
         m_currentStep--;
-        spdlog::debug("DocumentState::Undo: step {}/{}",
-                      m_currentStep, m_history.size());
+        spdlog::debug("DocumentState::Undo: step {}/{}", m_currentStep, m_history.size());
     }
 }
 
 void DocumentState::Redo() {
     if (m_currentStep < m_history.size()) {
         m_currentStep++;
-        spdlog::debug("DocumentState::Redo: step {}/{}",
-                      m_currentStep, m_history.size());
+        spdlog::debug("DocumentState::Redo: step {}/{}", m_currentStep, m_history.size());
     }
 }
 
@@ -81,8 +78,7 @@ void DocumentState::ClearHistory() {
 void DocumentState::SetMaxHistory(size_t maxSteps) {
     m_maxHistory = maxSteps;
     if (m_history.size() > m_maxHistory) {
-        m_history.erase(m_history.begin(),
-                        m_history.begin() + (m_history.size() - m_maxHistory));
+        m_history.erase(m_history.begin(), m_history.begin() + (m_history.size() - m_maxHistory));
         m_currentStep = std::min(m_currentStep, m_history.size());
     }
 }
@@ -103,13 +99,11 @@ std::expected<std::vector<std::uint8_t>, std::string> DocumentState::Serialize()
     std::string str = oss.str();
     data.assign(str.begin(), str.end());
 
-    spdlog::debug("DocumentState::Serialize: {} bytes, {} operations",
-                  data.size(), m_history.size());
+    spdlog::debug("DocumentState::Serialize: {} bytes, {} operations", data.size(), m_history.size());
     return data;
 }
 
-std::expected<void, std::string> DocumentState::Deserialize(
-    const std::vector<std::uint8_t>& data) {
+std::expected<void, std::string> DocumentState::Deserialize(const std::vector<std::uint8_t>& data) {
     std::string str(data.begin(), data.end());
     std::istringstream iss(str);
 
@@ -137,13 +131,12 @@ std::expected<void, std::string> DocumentState::Deserialize(
         m_history.push_back(std::move(op));
     }
 
-    spdlog::debug("DocumentState::Deserialize: {} operations loaded",
-                  m_history.size());
+    spdlog::debug("DocumentState::Deserialize: {} operations loaded", m_history.size());
     return {};
 }
 
-std::expected<std::vector<Operation>, std::string> DocumentState::ReplayOperations(
-    const std::vector<Operation>& ops) const {
+std::expected<std::vector<Operation>, std::string>
+DocumentState::ReplayOperations(const std::vector<Operation>& ops) const {
     spdlog::debug("DocumentState::ReplayOperations: {} operations", ops.size());
     return ops;
 }

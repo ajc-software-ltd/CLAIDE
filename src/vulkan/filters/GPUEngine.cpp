@@ -24,6 +24,13 @@
 
 namespace Gpu {
 
+struct CpuImageInfo
+{
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+};
+
 #ifndef CLIADE_VERSION_MAJOR
 #define CLIADE_VERSION_MAJOR 0
 #endif
@@ -36,7 +43,8 @@ namespace Gpu {
 #define CLIADE_VERSION_PATCH 47
 #endif
 
-struct GPUEngine::Impl {
+struct GPUEngine::Impl
+{
     VkInstance instance = VK_NULL_HANDLE;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
@@ -53,29 +61,34 @@ struct GPUEngine::Impl {
     std::unordered_map<std::string, bool> shaderAvailability;
 
     ~Impl() {
-        if (commandPool) vkDestroyCommandPool(device, commandPool, nullptr);
-        if (pipelineLayout) vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-        if (descriptorSetLayout) vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-        if (device) vkDestroyDevice(device, nullptr);
-        if (instance) vkDestroyInstance(instance, nullptr);
+        if (commandPool)
+            vkDestroyCommandPool(device, commandPool, nullptr);
+        if (pipelineLayout)
+            vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        if (descriptorSetLayout)
+            vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+        if (device)
+            vkDestroyDevice(device, nullptr);
+        if (instance)
+            vkDestroyInstance(instance, nullptr);
     }
 };
 
-GPUEngine::GPUEngine() : m_impl(std::make_unique<Impl>()) {}
+GPUEngine::GPUEngine() : m_impl(std::make_unique<Impl>()) {
+}
 GPUEngine::~GPUEngine() = default;
 
 bool GPUEngine::Initialize() {
-    if (m_impl->initialized) return true;
+    if (m_impl->initialized)
+        return true;
 
     // Create instance
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "CLIADE";
-    appInfo.applicationVersion = VK_MAKE_VERSION(
-        CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
+    appInfo.applicationVersion = VK_MAKE_VERSION(CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
     appInfo.pEngineName = "CLIADE GPU Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(
-        CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
+    appInfo.engineVersion = VK_MAKE_VERSION(CLIADE_VERSION_MAJOR, CLIADE_VERSION_MINOR, CLIADE_VERSION_PATCH);
     appInfo.apiVersion = VK_API_VERSION_1_2;
 
     VkInstanceCreateInfo createInfo = {};
@@ -108,10 +121,18 @@ bool GPUEngine::Initialize() {
 
         int score = 0;
         switch (props.deviceType) {
-        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU: score = 100; break;
-        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: score = 50; break;
-        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU: score = 25; break;
-        default: score = 0; break;
+        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+            score = 100;
+            break;
+        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+            score = 50;
+            break;
+        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+            score = 25;
+            break;
+        default:
+            score = 0;
+            break;
         }
 
         if (score > bestScore) {
@@ -215,9 +236,8 @@ bool GPUEngine::Initialize() {
     m_impl->initialized = true;
     spdlog::info("GPUEngine::Initialize: Vulkan device: {}", m_impl->deviceName);
 
-    constexpr std::array<const char*, 6> kShaderNames = {
-        "brightness", "contrast", "grayscale", "invert", "blur", "sharpen"
-    };
+    constexpr std::array<const char*, 6> kShaderNames = {"brightness", "contrast", "grayscale",
+                                                         "invert",     "blur",     "sharpen"};
 
     auto buildShaderDir = std::filesystem::current_path() / "build" / "shaders";
     auto sourceShaderDir = std::filesystem::current_path() / "src" / "gpu" / "shaders";
@@ -241,7 +261,8 @@ bool GPUEngine::Initialize() {
         }
 
         m_impl->shaderAvailability[shaderName] = false;
-        spdlog::warn("GPUEngine::Initialize: missing shader '{}.spv' in build/shaders or src/vulkan/shaders", shaderName);
+        spdlog::warn("GPUEngine::Initialize: missing shader '{}.spv' in build/shaders or src/vulkan/shaders",
+                     shaderName);
     }
 
     return true;
@@ -260,13 +281,13 @@ FilterExecutionPath GPUEngine::GetLastExecutionPath() const {
 }
 
 // CPU fallback implementations
-static std::vector<std::uint8_t> ApplyBrightnessCPU(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double value) {
+static std::vector<std::uint8_t> ApplyBrightnessCPU(const std::vector<std::uint8_t>& input, CpuImageInfo imageInfo,
+                                                    double value) {
     std::vector<std::uint8_t> output = input;
     double factor = value / 100.0;
 
-    for (std::size_t i = 0; i < output.size(); i += channels) {
-        for (int c = 0; c < channels; ++c) {
+    for (std::size_t i = 0; i < output.size(); i += imageInfo.channels) {
+        for (int c = 0; c < imageInfo.channels; ++c) {
             double v = output[i + c] + factor * 255.0;
             output[i + c] = static_cast<std::uint8_t>(std::max(0.0, std::min(255.0, v)));
         }
@@ -274,13 +295,13 @@ static std::vector<std::uint8_t> ApplyBrightnessCPU(
     return output;
 }
 
-static std::vector<std::uint8_t> ApplyContrastCPU(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double value) {
+static std::vector<std::uint8_t> ApplyContrastCPU(const std::vector<std::uint8_t>& input, CpuImageInfo imageInfo,
+                                                  double value) {
     std::vector<std::uint8_t> output = input;
     double factor = (259.0 * (value + 255.0)) / (255.0 * (259.0 - value));
 
-    for (std::size_t i = 0; i < output.size(); i += channels) {
-        for (int c = 0; c < channels; ++c) {
+    for (std::size_t i = 0; i < output.size(); i += imageInfo.channels) {
+        for (int c = 0; c < imageInfo.channels; ++c) {
             double v = factor * (output[i + c] - 128.0) + 128.0;
             output[i + c] = static_cast<std::uint8_t>(std::max(0.0, std::min(255.0, v)));
         }
@@ -288,55 +309,53 @@ static std::vector<std::uint8_t> ApplyContrastCPU(
     return output;
 }
 
-static std::vector<std::uint8_t> ApplyGrayscaleCPU(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels) {
+static std::vector<std::uint8_t> ApplyGrayscaleCPU(const std::vector<std::uint8_t>& input, CpuImageInfo imageInfo) {
     std::vector<std::uint8_t> output = input;
 
-    for (std::size_t i = 0; i < output.size(); i += channels) {
+    for (std::size_t i = 0; i < output.size(); i += imageInfo.channels) {
         double gray = 0.299 * output[i] + 0.587 * output[i + 1] + 0.114 * output[i + 2];
         output[i] = output[i + 1] = output[i + 2] = static_cast<std::uint8_t>(gray);
     }
     return output;
 }
 
-static std::vector<std::uint8_t> ApplyInvertCPU(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels) {
+static std::vector<std::uint8_t> ApplyInvertCPU(const std::vector<std::uint8_t>& input, CpuImageInfo imageInfo) {
     std::vector<std::uint8_t> output = input;
 
-    for (std::size_t i = 0; i < output.size(); i += channels) {
-        for (int c = 0; c < std::min(channels, 3); ++c) {
+    for (std::size_t i = 0; i < output.size(); i += imageInfo.channels) {
+        for (int c = 0; c < std::min(imageInfo.channels, 3); ++c) {
             output[i + c] = 255 - output[i + c];
         }
     }
     return output;
 }
 
-static std::vector<std::uint8_t> ApplyBlurCPU(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double radius) {
+static std::vector<std::uint8_t> ApplyBlurCPU(const std::vector<std::uint8_t>& input, CpuImageInfo imageInfo,
+                                              double radius) {
     int kernelSize = static_cast<int>(std::max(1.0, radius * 2 + 1));
     std::vector<std::uint8_t> output(input.size());
 
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
+    for (int y = 0; y < imageInfo.height; ++y) {
+        for (int x = 0; x < imageInfo.width; ++x) {
             double sum[4] = {0, 0, 0, 0};
             double weightSum = 0;
 
             for (int ky = -kernelSize; ky <= kernelSize; ++ky) {
                 for (int kx = -kernelSize; kx <= kernelSize; ++kx) {
-                    int sx = std::max(0, std::min(width - 1, x + kx));
-                    int sy = std::max(0, std::min(height - 1, y + ky));
+                    int sx = std::max(0, std::min(imageInfo.width - 1, x + kx));
+                    int sy = std::max(0, std::min(imageInfo.height - 1, y + ky));
                     double dist = std::sqrt(kx * kx + ky * ky);
                     double w = std::exp(-(dist * dist) / (2.0 * radius * radius));
 
-                    for (int c = 0; c < channels; ++c) {
-                        sum[c] += input[(sy * width + sx) * channels + c] * w;
+                    for (int c = 0; c < imageInfo.channels; ++c) {
+                        sum[c] += input[(sy * imageInfo.width + sx) * imageInfo.channels + c] * w;
                     }
                     weightSum += w;
                 }
             }
 
-            for (int c = 0; c < channels; ++c) {
-                output[(y * width + x) * channels + c] =
+            for (int c = 0; c < imageInfo.channels; ++c) {
+                output[(y * imageInfo.width + x) * imageInfo.channels + c] =
                     static_cast<std::uint8_t>(std::round(sum[c] / weightSum));
             }
         }
@@ -344,22 +363,22 @@ static std::vector<std::uint8_t> ApplyBlurCPU(
     return output;
 }
 
-static std::vector<std::uint8_t> ApplySharpenCPU(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double amount) {
+static std::vector<std::uint8_t> ApplySharpenCPU(const std::vector<std::uint8_t>& input, CpuImageInfo imageInfo,
+                                                 double amount) {
     std::vector<std::uint8_t> output = input;
     double kernel[9] = {0, -amount, 0, -amount, 1 + 4 * amount, -amount, 0, -amount, 0};
 
-    for (int y = 1; y < height - 1; ++y) {
-        for (int x = 1; x < width - 1; ++x) {
-            for (int c = 0; c < channels; ++c) {
+    for (int y = 1; y < imageInfo.height - 1; ++y) {
+        for (int x = 1; x < imageInfo.width - 1; ++x) {
+            for (int c = 0; c < imageInfo.channels; ++c) {
                 double sum = 0;
                 int ki = 0;
                 for (int ky = -1; ky <= 1; ++ky) {
                     for (int kx = -1; kx <= 1; ++kx) {
-                        sum += input[((y + ky) * width + (x + kx)) * channels + c] * kernel[ki++];
+                        sum += input[((y + ky) * imageInfo.width + (x + kx)) * imageInfo.channels + c] * kernel[ki++];
                     }
                 }
-                output[(y * width + x) * channels + c] =
+                output[(y * imageInfo.width + x) * imageInfo.channels + c] =
                     static_cast<std::uint8_t>(std::max(0.0, std::min(255.0, sum)));
             }
         }
@@ -367,65 +386,75 @@ static std::vector<std::uint8_t> ApplySharpenCPU(
     return output;
 }
 
-std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyBrightness(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double value) {
+std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyBrightness(const std::vector<std::uint8_t>& input,
+                                                                                 [[maybe_unused]] int width,
+                                                                                 [[maybe_unused]] int height,
+                                                                                 int channels, double value) {
     if (!m_impl->initialized) {
         m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
-        return ApplyBrightnessCPU(input, width, height, channels, value);
+        return ApplyBrightnessCPU(input, CpuImageInfo{width, height, channels}, value);
     }
     return DispatchShader("brightness", input, width, height, channels, {static_cast<float>(value)});
 }
 
-std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyContrast(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double value) {
+std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyContrast(const std::vector<std::uint8_t>& input,
+                                                                               [[maybe_unused]] int width,
+                                                                               [[maybe_unused]] int height,
+                                                                               int channels, double value) {
     if (!m_impl->initialized) {
         m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
-        return ApplyContrastCPU(input, width, height, channels, value);
+        return ApplyContrastCPU(input, CpuImageInfo{width, height, channels}, value);
     }
     return DispatchShader("contrast", input, width, height, channels, {static_cast<float>(value)});
 }
 
-std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyGrayscale(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels) {
+std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyGrayscale(const std::vector<std::uint8_t>& input,
+                                                                                [[maybe_unused]] int width,
+                                                                                [[maybe_unused]] int height,
+                                                                                int channels) {
     if (!m_impl->initialized) {
         m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
-        return ApplyGrayscaleCPU(input, width, height, channels);
+        return ApplyGrayscaleCPU(input, CpuImageInfo{width, height, channels});
     }
     return DispatchShader("grayscale", input, width, height, channels, {});
 }
 
-std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyInvert(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels) {
+std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyInvert(const std::vector<std::uint8_t>& input,
+                                                                             [[maybe_unused]] int width,
+                                                                             [[maybe_unused]] int height,
+                                                                             int channels) {
     if (!m_impl->initialized) {
         m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
-        return ApplyInvertCPU(input, width, height, channels);
+        return ApplyInvertCPU(input, CpuImageInfo{width, height, channels});
     }
     return DispatchShader("invert", input, width, height, channels, {});
 }
 
-std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyBlur(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double radius) {
+std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplyBlur(const std::vector<std::uint8_t>& input,
+                                                                           [[maybe_unused]] int width,
+                                                                           [[maybe_unused]] int height, int channels,
+                                                                           double radius) {
     if (!m_impl->initialized) {
         m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
-        return ApplyBlurCPU(input, width, height, channels, radius);
+        return ApplyBlurCPU(input, CpuImageInfo{width, height, channels}, radius);
     }
     return DispatchShader("blur", input, width, height, channels, {static_cast<float>(radius)});
 }
 
-std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplySharpen(
-    const std::vector<std::uint8_t>& input, [[maybe_unused]] int width, [[maybe_unused]] int height, int channels, double amount) {
+std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::ApplySharpen(const std::vector<std::uint8_t>& input,
+                                                                              [[maybe_unused]] int width,
+                                                                              [[maybe_unused]] int height, int channels,
+                                                                              double amount) {
     if (!m_impl->initialized) {
         m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuUnavailable;
-        return ApplySharpenCPU(input, width, height, channels, amount);
+        return ApplySharpenCPU(input, CpuImageInfo{width, height, channels}, amount);
     }
     return DispatchShader("sharpen", input, width, height, channels, {static_cast<float>(amount)});
 }
 
-std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::DispatchShader(
-    const std::string& shaderName,
-    const std::vector<std::uint8_t>& input,
-    int width, int height, int channels,
-    const std::vector<float>& pushConstants) {
+std::expected<std::vector<std::uint8_t>, std::string>
+GPUEngine::DispatchShader(const std::string& shaderName, const std::vector<std::uint8_t>& input, int width, int height,
+                          int channels, const std::vector<float>& pushConstants) {
     if (!m_impl->initialized) {
         return std::unexpected("GPU not initialized");
     }
@@ -433,26 +462,26 @@ std::expected<std::vector<std::uint8_t>, std::string> GPUEngine::DispatchShader(
     auto it = m_impl->shaderAvailability.find(shaderName);
     if (it == m_impl->shaderAvailability.end() || !it->second) {
         m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackShaderMissing;
-        spdlog::warn("GPUEngine::DispatchShader: missing shader '{}.spv', using CPU fallback",
-                     shaderName);
+        spdlog::warn("GPUEngine::DispatchShader: missing shader '{}.spv', using CPU fallback", shaderName);
     } else {
         m_impl->lastExecutionPath = FilterExecutionPath::CpuFallbackGpuPipelinePending;
-        spdlog::info("GPUEngine::DispatchShader: shader '{}' found at {}, GPU dispatch pipeline pending, using CPU fallback",
-                     shaderName, m_impl->shaderPaths[shaderName].string());
+        spdlog::info(
+            "GPUEngine::DispatchShader: shader '{}' found at {}, GPU dispatch pipeline pending, using CPU fallback",
+            shaderName, m_impl->shaderPaths[shaderName].string());
     }
 
     if (shaderName == "brightness" && !pushConstants.empty()) {
-        return ApplyBrightnessCPU(input, width, height, channels, pushConstants[0]);
+        return ApplyBrightnessCPU(input, CpuImageInfo{width, height, channels}, pushConstants[0]);
     } else if (shaderName == "contrast" && !pushConstants.empty()) {
-        return ApplyContrastCPU(input, width, height, channels, pushConstants[0]);
+        return ApplyContrastCPU(input, CpuImageInfo{width, height, channels}, pushConstants[0]);
     } else if (shaderName == "grayscale") {
-        return ApplyGrayscaleCPU(input, width, height, channels);
+        return ApplyGrayscaleCPU(input, CpuImageInfo{width, height, channels});
     } else if (shaderName == "invert") {
-        return ApplyInvertCPU(input, width, height, channels);
+        return ApplyInvertCPU(input, CpuImageInfo{width, height, channels});
     } else if (shaderName == "blur" && !pushConstants.empty()) {
-        return ApplyBlurCPU(input, width, height, channels, pushConstants[0]);
+        return ApplyBlurCPU(input, CpuImageInfo{width, height, channels}, pushConstants[0]);
     } else if (shaderName == "sharpen" && !pushConstants.empty()) {
-        return ApplySharpenCPU(input, width, height, channels, pushConstants[0]);
+        return ApplySharpenCPU(input, CpuImageInfo{width, height, channels}, pushConstants[0]);
     }
 
     return std::unexpected("Unknown shader: " + shaderName);

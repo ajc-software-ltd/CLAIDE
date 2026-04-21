@@ -17,8 +17,9 @@
 
 namespace Render {
 
-class VulkanContext {
-public:
+class VulkanContext
+{
+  public:
     VulkanContext();
     ~VulkanContext();
 
@@ -26,14 +27,26 @@ public:
     [[nodiscard]] bool IsInitialized() const;
     [[nodiscard]] std::string GetDeviceName() const;
 
-    [[nodiscard]] VkInstance GetInstance() const { return m_instance; }
-    [[nodiscard]] VkPhysicalDevice GetPhysicalDevice() const { return m_physicalDevice; }
-    [[nodiscard]] VkDevice GetDevice() const { return m_device; }
-    [[nodiscard]] VkQueue GetGraphicsQueue() const { return m_graphicsQueue; }
-    [[nodiscard]] uint32_t GetGraphicsQueueFamily() const { return m_graphicsQueueFamily; }
-    [[nodiscard]] VkCommandPool GetCommandPool() const { return m_commandPool; }
+    [[nodiscard]] VkInstance GetInstance() const {
+        return m_instance;
+    }
+    [[nodiscard]] VkPhysicalDevice GetPhysicalDevice() const {
+        return m_physicalDevice;
+    }
+    [[nodiscard]] VkDevice GetDevice() const {
+        return m_device;
+    }
+    [[nodiscard]] VkQueue GetGraphicsQueue() const {
+        return m_graphicsQueue;
+    }
+    [[nodiscard]] uint32_t GetGraphicsQueueFamily() const {
+        return m_graphicsQueueFamily;
+    }
+    [[nodiscard]] VkCommandPool GetCommandPool() const {
+        return m_commandPool;
+    }
 
-private:
+  private:
     std::expected<void, std::string> CreateInstance(bool enableValidation);
     std::expected<void, std::string> SelectPhysicalDevice();
     std::expected<void, std::string> CreateDevice();

@@ -15,21 +15,23 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <Magick++.h>
 #include <wx/image.h>
 #include <wx/log.h>
-#include <Magick++.h>
 
-#include "platform/PlatformPaths.hpp"
 #include "core/CrashHandler.hpp"
+#include "platform/PlatformPaths.hpp"
 #include "ui/MainFrame.hpp"
 #include "ui/Theme.hpp"
 
 namespace App {
 
-class SpdlogTarget : public wxLog {
-public:
+class SpdlogTarget : public wxLog
+{
+  public:
     void DoLogText(const wxString& message) override {
-        if (message.IsEmpty()) return;
+        if (message.IsEmpty())
+            return;
 
         if (message.Lower().Find("focus") != wxNOT_FOUND) {
             return;
@@ -38,9 +40,7 @@ public:
         spdlog::info("wxWidgets: {}", message.ToUTF8().data());
     }
 
-    void DoLogRecord(wxLogLevel level,
-                     const wxString& message,
-                     const wxLogRecordInfo& info) override {
+    void DoLogRecord(wxLogLevel level, const wxString& message, const wxLogRecordInfo& info) override {
         (void)info;
 
         if (message.Lower().Find("focus") != wxNOT_FOUND) {
@@ -73,15 +73,10 @@ public:
 };
 
 #ifndef NDEBUG
-void WxAssertHandler(const wxString& file,
-                     int line,
-                     const wxString& func,
-                     const wxString& cond,
-                     const wxString& msg) {
-    std::string fullMsg = fmt::format(
-        "ASSERT FAILED: {} | file: {} | line: {} | func: {} | condition: {}",
-        msg.ToUTF8().data(), file.ToUTF8().data(), line,
-        func.ToUTF8().data(), cond.ToUTF8().data());
+void WxAssertHandler(const wxString& file, int line, const wxString& func, const wxString& cond, const wxString& msg) {
+    std::string fullMsg =
+        fmt::format("ASSERT FAILED: {} | file: {} | line: {} | func: {} | condition: {}", msg.ToUTF8().data(),
+                    file.ToUTF8().data(), line, func.ToUTF8().data(), cond.ToUTF8().data());
     spdlog::critical(fullMsg);
 }
 #endif
@@ -96,11 +91,9 @@ bool Application::OnInit() {
         Core::CrashHandler::Initialize(logDir);
 
         auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        auto fileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-            logPath.string(), 5 * 1024 * 1024, 3);
+        auto fileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logPath.string(), 5 * 1024 * 1024, 3);
 
-        auto logger = std::make_shared<spdlog::logger>(
-            "cliade", spdlog::sinks_init_list{consoleSink, fileSink});
+        auto logger = std::make_shared<spdlog::logger>("cliade", spdlog::sinks_init_list{consoleSink, fileSink});
 
 #ifdef NDEBUG
         logger->set_level(spdlog::level::info);

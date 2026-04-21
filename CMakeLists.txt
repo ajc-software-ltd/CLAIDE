@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
-project(CLIADE VERSION 0.0.47 LANGUAGES CXX)
+project(CLIADE VERSION 0.0.56 LANGUAGES CXX)
 
-set(CLIADE_VERSION_STRING "0.0.47-dev")
+set(CLIADE_VERSION_STRING "0.0.56-dev")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -45,6 +46,8 @@ set(SOURCES
     src/core/Encoding.cpp
     src/core/Document.cpp
     src/core/FileService.cpp
+    src/core/FileSystemService.cpp
+    src/core/DocumentWorkflowService.cpp
     src/core/MediaService.cpp
     src/core/FileBrowserService.cpp
     src/core/DocumentState.cpp
@@ -80,6 +83,8 @@ set(HEADERS
     src/core/Encoding.hpp
     src/core/Document.hpp
     src/core/FileService.hpp
+    src/core/FileSystemService.hpp
+    src/core/DocumentWorkflowService.hpp
     src/core/MediaService.hpp
     src/core/FileBrowserService.hpp
     src/core/DocumentState.hpp
@@ -203,6 +208,7 @@ if(Catch2_FOUND)
         src/core/Encoding.cpp
         src/core/Document.cpp
         src/core/FileService.cpp
+        src/core/DocumentWorkflowService.cpp
         src/core/MediaService.cpp
         src/core/FileBrowserService.cpp
         src/core/DocumentState.cpp
@@ -256,10 +262,24 @@ if(CLANG_FORMAT)
 endif()
 
 # Lint target
-find_program(CLANG_TIDY clang-tidy)
+find_program(CLANG_TIDY
+    NAMES clang-tidy
+    PATHS
+        "$ENV{HOME}/.local/bin"
+    NO_DEFAULT_PATH
+)
+if(NOT CLANG_TIDY)
+    find_program(CLANG_TIDY
+        NAMES clang-tidy-20 clang-tidy-19 clang-tidy
+    )
+endif()
 if(CLANG_TIDY)
     add_custom_target(lint
-        COMMAND ${CLANG_TIDY} ${ALL_SOURCE_FILES} -- -std=c++23 -I${CMAKE_SOURCE_DIR}/src -I${CMAKE_SOURCE_DIR}/include
+        COMMAND ${CLANG_TIDY} --version
+        COMMAND ${CMAKE_COMMAND} -E env
+            CLANG_TIDY_BIN=${CLANG_TIDY}
+            ${CMAKE_SOURCE_DIR}/scripts/run_lint.sh
+            ${CMAKE_BINARY_DIR}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Running clang-tidy"
     )

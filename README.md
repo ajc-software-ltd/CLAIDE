@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.47-dev`**
+- Current build version: **`0.0.56-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.47-dev`**
+- Example for current state: **`v0.0.56-dev`**
 
 ---
 
@@ -162,6 +162,11 @@ cmake --build build --target lint
 # Full validation (format + lint + test)
 cmake --build build --target validate
 ```
+
+> Note: `lint` intentionally disables `modernize-use-std-print` due to an upstream clang-tidy stability issue observed on this project.
+> Lint reporting now writes both raw and deduplicated reports under `build/reports/`; prioritize unique diagnostics from `clang-tidy.summary.md`.
+> Test lint also suppresses `bugprone-chained-comparison` because Catch2 assertion decomposition generates high-volume false positives.
+> Lint gate thresholds are enforced by `scripts/run_lint.sh` (`LINT_MAX_BUCKET_A=0`, `LINT_MAX_SRC_BUCKET_B=24` by default).
 
 ## Release Management
 

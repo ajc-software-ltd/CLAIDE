@@ -98,8 +98,7 @@ TEST_CASE("Encode encodes UTF-8 with BOM", "[encoding]") {
     REQUIRE(result->bytes[0] == 0xEF);
     REQUIRE(result->bytes[1] == 0xBB);
     REQUIRE(result->bytes[2] == 0xBF);
-    std::string text(
-        result->bytes.begin() + 3, result->bytes.end());
+    std::string text(result->bytes.begin() + 3, result->bytes.end());
     REQUIRE(text == "Hi");
 }
 

@@ -20,8 +20,7 @@ namespace Core {
 
 namespace {
 
-constexpr VulkanAIApiVersion k_ExpectedApiVersion{
-    VULKANAI_API_VERSION_MAJOR, VULKANAI_API_VERSION_MINOR};
+constexpr VulkanAIApiVersion k_ExpectedApiVersion{VULKANAI_API_VERSION_MAJOR, VULKANAI_API_VERSION_MINOR};
 
 #ifdef _WIN32
 constexpr const char* kModuleName = "VulkanAI.dll";
@@ -58,15 +57,13 @@ std::string GetPlatformLoadError() {
 } // namespace
 
 VulkanRuntimeLoader::VulkanRuntimeLoader()
-    : m_module(nullptr), m_initialize(nullptr), m_shutdown(nullptr),
-      m_getApiVersion(nullptr), m_isApiCompatible(nullptr),
-      m_isInitialized(nullptr), m_getCapabilities(nullptr), m_getVersion(nullptr),
-      m_getLastError(nullptr), m_isVulkanAvailable(nullptr),
-      m_getAvailabilityReason(nullptr), m_getAvailabilityReasonCode(nullptr),
-      m_getInstallHelpUrl(nullptr),
-      m_createSurfaceWithDesc(nullptr), m_destroySurface(nullptr),
-      m_beginFrame(nullptr), m_endFrame(nullptr), m_presentFrame(nullptr),
-      m_apiCompatible(false) {}
+    : m_module(nullptr), m_initialize(nullptr), m_shutdown(nullptr), m_getApiVersion(nullptr),
+      m_isApiCompatible(nullptr), m_isInitialized(nullptr), m_getCapabilities(nullptr), m_getVersion(nullptr),
+      m_getLastError(nullptr), m_isVulkanAvailable(nullptr), m_getAvailabilityReason(nullptr),
+      m_getAvailabilityReasonCode(nullptr), m_getInstallHelpUrl(nullptr), m_createSurfaceWithDesc(nullptr),
+      m_destroySurface(nullptr), m_beginFrame(nullptr), m_endFrame(nullptr), m_presentFrame(nullptr),
+      m_apiCompatible(false) {
+}
 
 VulkanRuntimeLoader::~VulkanRuntimeLoader() {
     Unload();
@@ -118,8 +115,7 @@ std::expected<void, std::string> VulkanRuntimeLoader::Load() {
     for (const auto& candidate : uniqueCandidates) {
         m_module = TryLoadModule(candidate);
         if (m_module != nullptr) {
-            spdlog::info("VulkanRuntimeLoader::Load: loaded runtime from {}",
-                         candidate.string());
+            spdlog::info("VulkanRuntimeLoader::Load: loaded runtime from {}", candidate.string());
             break;
         }
         auto attempt = candidate.string() + " (" + GetPlatformLoadError() + ")";
@@ -148,13 +144,11 @@ std::expected<void, std::string> VulkanRuntimeLoader::Load() {
     }
 
     auto apiVersion = m_getApiVersion();
-    m_apiCompatible = m_isApiCompatible(
-                          k_ExpectedApiVersion.major, k_ExpectedApiVersion.minor) == 1;
+    m_apiCompatible = m_isApiCompatible(k_ExpectedApiVersion.major, k_ExpectedApiVersion.minor) == 1;
     if (!m_apiCompatible) {
         m_lastError = "Vulkan runtime API version mismatch";
-        spdlog::error("VulkanRuntimeLoader::Load: expected {}.{}, got {}.{}",
-                      k_ExpectedApiVersion.major, k_ExpectedApiVersion.minor,
-                      apiVersion.major, apiVersion.minor);
+        spdlog::error("VulkanRuntimeLoader::Load: expected {}.{}, got {}.{}", k_ExpectedApiVersion.major,
+                      k_ExpectedApiVersion.minor, apiVersion.major, apiVersion.minor);
         Unload();
         return std::unexpected(m_lastError);
     }
@@ -163,7 +157,8 @@ std::expected<void, std::string> VulkanRuntimeLoader::Load() {
 }
 
 void VulkanRuntimeLoader::Unload() {
-    if (m_module == nullptr) return;
+    if (m_module == nullptr)
+        return;
 
 #ifdef _WIN32
     FreeLibrary(reinterpret_cast<HMODULE>(m_module));
@@ -197,7 +192,8 @@ bool VulkanRuntimeLoader::IsLoaded() const {
 }
 
 bool VulkanRuntimeLoader::IsInitialized() const {
-    if (m_isInitialized == nullptr) return false;
+    if (m_isInitialized == nullptr)
+        return false;
     return m_isInitialized() == 1;
 }
 
@@ -206,7 +202,8 @@ bool VulkanRuntimeLoader::IsApiCompatible() const {
 }
 
 VulkanAIResult VulkanRuntimeLoader::Initialize() {
-    if (m_initialize == nullptr) return VULKANAI_ERROR_INTERNAL;
+    if (m_initialize == nullptr)
+        return VULKANAI_ERROR_INTERNAL;
     return m_initialize();
 }
 
@@ -217,7 +214,8 @@ void VulkanRuntimeLoader::Shutdown() {
 }
 
 bool VulkanRuntimeLoader::IsVulkanAvailable() const {
-    if (m_isVulkanAvailable == nullptr) return false;
+    if (m_isVulkanAvailable == nullptr)
+        return false;
     return m_isVulkanAvailable() == 1;
 }
 
@@ -230,11 +228,10 @@ VulkanAIAvailabilityReasonCode VulkanRuntimeLoader::GetAvailabilityReasonCode() 
 
 VulkanAIRuntimeCapabilities VulkanRuntimeLoader::GetCapabilities() const {
     if (m_getCapabilities == nullptr) {
-        return VulkanAIRuntimeCapabilities{
-            .apiVersion = VulkanAIApiVersion{0, 0},
-            .runtimeVersion = VulkanAIVersion{0, 0, 0},
-            .isVulkanAvailable = 0,
-            .reasonCode = VULKANAI_REASON_UNKNOWN};
+        return VulkanAIRuntimeCapabilities{.apiVersion = VulkanAIApiVersion{0, 0},
+                                           .runtimeVersion = VulkanAIVersion{0, 0, 0},
+                                           .isVulkanAvailable = 0,
+                                           .reasonCode = VULKANAI_REASON_UNKNOWN};
     }
 
     return m_getCapabilities();
@@ -285,27 +282,32 @@ std::string VulkanRuntimeLoader::GetInstallHelpUrl() const {
 }
 
 VulkanAISurfaceHandle VulkanRuntimeLoader::CreateSurface(const VulkanAISurfaceDesc& desc) const {
-    if (m_createSurfaceWithDesc == nullptr) return nullptr;
+    if (m_createSurfaceWithDesc == nullptr)
+        return nullptr;
     return m_createSurfaceWithDesc(&desc);
 }
 
 void VulkanRuntimeLoader::DestroySurface(VulkanAISurfaceHandle surface) const {
-    if (m_destroySurface == nullptr) return;
+    if (m_destroySurface == nullptr)
+        return;
     m_destroySurface(surface);
 }
 
 VulkanAIResult VulkanRuntimeLoader::BeginFrame(VulkanAISurfaceHandle surface) const {
-    if (m_beginFrame == nullptr) return VULKANAI_ERROR_INTERNAL;
+    if (m_beginFrame == nullptr)
+        return VULKANAI_ERROR_INTERNAL;
     return m_beginFrame(surface);
 }
 
 VulkanAIResult VulkanRuntimeLoader::EndFrame(VulkanAISurfaceHandle surface) const {
-    if (m_endFrame == nullptr) return VULKANAI_ERROR_INTERNAL;
+    if (m_endFrame == nullptr)
+        return VULKANAI_ERROR_INTERNAL;
     return m_endFrame(surface);
 }
 
 VulkanAIResult VulkanRuntimeLoader::PresentFrame(VulkanAISurfaceHandle surface) const {
-    if (m_presentFrame == nullptr) return VULKANAI_ERROR_INTERNAL;
+    if (m_presentFrame == nullptr)
+        return VULKANAI_ERROR_INTERNAL;
     return m_presentFrame(surface);
 }
 
@@ -316,8 +318,7 @@ std::expected<void, std::string> VulkanRuntimeLoader::ResolveSymbols() {
 
     auto loadSymbol = [this](const char* symbolName) -> void* {
 #ifdef _WIN32
-        return reinterpret_cast<void*>(GetProcAddress(
-            reinterpret_cast<HMODULE>(m_module), symbolName));
+        return reinterpret_cast<void*>(GetProcAddress(reinterpret_cast<HMODULE>(m_module), symbolName));
 #else
         return dlsym(m_module, symbolName);
 #endif
@@ -326,16 +327,15 @@ std::expected<void, std::string> VulkanRuntimeLoader::ResolveSymbols() {
     m_initialize = reinterpret_cast<InitializeFn>(loadSymbol("VulkanAI_Initialize"));
     m_shutdown = reinterpret_cast<ShutdownFn>(loadSymbol("VulkanAI_Shutdown"));
     m_getApiVersion = reinterpret_cast<GetApiVersionFn>(loadSymbol("VulkanAI_GetApiVersion"));
-    m_isApiCompatible =
-        reinterpret_cast<IsApiCompatibleFn>(loadSymbol("VulkanAI_IsApiCompatible"));
+    m_isApiCompatible = reinterpret_cast<IsApiCompatibleFn>(loadSymbol("VulkanAI_IsApiCompatible"));
     m_isInitialized = reinterpret_cast<IsInitializedFn>(loadSymbol("VulkanAI_IsInitialized"));
     m_getCapabilities = reinterpret_cast<GetCapabilitiesFn>(loadSymbol("VulkanAI_GetCapabilities"));
     m_isVulkanAvailable = reinterpret_cast<IsVulkanAvailableFn>(loadSymbol("VulkanAI_IsVulkanAvailable"));
     m_getVersion = reinterpret_cast<GetVersionFn>(loadSymbol("VulkanAI_GetVersion"));
     m_getLastError = reinterpret_cast<GetLastErrorFn>(loadSymbol("VulkanAI_GetLastError"));
     m_getAvailabilityReason = reinterpret_cast<GetAvailabilityReasonFn>(loadSymbol("VulkanAI_GetAvailabilityReason"));
-    m_getAvailabilityReasonCode = reinterpret_cast<GetAvailabilityReasonCodeFn>(
-        loadSymbol("VulkanAI_GetAvailabilityReasonCode"));
+    m_getAvailabilityReasonCode =
+        reinterpret_cast<GetAvailabilityReasonCodeFn>(loadSymbol("VulkanAI_GetAvailabilityReasonCode"));
     m_getInstallHelpUrl = reinterpret_cast<GetInstallHelpUrlFn>(loadSymbol("VulkanAI_GetInstallHelpUrl"));
     m_createSurfaceWithDesc = reinterpret_cast<CreateSurfaceWithDescFn>(loadSymbol("VulkanAI_CreateSurfaceWithDesc"));
     m_destroySurface = reinterpret_cast<DestroySurfaceFn>(loadSymbol("VulkanAI_DestroySurface"));
@@ -343,16 +343,12 @@ std::expected<void, std::string> VulkanRuntimeLoader::ResolveSymbols() {
     m_endFrame = reinterpret_cast<EndFrameFn>(loadSymbol("VulkanAI_EndFrame"));
     m_presentFrame = reinterpret_cast<PresentFrameFn>(loadSymbol("VulkanAI_PresentFrame"));
 
-    if (m_initialize == nullptr || m_shutdown == nullptr ||
-        m_getApiVersion == nullptr || m_isApiCompatible == nullptr ||
-        m_isInitialized == nullptr || m_getCapabilities == nullptr ||
-        m_isVulkanAvailable == nullptr ||
-        m_getVersion == nullptr || m_getLastError == nullptr ||
+    if (m_initialize == nullptr || m_shutdown == nullptr || m_getApiVersion == nullptr ||
+        m_isApiCompatible == nullptr || m_isInitialized == nullptr || m_getCapabilities == nullptr ||
+        m_isVulkanAvailable == nullptr || m_getVersion == nullptr || m_getLastError == nullptr ||
         m_getAvailabilityReason == nullptr || m_getAvailabilityReasonCode == nullptr ||
-        m_getInstallHelpUrl == nullptr ||
-        m_createSurfaceWithDesc == nullptr || m_destroySurface == nullptr ||
-        m_beginFrame == nullptr || m_endFrame == nullptr ||
-        m_presentFrame == nullptr) {
+        m_getInstallHelpUrl == nullptr || m_createSurfaceWithDesc == nullptr || m_destroySurface == nullptr ||
+        m_beginFrame == nullptr || m_endFrame == nullptr || m_presentFrame == nullptr) {
         m_lastError = "Failed to resolve one or more Vulkan runtime symbols";
         spdlog::error("VulkanRuntimeLoader::ResolveSymbols: {}", m_lastError);
         return std::unexpected(m_lastError);

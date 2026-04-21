@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
-#include <unordered_set>
 
 #include <spdlog/spdlog.h>
 
@@ -14,16 +14,14 @@
 
 namespace {
 
-constexpr VulkanAIApiVersion k_ApiVersion{
-    VULKANAI_API_VERSION_MAJOR,
-    VULKANAI_API_VERSION_MINOR};
+constexpr VulkanAIApiVersion k_ApiVersion{VULKANAI_API_VERSION_MAJOR, VULKANAI_API_VERSION_MINOR};
 
 std::mutex g_mutex;
 bool g_initialized = false;
 std::string g_lastError;
 std::string g_availabilityReason;
 VulkanAIAvailabilityReasonCode g_reasonCode = VULKANAI_REASON_NONE;
-std::unordered_set<void*> g_surfaces;
+std::set<void*> g_surfaces;
 #ifdef VULKANAI_HAS_VULKAN
 std::unique_ptr<Render::VulkanContext> g_context;
 #endif
@@ -45,7 +43,8 @@ void SetError(std::string message) {
     spdlog::warn("VulkanAI: {}", g_lastError);
 }
 
-struct SurfaceState {
+struct SurfaceState
+{
     uint32_t width = 0;
     uint32_t height = 0;
     uintptr_t nativeWindowHandle = 0;
@@ -107,17 +106,15 @@ VulkanAIApiVersion VulkanAI_GetApiVersion(void) {
 
 int VulkanAI_IsApiCompatible(uint32_t requestedMajor, uint32_t requestedMinor) {
     auto runtimeVersion = VulkanAI_GetApiVersion();
-    return runtimeVersion.major == requestedMajor &&
-           runtimeVersion.minor == requestedMinor;
+    return runtimeVersion.major == requestedMajor && runtimeVersion.minor == requestedMinor;
 }
 
 VulkanAIRuntimeCapabilities VulkanAI_GetCapabilities(void) {
     std::lock_guard lock(g_mutex);
-    return VulkanAIRuntimeCapabilities{
-        .apiVersion = VulkanAI_GetApiVersion(),
-        .runtimeVersion = VulkanAI_GetVersion(),
-        .isVulkanAvailable = VulkanAI_IsVulkanAvailable(),
-        .reasonCode = g_reasonCode};
+    return VulkanAIRuntimeCapabilities{.apiVersion = VulkanAI_GetApiVersion(),
+                                       .runtimeVersion = VulkanAI_GetVersion(),
+                                       .isVulkanAvailable = VulkanAI_IsVulkanAvailable(),
+                                       .reasonCode = g_reasonCode};
 }
 
 int VulkanAI_IsInitialized(void) {
@@ -137,10 +134,8 @@ int VulkanAI_IsVulkanAvailable(void) {
 }
 
 VulkanAIVersion VulkanAI_GetVersion(void) {
-    return VulkanAIVersion{
-        static_cast<uint32_t>(CLIADE_VERSION_MAJOR),
-        static_cast<uint32_t>(CLIADE_VERSION_MINOR),
-        static_cast<uint32_t>(CLIADE_VERSION_PATCH)};
+    return VulkanAIVersion{static_cast<uint32_t>(CLIADE_VERSION_MAJOR), static_cast<uint32_t>(CLIADE_VERSION_MINOR),
+                           static_cast<uint32_t>(CLIADE_VERSION_PATCH)};
 }
 
 const char* VulkanAI_GetLastError(void) {
@@ -210,9 +205,11 @@ VulkanAISurfaceHandle VulkanAI_CreateSurface(uint32_t width, uint32_t height) {
 
 void VulkanAI_DestroySurface(VulkanAISurfaceHandle surface) {
     std::lock_guard lock(g_mutex);
-    if (surface == nullptr) return;
+    if (surface == nullptr)
+        return;
 
-    if (!g_surfaces.erase(surface)) return;
+    if (!g_surfaces.erase(surface))
+        return;
     delete static_cast<SurfaceState*>(surface);
 }
 

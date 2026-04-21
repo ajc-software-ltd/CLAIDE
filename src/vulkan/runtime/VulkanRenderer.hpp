@@ -7,13 +7,14 @@
 
 namespace Render {
 
-class VulkanRenderer {
-public:
+class VulkanRenderer
+{
+  public:
     std::expected<void, std::string> Initialize(VulkanSwapchain* swapchain);
     std::expected<void, std::string> RenderFrame();
     void Shutdown();
 
-private:
+  private:
     VulkanSwapchain* m_swapchain{nullptr};
 };
 

@@ -38,24 +38,24 @@ TEST_CASE("MipmapGenerator GetLevel returns correct data", "[mipmap]") {
     std::vector<std::uint8_t> input(4 * 4 * 4, 200);
     auto mipmaps = MipmapGenerator::Generate(input.data(), 4, 4, 4);
 
-    int w = 0, h = 0;
-    auto data = MipmapGenerator::GetLevel(mipmaps, 0, w, h, 4);
+    ImageSize size{};
+    auto data = MipmapGenerator::GetLevel(mipmaps, 0, size, 4);
 
     REQUIRE(data != nullptr);
-    REQUIRE(w == 4);
-    REQUIRE(h == 4);
+    REQUIRE(size.width == 4);
+    REQUIRE(size.height == 4);
 }
 
 TEST_CASE("MipmapGenerator GetLevelCopy returns copy", "[mipmap]") {
     std::vector<std::uint8_t> input(4 * 4 * 4, 200);
     auto mipmaps = MipmapGenerator::Generate(input.data(), 4, 4, 4);
 
-    int w = 0, h = 0;
-    auto copy = MipmapGenerator::GetLevelCopy(mipmaps, 0, w, h, 4);
+    ImageSize size{};
+    auto copy = MipmapGenerator::GetLevelCopy(mipmaps, 0, size, 4);
 
     REQUIRE(copy.size() == 4 * 4 * 4);
-    REQUIRE(w == 4);
-    REQUIRE(h == 4);
+    REQUIRE(size.width == 4);
+    REQUIRE(size.height == 4);
 }
 
 TEST_CASE("MipmapGenerator handles non-square images", "[mipmap]") {
