@@ -51,13 +51,13 @@ When the user asks to merge a branch into `main`, complete all of the following 
 # Preflight Ubuntu/Debian prerequisites (installs missing packages, including ninja-build)
 ./scripts/bootstrap_prereqs_ubuntu.sh
 
-# Configure (default preset does NOT require Ninja)
+# Configure (primary fast preset uses Ninja)
 cmake --preset dev
 cmake --build build
 
-# Optional faster configure when Ninja is installed
-cmake --preset dev-ninja
-cmake --build build-ninja
+# Fallback configure when Ninja is unavailable
+cmake --preset dev-make
+cmake --build build-make
 
 # Run a single test
 ctest --test-dir build -R <test_name_pattern> --output-on-failure
