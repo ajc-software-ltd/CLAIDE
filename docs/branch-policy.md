@@ -1,19 +1,12 @@
 # Branch and Merge Policy
 
 ## Core branches
-- `main`: stable/release-only
-- `work`: integration branch
-
-## Runtime branches
-- `vulkan-runtime`
-- `ffmpeg-runtime`
-- `miniaudio-runtime`
-- `wxwidgets-runtime` (optional)
+- `main`: the only long-lived branch moving forward.
 
 ## Merge flow
-1. runtime branch -> `work`
-2. integration validation on `work`
-3. `work` -> `main` only on explicit approval
+1. open feature/fix branch from `main`
+2. validate in that short-lived branch
+3. merge/cherry-pick into `main` on explicit approval
 
 ## Promotion checks
 - configure/build succeeds

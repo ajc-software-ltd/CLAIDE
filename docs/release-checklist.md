@@ -2,6 +2,10 @@
 
 Use this checklist whenever milestone status or release metadata changes.
 
+Branch policy note:
+- Use `main` as the single long-lived branch.
+- Create short-lived branches only for implementation work, then merge back to `main`.
+
 ## Milestone traceability checklist
 
 - [ ] `milestones.md` reflects the new status and milestone description.
