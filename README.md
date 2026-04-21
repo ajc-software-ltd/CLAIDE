@@ -8,13 +8,13 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.106-dev`**
+- Current build version: **`0.0.109-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.106-dev`**
+- Example for current state: **`v0.0.109-dev`**
 
 ## Repository Rename Readiness
 
-- Pre-rename checklist: `docs/repo-rename-readiness.md`
+- Post-rename checklist: `docs/repo-rename-readiness.md`
 
 ---
 
@@ -105,7 +105,10 @@ Install via vcpkg or package manager:
 # or (same flow)
 make dev-build
 
-# Configure
+# Configure (recommended preset for LSP/clangd compatibility)
+cmake --preset dev
+
+# Or manual configure
 cmake -B build -DCMAKE_BUILD_TYPE=Debug
 
 # Build
@@ -160,7 +163,10 @@ cmake --build build --target format
 # Check formatting
 cmake --build build --target format-check
 
-# Static analysis
+# Fast local static analysis (changed files only)
+cmake --build build --target lint-fast
+
+# Full static analysis
 cmake --build build --target lint
 
 # Full validation (format + lint + test)
@@ -254,3 +260,11 @@ CLAIDE/
 ## License
 
 AJC-Software Ltd © 2026
+
+
+### clangd / OpenCode / LM Studio LSP troubleshooting
+
+- Configure with `cmake --preset dev` so `build/compile_commands.json` is generated.
+- Sync compile database to repo root for language servers: `cmake --build build --target refresh-compile-commands`.
+- Restart the language server if diagnostics do not appear after reconfigure.
+- `.clangd`, `.clang-tidy`, and `.clang-format` in repo root define diagnostics/format behavior.

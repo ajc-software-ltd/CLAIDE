@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(CLAIDE VERSION 0.0.106 LANGUAGES CXX)
+project(CLAIDE VERSION 0.0.109 LANGUAGES CXX)
 
-set(CLAIDE_VERSION_STRING "0.0.106-dev")
+set(CLAIDE_VERSION_STRING "0.0.109-dev")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -273,6 +273,26 @@ if(CLANG_TIDY)
             ${CMAKE_BINARY_DIR}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Running clang-tidy"
+    )
+
+    add_custom_target(lint-fast
+        COMMAND ${CLANG_TIDY} --version
+        COMMAND ${CMAKE_COMMAND} -E env
+            CLANG_TIDY_BIN=${CLANG_TIDY}
+            ${CMAKE_SOURCE_DIR}/scripts/run_lint_changed.sh
+            ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy on changed files"
+    )
+endif()
+
+
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+    add_custom_target(refresh-compile-commands
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_BINARY_DIR}/compile_commands.json
+            ${CMAKE_SOURCE_DIR}/compile_commands.json
+        COMMENT "Sync compile_commands.json to repository root for clangd/LSP"
     )
 endif()
 

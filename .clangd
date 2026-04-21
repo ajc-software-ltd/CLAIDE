@@ -1,0 +1,7 @@
+CompileFlags:
+  CompilationDatabase: build
+
+Diagnostics:
+  ClangTidy:
+    Add: [cppcoreguidelines-*, modernize-*, readability-*, bugprone-*, performance-*]
+    Remove: [modernize-use-std-print]

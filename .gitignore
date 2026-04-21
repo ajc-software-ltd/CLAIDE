@@ -1,4 +1,4 @@
-# CLIADE NotePad — .gitignore
+# CLAIDE NotePad — .gitignore
 
 # CMake build directories
 cmake-build-debug/
