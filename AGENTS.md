@@ -84,6 +84,14 @@ cmake --build build --target validate
 cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON
 ```
 
+## Validation Scope Policy (Required)
+
+- Do **not** run full configure/build/test/lint for metadata-only updates (version bumps, tags, changelog/docs-only edits).
+- For metadata-only updates, run lightweight checks only:
+  - `git diff --name-only` (confirm touched files are metadata/docs/version files)
+  - targeted grep checks for version consistency (for example `rg -n "0\\.0\\.<N>-dev" ...`)
+- Run compile/test/lint only when C++ source, headers, CMake logic, or scripts affecting build/test behavior are changed.
+
 ---
 
 ## Code Style

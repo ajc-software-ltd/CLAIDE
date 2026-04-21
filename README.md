@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.112-dev`**
+- Current build version: **`0.0.113-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.112-dev`**
+- Example for current state: **`v0.0.113-dev`**
 
 ## Repository Rename Readiness
 
@@ -193,6 +193,7 @@ cmake --build build --target validate
 - Operational release checklist: `docs/release-checklist.md`
 - Branch/merge workflow: `docs/branch-policy.md`
 - Required merge validation gates: `build_with_prereqs` + `format-check` + `lint` + full `ctest`
+- Scope rule: for docs/version/tag-only changes, skip full rebuild and run lightweight consistency checks only (`git diff --name-only` + targeted `rg`).
 
 ## Project Structure
 
