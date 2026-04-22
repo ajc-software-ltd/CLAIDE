@@ -5,11 +5,11 @@ This document maps milestone progress to concrete commits and release tags.
 ## Versioning policy (current)
 
 - Versioning now follows commit-count semantics: `v0.0.<commit_count>-dev`.
-- Current baseline version: `v0.0.124-dev`.
+- Current baseline version: `v0.0.125-dev`.
 
 ## Pre-repo rename checkpoint
 
-- Target checkpoint tag: `v0.0.124-dev`
+- Target checkpoint tag: `v0.0.125-dev`
 - Purpose: project-name consistency release after repository rename to `CLAIDE`.
 - Branch policy moving forward: `main` only for long-lived development.
 
