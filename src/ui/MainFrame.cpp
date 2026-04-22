@@ -45,7 +45,7 @@
 namespace Ui {
 
 #ifndef CLAIDE_VERSION_STRING
-#define CLAIDE_VERSION_STRING "0.0.132-dev"
+#define CLAIDE_VERSION_STRING "0.0.133-dev"
 #endif
 
 namespace {

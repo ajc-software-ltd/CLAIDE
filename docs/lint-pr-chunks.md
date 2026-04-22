@@ -62,6 +62,6 @@ If additional follow-up work is needed after the planned chunks, that follow-up 
 - ✅ Chunk C (`0.0.128-dev`) UI lint scope executed.
 - ✅ Chunk D (`0.0.129-dev`) Vulkan/render lint scope executed.
 - ✅ Chunk E (`0.0.130-dev`) tests lint scope executed.
-- ⏳ Chunk F (`0.0.131-dev`) docs/workflow cleanup (this revision).
-- ⏳ Chunk G (`0.0.132-dev`) pre-final reconciliation.
-- ⏳ Final full-sweep release (`0.0.133-dev`).
+- ✅ Chunk F (`0.0.131-dev`) docs/workflow cleanup completed.
+- ✅ Chunk G (`0.0.132-dev`) pre-final reconciliation completed.
+- ✅ Final full-sweep release (`0.0.133-dev`) completed with zero lint errors (Bucket A = 0 across scopes).
