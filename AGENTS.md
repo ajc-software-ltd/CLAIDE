@@ -77,6 +77,12 @@ cmake --build build --target format-check
 # Static analysis
 cmake --build build --target lint
 
+# Scoped static analysis (changed files by module)
+cmake --build build --target lint-core
+cmake --build build --target lint-ui
+cmake --build build --target lint-vulkan
+cmake --build build --target lint-tests
+
 # Full validation (format + lint + test)
 cmake --build build --target validate
 
@@ -326,3 +332,9 @@ Any known limitations or follow-up concerns.
 If there is a conflict between simplicity and unnecessary framework complexity, choose simplicity.
 
 The target product is **CLAIDE AI Content Creator** — a reliable, commercial-friendly, cross-platform AIO IDE in **C++23**, designed for **Linux x64** and **Windows x64**, developed comfortably in **CLion**, with a workflow compatible with **CLion + OpenCode + LM Studio**. It combines code editing, media viewing (AVIM Canvas), and AI-powered content generation in one unified workspace.
+
+
+## Lint PR chunking policy
+
+- Land lint work in small module-scoped PR chunks: core/platform, ui, vulkan, tests, then final validation.
+- Only push after the final validation chunk unless explicitly requested otherwise.
