@@ -280,6 +280,76 @@ void caseSmokeReopenParts() {
   require(zip.hasEntry("/word/document.xml"), FailureKind::Packaging, "missing document xml");
 }
 
+void caseLoadSaveReloadRoundTrip() {
+  md::Document source;
+  auto section = source.addSection();
+  auto p = section->addParagraph();
+  p->prop_.style_ = "Heading1";
+  p->addRichText("Round trip");
+  p->addRichText("\nwith break\tand tab");
+  const md::NumberingId listId = source.addNumberedListDefinition();
+  p->numId_ = listId;
+  p->level_ = md::NumberingLevel::Level2;
+  section->addTable(2, 2)->merge(0, 0, 2, 1);
+
+  const fs::path original = outputRoot() / "roundtrip_original.docx";
+  const fs::path saved = outputRoot() / "roundtrip_saved.docx";
+  source.saveAs(original.string());
+
+  md::Document loaded;
+  loaded.load(original.string());
+  loaded.saveAs(saved.string());
+
+  md::Document reloaded;
+  reloaded.load(saved.string());
+
+  const auto sections = reloaded.sections();
+  require(!sections.empty(), FailureKind::Semantic, "expected non-empty sections after reload");
+  const auto blocks = sections.front()->blocks();
+  require(blocks.size() >= 2, FailureKind::Semantic, "expected paragraph+table after reload");
+
+  auto para = std::dynamic_pointer_cast<md::Paragraph>(blocks.front());
+  require(static_cast<bool>(para), FailureKind::Semantic, "expected first block paragraph after reload");
+  require(para->numId_ > 0, FailureKind::Semantic, "expected numbering linkage after reload");
+  require(!para->runs().empty(), FailureKind::Semantic, "expected rich text runs after reload");
+
+  auto table = std::dynamic_pointer_cast<md::Table>(blocks.back());
+  require(static_cast<bool>(table), FailureKind::Semantic, "expected second block table after reload");
+  const auto mergedCell = table->cellAt(0, 0);
+  require(mergedCell->rect().rows() == 2 && mergedCell->rect().cols() == 1,
+          FailureKind::Semantic, "expected merged cell preserved after reload");
+}
+
+void caseImportFromGeneratedCorpus() {
+  casePlainParagraphs();
+  caseRichText();
+  caseLists();
+  caseTablesAndMerges();
+  casePictures();
+  caseStyles();
+  caseMultiSection();
+
+  const std::vector<fs::path> docs = {
+      outputRoot() / "plain.docx",
+      outputRoot() / "rich_text.docx",
+      outputRoot() / "lists.docx",
+      outputRoot() / "tables.docx",
+      outputRoot() / "picture.docx",
+      outputRoot() / "styles.docx",
+      outputRoot() / "multisection.docx",
+  };
+
+  for (const auto& path : docs) {
+    md::Document loaded;
+    loaded.load(path.string());
+    const auto sections = loaded.sections();
+    require(!sections.empty(), FailureKind::Semantic, "import produced empty section list: " + path.string());
+    const fs::path resaved = outputRoot() / ("resave_" + path.filename().string());
+    loaded.saveAs(resaved.string());
+    ensurePartsExist(resaved, {"/[Content_Types].xml", "/_rels/.rels", "/word/document.xml"});
+  }
+}
+
 void runCase(const std::string& name, const std::function<void()>& fn) {
   try {
     fn();
@@ -302,6 +372,8 @@ int main() {
       {"paragraph and character styles", caseStyles},
       {"multi-section document", caseMultiSection},
       {"create-save-reopen package parts", caseSmokeReopenParts},
+      {"load-save-reload round trip", caseLoadSaveReloadRoundTrip},
+      {"import from generated corpus", caseImportFromGeneratedCorpus},
   };
 
   for (const auto& [name, fn] : cases) {

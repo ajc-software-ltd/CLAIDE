@@ -53,7 +53,7 @@ namespace MINIDOCX_NAMESPACE
     void initRelationships();
 
     void writeOfficeDocument();
-    //void readOfficeDocument();
+    void readOfficeDocument();
 
   private:
     std::list<SectionPointer> sections_;
@@ -78,6 +78,7 @@ namespace MINIDOCX_NAMESPACE
     std::map<std::string, CharacterStyle> characterStyles_;
 
     void writeStyles();
+    void readStyles();
 
   public:
     void addParagraphStyle(const ParagraphStyle& style);
@@ -92,6 +93,7 @@ namespace MINIDOCX_NAMESPACE
     std::map<NumberingId, NumberingDefinition> numDefinitions_;
 
     void writeNumDefinitions();
+    void readNumDefinitions();
 
   public:
     // Adds abstract numbering definition.

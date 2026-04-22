@@ -17,6 +17,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <optional>
 
 
 namespace pugi { class xml_document; }
@@ -37,6 +38,17 @@ namespace MINIDOCX_NAMESPACE
   {
   public:
     PackageProperties prop_;
+
+    std::string readPartText(const PartName& name)
+    {
+      return extractFileToString(name);
+    }
+
+    Buffer readPartBinary(const PartName& name)
+    {
+      const std::string raw = extractFileToString(name);
+      return Buffer(raw.begin(), raw.end());
+    }
 
   protected:
     void init();
@@ -143,7 +155,30 @@ namespace MINIDOCX_NAMESPACE
     inline void readRelationshipsFor(const PartName& src)
     {
       initRelationshipsFor(src);
-      readRelationships(src, relationships_[src]);
+      readRelationships(toRelationshipsPartName(src), relationships_[src]);
+    }
+
+
+  public:
+    std::optional<Relationship> findRelationshipFor(const PartName& src, const RelationshipId id) const
+    {
+      const auto relsIt = relationships_.find(src);
+      if (relsIt == relationships_.end())
+        return std::nullopt;
+
+      const auto relIt = relsIt->second.map_.find(id);
+      if (relIt == relsIt->second.map_.end())
+        return std::nullopt;
+
+      return relIt->second;
+    }
+
+    std::optional<Relationship> findPackageRelationship(const RelationshipId id) const
+    {
+      const auto relIt = packageRelationships_.map_.find(id);
+      if (relIt == packageRelationships_.map_.end())
+        return std::nullopt;
+      return relIt->second;
     }
 
   private:
@@ -153,7 +188,7 @@ namespace MINIDOCX_NAMESPACE
     void writeCoreProperties();
     void writeExtendedProperties();
 
-    //void readCoreProperties();
-    //void readExtendedProperties();
+    void readCoreProperties();
+    void readExtendedProperties();
   };
 }
