@@ -9,6 +9,7 @@ _Last updated: 2026-04-22_
 - PR9: public API contract clarification and surface-boundary tightening (no new engine features).
 - PR10: pre-integration readiness gate and validation contract (no new engine features).
 - PR11: optional out-of-process Python provider bridge (companion layer, not core replacement).
+- PR12: Python bridge hardening (explicit pathing, probing, protocol validation, normalized errors, provenance).
 
 ## Public Usage Contract (Current)
 
@@ -23,6 +24,7 @@ _Last updated: 2026-04-22_
 
 ## Optional Provider Bridge (Current)
 
+- Bridge hardening: explicit launch config, capability probing, versioned protocol validation, normalized errors
 - Bridge model: out-of-process Python worker with explicit request/response payloads
 - Build default: disabled (`MINIDOCX_ENABLE_PYTHON_BRIDGE=OFF`)
 - Companion providers: smoke, mammoth export, docxcompose append, optional lxml expert workflows
@@ -72,7 +74,7 @@ _Last updated: 2026-04-22_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR11)
+## Next Likely Chunks (After PR12)
 
 - Continue module-scoped tests and docs hardening around existing surfaces
 - Keep contract language consistent across headers/docs/examples as APIs evolve

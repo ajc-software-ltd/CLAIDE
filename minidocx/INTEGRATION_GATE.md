@@ -52,6 +52,8 @@ When building with `MINIDOCX_ENABLE_PYTHON_BRIDGE=ON`:
 1. `minidocx.python_bridge` test must pass.
 2. Probe and smoke operations must return deterministic results.
 3. Missing third-party Python dependencies must return actionable provider-unavailable errors (not crashes).
+4. Protocol version/schema validation failures must return deterministic bridge errors.
+5. Provenance for provider-backed responses must be explicit.
 
 ## Branch Validation Commands
 
@@ -84,5 +86,5 @@ The following remain out of scope:
 
 ## Change Policy
 
-PR10/PR11 are validation/process and optional-provider hardening only.
+PR10/PR11/PR12 are validation/process and optional-provider hardening only.
 Do not use this gate document to introduce unsupported engine capability claims.

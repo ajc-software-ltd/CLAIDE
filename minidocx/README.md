@@ -64,6 +64,14 @@ This branch exposes a layered public surface: low-level model APIs plus higher-l
 
 Bridge failures are surfaced as explicit response codes; missing Python/provider dependencies do not break core engine use.
 
+Bridge hardening guarantees (PR12):
+
+- Explicit launch strategy only: either `workerExecutablePath`, or `pythonExecutablePath + workerScriptPath`
+- Protocol version + schema validation on request/response
+- Deterministic normalized bridge error surface
+- Capability probe reports provider availability, versions, and capabilities before execution
+- Result provenance indicates provider-assisted origin
+
 ## Validation & Readiness Gate (PR10)
 
 `minidocx` now defines a branch-local readiness contract.

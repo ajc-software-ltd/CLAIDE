@@ -39,6 +39,23 @@ The Python bridge is an optional out-of-process provider layer.
 
 Python dependencies are discovered at runtime by the worker and reported deterministically as availability or provider-unavailable errors.
 
+### Explicit launch configuration
+
+PR12 requires explicit worker launch configuration.
+
+Use either:
+- `workerExecutablePath`
+- or `pythonExecutablePath` + `workerScriptPath`
+
+No implicit current-working-directory or hidden fallback scanning is part of the public bridge contract.
+
+### Capability probing and error normalization
+
+Always call `probePythonProviders` before provider execution when bridge mode is enabled.
+The bridge normalizes failures into a stable error taxonomy (`BridgeUnavailable`, `WorkerLaunchFailed`, `ProviderUnavailable`, `ProtocolMismatch`, `MalformedResponse`, etc.).
+
+Bridge responses include provenance metadata so provider-assisted outputs are not confused with native core engine behavior.
+
 ## Branch Validation Flow (PR10)
 
 Use the branch gate commands for repeatable health checks:
