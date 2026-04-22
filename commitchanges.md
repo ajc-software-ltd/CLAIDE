@@ -2,70 +2,52 @@
 
 **Date**: 2026-04-22  
 **Author**: AJC-Software Ltd  
-**Version**: v0.0.143-dev  
+**Version**: v0.0.144-dev  
 **Status**: Ready to push to GitHub
 
 ---
 
-## Summary
+## Auto Summary
 
-### minidocx Integration
+### Branch policy cleanup
 
-- **Library**: MS Word document manipulation library (.docx support)
-- **Integration**: Refactored for use with CLAIDE
-- **Files Modified**: 38 files (headers and source)
-- **Version Updated**: 0.0.140-dev → 0.0.143-dev
+- Removed remaining project-facing references that could be confused with deprecated legacy branch naming.
+- Kept repository policy aligned to `main` as the active long-lived branch.
 
-### Version Updates
+### Version updates
 
-All version references updated across the codebase:
-- `src/ui/MainFrame.cpp` - CLAIDE_VERSION_STRING
-- `CMakeLists.txt` - Project version
-- `README.md` - Build version documentation
-- `RELEASES.md` - Release baseline
-- `milestones.md` - Tag range
-
-### Files Modified
-
-**CLAIDE Core (5 files):**
+All active version references were updated from `0.0.143-dev` to `0.0.144-dev`:
 - `CMakeLists.txt`
+- `src/ui/MainFrame.cpp`
 - `README.md`
 - `RELEASES.md`
 - `milestones.md`
-- `src/ui/MainFrame.cpp`
 
-**minidocx Library (38 files):**
-- `include/minidocx/minidocx.hpp`
-- `include/minidocx/word/main/*.hpp` (19 files)
-- `include/minidocx/word/main/properties/*.hpp` (8 files)
-- `include/minidocx/utils/*.hpp` (6 files)
-- `include/minidocx/packaging/*.hpp` (4 files)
-- `src/word/main/*.cpp` (4 files)
-- `src/packaging/*.cpp` (2 files)
-- `src/utils/*.cpp` (4 files)
-- `README.md`
+### Documentation refresh
+
+- Updated release and milestone docs to reflect `v0.0.144-dev`.
+- Rewrote this summary file to describe the current build/update scope.
 
 ---
 
 ## Verification
 
-- ✅ Version updated to 0.0.143-dev across all files
-- ✅ minidocx library refactored with CLAIDE branding
-- ✅ All 38 minidocx files updated
-- ✅ Commit ready for push
+- ✅ Version markers aligned to `v0.0.144-dev`
+- ✅ Documentation set updated for the new build version
+- ✅ Ready for local tag + push flow
 
 ---
 
 ## Commit Message
 
-```
-refactor(minidocx): integrate MS Word library with CLAIDE branding
+```text
+build: v0.0.144-dev docs refresh and main-branch cleanup
 ```
 
 ---
 
 ## Git Tag
 
-```
-v0.0.143-dev
+```text
+v0.0.144-dev
 ```
