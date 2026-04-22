@@ -1,75 +1,79 @@
+minidocx is a modern, free, open-source, cross-platform, lightweight C++20 library for manipulating Microsoft Word documents (`.docx`) from code, without requiring MS Office/WPS Office.
 
-minidocx is a modern, free, open-source, cross-platform, light-weight,
-and user-friendly C++20 library for manipulating Microsoft Word Document (.docx file)
-as described in [ECMA 376 5th edition](https://www.ecma-international.org/publications-and-standards/standards/ecma-376) or [ISO/IEC 29500-1:2016](https://www.iso.org/standard/71691.html) without installing MS Office or WPS Office.
+This branch has evolved from a basic create-and-save library into a layered document engine with read/write, inspection, style resolution, layout, and command-based editing APIs.
 
-## Features
+## Current Capability Summary
 
-- Section
-- Paragraph
-- Rich text
-- Table
-- Picture
-- Style
-- List
+### Core document model + DOCX read/write subset
+- Document / section / paragraph / rich-text / table / picture model
+- Supported subset authoring and round-trip load/save for current branch scope
 
-## Preview
+### I/O modes
+- File I/O: `load`, `saveAs`
+- Stream I/O: `loadFromStream`, `saveToStream`
+- Buffer I/O: `loadFromBuffer`, `saveToBuffer`
 
-Light Mode | Dark Mode
----------- | ---------
-![](./assets/screenshots/20250214232857.png) | ![](./assets/screenshots/20250214233038.png)
+### Semantic inspection/query APIs
+- Document statistics and listings (`inspection::summarize`, `list*`)
+- Text extraction (`inspection::extractVisibleText`)
 
-## Example
+### Computed-style resolution
+- Paragraph/run computed formatting resolution
+- Deterministic issue reporting for missing references/cycles
 
-Here's an example of how to use minidocx to create a .docx file.
+### Neutral layout generation
+- `inspection::buildLayout` produces page/content/node geometry structures
+- Intended as renderer-neutral layout data
 
-```cpp
-#include "minidocx/minidocx.hpp"
-#include <iostream>
+### Command-based editing
+- `editing::applyCommand` with command variants for structure/text/style/numbering/table/image updates
 
-int main()
-{
-  using namespace md;
-  try {
-    Document doc;
-    SectionPointer sect = doc.addSection();
+## Preferred Usage Guidance
 
-    ParagraphPointer para = sect->addParagraph();
-    para->prop_.align_ = Alignment::Centered;
+- **Direct model mutation** is suitable for low-level/manual authoring in trusted code.
+- **Command + inspection APIs** are preferred for deterministic higher-level workflows.
 
-    RichTextPointer rich = para->addRichText("Happy New Year!");
-    rich->prop_.fontSize_ = 32;
-    rich->prop_.color_ = "FF0000";
+## Out of Scope in This Branch (Current)
 
-    doc.saveAs("a.docx");
-  }
-  catch (const Exception& ex) {
-    std::cerr << ex.what() << std::endl;
-  }
-  return 0;
-}
-```
+- CLAIDE adapter integration
+- Vulkan/canvas bridge implementation
+- AI endpoint wiring
+- Full Microsoft Word parity
+- New DOCX families not yet supported here, including:
+  - comments
+  - tracked revisions
+  - footnotes / endnotes
+  - headers / footers
+  - text boxes
+  - charts
+  - equations
+  - mail merge
+
+## Examples
+
+Examples are in `minidocx/examples/` and include:
+- document creation/styling/media/table/list samples
+- inspection + command workflow sample (`inspection_workflow.cpp`)
 
 ## Building
 
-To build minidocx lib you'll need a C++20 compiler and CMake 3.28.
+To build minidocx you need C++20 and CMake 3.28.
 
 ```bash
 cd minidocx
 
-# Windows
-cmake --preset x64-win-msbuild-v143
-cmake --build --preset x64-win-msbuild-v143-debug
-./out/x64-win-msbuild-v143/bin/exe/Debug/myapp.exe
-
 # Linux
 cmake --preset x64-linux-ninja-gcc
 cmake --build --preset x64-linux-ninja-gcc-debug
-./out/x64-linux-ninja-gcc/bin/exe/myapp
+
+# Windows
+cmake --preset x64-win-msbuild-v143
+cmake --build --preset x64-win-msbuild-v143-debug
 ```
 
-A static library is built by default. If you want to use a shared build of minidocx, set the `BUILD_SHARED` CMake option to `true`.
+A static library is built by default. To build shared, set `BUILD_SHARED=ON`.
 
 ## Documentation
 
 - [User Guide](./guide.md)
+- [Branch Status](./BRANCH_STATUS.md)

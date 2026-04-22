@@ -1,153 +1,156 @@
-
 # User Guide
 
-Following sections describe necessary information and features supported by minidocx. 
-Please note this description may not be complete but limited to the most useful ones.
-If you want to find less common features, please check header files under `include` directory.
+This guide documents the currently supported minidocx branch capabilities.
+It is intentionally branch-scoped and does not claim full Microsoft Word parity.
+
+## Recommended Usage Style
+
+- **Direct mutation (Document/Section/Paragraph/Run APIs):** use for low-level, manual authoring where caller code fully controls the model.
+- **Command + inspection APIs:** prefer for deterministic higher-level workflows, scripted edits, and post-edit verification.
+
+In short: direct mutation is valid for trusted authoring paths; command/query is preferred for repeatable workflow logic.
 
 ## Measuring Units
 
-The measuring units used in the document mainly include point (pt), twentieth of a point (tw), 
-and English Metric Unit (emu), which are used to specify font size, page size, table width, etc.
-The relationship between them is shown in the table below.
+minidocx uses point (`pt`), twentieth of a point (`tw`), and English Metric Unit (`emu`) for page, paragraph, and drawing geometry.
 
 |   mm |   cm |   in |   pt |   tw |    emu |
-| ---: | ---: | ---: | ---: | ---: | -----: | 
+| ---: | ---: | ---: | ---: | ---: | -----: |
 |    1 |      |      |      |      |  36000 |
 |      |    1 |      |      |      | 360000 |
 | 25.4 | 2.54 |    1 |   72 | 1440 | 914400 |
 |      |      |      |    1 |   20 |  12700 |
 |      |      |      |      |    1 |    635 |
 
-For more information, 
-see [Lars Corneliussen's blog post](https://startbigthinksmall.wordpress.com/2010/01/04/points-inches-and-emus-measuring-units-in-office-open-xml/).
-
-## Data Structure
-
-A document consists of the following objects:
-
-- Document
-  - Section (Container)
-    - Paragraph (Block)
-      - Text (Inline)
-      - Picture (Inline)
-    - Table (Block)
-      - Cell (Container)
-
-A document consists of one or more sections. 
-A section is a special container that have a specific set of properties used to define the pages on which its contents will appear,
-such as page size, page orientation, and page margins.
-
-A container can contain two different types of block-level objects: paragraphs and tables.
- 
-A paragraph is a division of content that begins on a new line with a common set of properties,
-such as outline level, alignment, indentation, spacing, and borders.
-
-A paragraph can contain two different types of inline objects: texts and pictures.
-
-Tables are another type of block-level objects. A table is composed of a collection of cells. Cells are also containers.
-
 ## Headers and Namespace
 
-`minidocx.hpp` is the only one header you need to include in order to have access to all functions of minidocx
-and so that you do not have to care about the order of includes. All minidocx classes are member of the `md` namespace.
+Use the umbrella header:
 
 ```cpp
 #include "minidocx/minidocx.hpp"
 using namespace md;
 ```
 
-If you are linking against a precompiled shared build of minidocx, add `MINIDOCX_SHARED` compilation definition
-before including `minidocx.hpp`.
+If you link against a shared build, define `MINIDOCX_SHARED` before including the header.
 
 ## Error Handling
 
-All minidocx functions will throw an exception in case of an error. 
-You should catch the exception to either fix it or report back to the user.
-All exceptions minidocx throws are objects of the class `Exception`. That's why we simply catch `Exception` objects.
+minidocx throws `md::Exception` on failures in core load/save/model operations.
+Command workflow APIs return `editing::CommandResult` for explicit success/error handling.
 
 ```cpp
-try
-{
-  // Do something
+try {
+  // core API usage
 }
-catch (const Exception& ex)
-{
-  std::cerr << ex.what() << std::endl;
+catch (const md::Exception& ex) {
+  std::cerr << ex.what() << '\n';
 }
 ```
 
-## Documents
+## Core Document Model
 
-A document is represented by a `Document` object. To create a new document and save it as `example.docx`:
+A document is represented by `Document`, with nested sections and block/run content:
+
+- Document
+  - Section
+    - Paragraph
+      - RichText
+      - Picture
+    - Table
+      - Cell
+
+### Create and save
 
 ```cpp
-Document doc;
-// Do something
+md::Document doc;
+auto section = doc.addSection();
+section->addParagraph()->addRichText("Hello");
 doc.saveAs("example.docx");
 ```
 
-The `prop_` public data member of the `Document` object is a `PackageProperties` object, which is used to store additional information about the document, such as title, subject, author, and company.
+### Load/save I/O modes
 
 ```cpp
-doc.prop_.title_ = "New Year";
-doc.prop_.author_ = "John";
-doc.prop_.lastModifiedBy_ = "Peter";
+md::Document doc;
+doc.load("in.docx");
+
+auto bytes = doc.saveToBuffer();
+md::Document fromBuffer;
+fromBuffer.loadFromBuffer(bytes);
+
+std::stringstream ss;
+doc.saveToStream(ss);
+md::Document fromStream;
+fromStream.loadFromStream(ss);
 ```
 
-See other avaliable document properties in [PackageProperties](./include/minidocx/packaging/package.hpp).
+## Semantic Inspection / Query
 
-## Sections
+Inspection APIs are in `md::inspection`:
 
-A section is represented by a `Section` object which can be created by making a call to the `addSection()` method on a `Document` object:
+- `summarize`
+- `listSections`, `listParagraphs`, `listOutlineParagraphs`
+- `listRuns`, `listTables`, `listCells`, `listPictures`
+- `extractVisibleText`, `extractSectionVisibleText`
+- `hasNumbering`
+
+Example:
 
 ```cpp
-SectionPointer sect = doc.addSection();
+const auto stats = md::inspection::summarize(doc);
+const auto text = md::inspection::extractVisibleText(doc);
 ```
 
-The `prop_` public data member of the `Section` object is a `SectionProperties` object, which is used to store formatting properties for all pages in the section, such as page size, page orientaion, page margins, etc.
+## Computed-Style Resolution
+
+Style resolution APIs compute effective paragraph/run formatting based on style chains, numbering, and direct properties:
+
+- `resolveParagraphFormatting(document, paragraph)` or by `NodePath`
+- `resolveRunFormatting(document, paragraph, run)` or by `NodePath`
+
+These APIs also return `issues` for missing references and style cycles.
+
+## Neutral Layout Generation
+
+`md::inspection::buildLayout(doc)` returns a renderer-neutral `DocumentLayout` containing:
+
+- pages with page/content rectangles
+- line-level geometry
+- node references (paragraph/table/cell/picture/run)
+
+This layer provides deterministic geometry data and does not implement renderer integration itself.
+
+## Command-Based Editing
+
+`md::editing::applyCommand(document, command)` applies a typed edit and returns `CommandResult`.
+
+Representative command groups include:
+
+- structure: insert/delete section/paragraph/block
+- text/runs: replace paragraph text, insert/replace run text
+- media/tables: insert picture, create table, merge/split cell
+- styling: apply paragraph/character style, set paragraph/run properties
+- numbering/section: apply numbering, update section properties
+
+Example:
 
 ```cpp
-sect->prop_.size_.width_ = A3_W;
-sect->prop_.size_.height_ = A3_H;
-sect->prop_.landscape_ = true;
+md::editing::CommandResult r = md::editing::applyCommand(
+    doc, md::editing::ReplaceParagraphTextCommand{{0, 0, 0, false}, "Updated"});
+if (!r.success) {
+  std::cerr << r.message << '\n';
+}
 ```
 
-See other avaliable section properties in [SectionProperties](./include/minidocx/word/main/properties/section.hpp).
+## Current Non-Goals (Branch Scope)
 
-## Paragraphs
+The current minidocx branch does **not** include:
 
-A paragraph is represented by a `Paragraph` object which can be created by calling the `addParagraph()` method on a `Section` object:
+- CLAIDE adapter/UI/editor integration
+- Vulkan/canvas bridge implementation
+- AI endpoint wiring
+- full Microsoft Word parity
+- additional DOCX part/story families such as comments, tracked revisions,
+  footnotes/endnotes, headers/footers, charts, equations, text boxes, mail merge
 
-```cpp
-ParagraphPointer para = sect->addParagraph();
-```
-
-The `prop_` public data member of the `Paragraph` object is a `ParagraphProperties` object, which is used to store formatting properties for the paragraph, such as alignment, outline level, indentation, spacing, etc.
-
-```cpp
-para->prop_.align_ = Alignment::Centered;
-para->prop_.outlineLevel_ = OutlineLevel::Level1;
-```
-
-See other avaliable paragraph properties in [ParagraphProperties](./include/minidocx/word/main/properties/paragraph.hpp).
-
-## Rich Text
-
-A sequence of characters with a set of properties is represented by a `RichText` object which can be created by calling the `addRichText()` method on a `Paragraph` object with a piece of text encoded in UTF-8 as argument. Note that all characters, including font names mentioned below, should be encoded in UTF-8.
-
-```cpp
-RichTextPointer rich = para->addRichText(u8"Happy New Year!\n");
-```
-
-As you can see, the escape character `\n` (line break) is allowed. Note that the tab character `\t` is also allowed but the carriage return character `\r` is omitted. 
-
-The `prop_` public data member of the `RichText` object is a `RichTextProperties` object, which is used to store formatting properties for the text, such as font family, font size, font color, highlight, spacing, etc.
-
-```cpp
-rich->prop_.font_ = { .ascii_ = "Aria", .eastAsia_ = "Simsun" };
-rich->prop_.fontSize_ = 32;
-rich->prop_.color_ = "FF0000";
-```
-
-See other avaliable properties in [RichTextProperties](./include/minidocx/word/main/properties/richtext.hpp).
+For branch progress and next chunk direction, see [BRANCH_STATUS.md](./BRANCH_STATUS.md).
