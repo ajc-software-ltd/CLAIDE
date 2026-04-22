@@ -16,9 +16,9 @@ namespace MINIDOCX_NAMESPACE
 {
   struct PictureProperties
   {
-    // Drawing Object Size 绘制对象尺寸
+    // Drawing Object Size 
     // Specifies the size of the extents rectangle in EMUs.
-    // 以 EMUs 为单位指定范围矩形的尺寸。
+    //  EMUs 
     struct Extent {
       size_t width_ = 4 * 914400; // 4 inches
       size_t height_ = 4 * 914400; // 4 inches
@@ -32,7 +32,7 @@ namespace MINIDOCX_NAMESPACE
     } extent_;
 
 
-    // 裁剪
+    // 
     struct Cropping {
       double top_ = 0;
       double bottom_ = 0;
@@ -43,7 +43,7 @@ namespace MINIDOCX_NAMESPACE
     std::optional<Cropping> cropping_;
 
 
-    // 伸缩
+    // 
     struct Stretching {
       double top_ = 0;
       double bottom_ = 0;

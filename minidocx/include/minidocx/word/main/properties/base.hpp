@@ -16,22 +16,22 @@
 namespace MINIDOCX_NAMESPACE
 {
   enum class Alignment {
-    Left,       // 左对齐
-    Centered,   // 居中对齐
-    Right,      // 右对齐
-    Justified,  // 两端对齐
-    Distributed // 分散对齐
+    Left,       // 
+    Centered,   // 
+    Right,      // 
+    Justified,  // 
+    Distributed // 
   };
 
   enum class BorderStyle {
-    Single,    // 单实线
-    Double,    // 双实线
-    Triple,    // 三实线
-    Dotted,    // 点虚线
-    Dashed,    // 短划线
-    DotDash,   // 点划线
-    Wave,      // 波浪线
-    DoubleWave // 双波浪线
+    Single,    // 
+    Double,    // 
+    Triple,    // 
+    Dotted,    // 
+    Dashed,    // 
+    DotDash,   // 
+    Wave,      // 
+    DoubleWave // 
   };
 
   struct BorderProperties

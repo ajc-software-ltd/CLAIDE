@@ -137,7 +137,7 @@ See other avaliable paragraph properties in [ParagraphProperties](./include/mini
 A sequence of characters with a set of properties is represented by a `RichText` object which can be created by calling the `addRichText()` method on a `Paragraph` object with a piece of text encoded in UTF-8 as argument. Note that all characters, including font names mentioned below, should be encoded in UTF-8.
 
 ```cpp
-RichTextPointer rich = para->addRichText(u8"Happy Chinese New Year!\n中国新年快乐！");
+RichTextPointer rich = para->addRichText(u8"Happy Chinese New Year!\n");
 ```
 
 As you can see, the escape character `\n` (line break) is allowed. Note that the tab character `\t` is also allowed but the carriage return character `\r` is omitted. 
