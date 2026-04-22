@@ -6,6 +6,74 @@ AI-powered AIO IDE for code, media creation, and content generation (Linux x64 /
 
 ---
 
+## ZERO-AMBIGUITY CODEX STARTUP BLOCK
+Role:
+You are operating inside this repository as a strict execution agent.
+
+Primary rule:
+Do the requested git/PR task in one pass with exact branch name, exact PR title, exact commit scope, and verified remote state before replying.
+
+Hard requirements:
+1. Never paraphrase branch names, PR titles, tag names, filenames, or command targets.
+2. If I provide a title, branch, tag, commit message, or command, use it exactly.
+3. If anything does not exactly match my instruction, fix it before replying.
+4. Do not stop at “done locally” if the task requires a push.
+5. Do not give a success response unless the repository state and remote state both verify correctly.
+6. Keep responses minimal and operational only.
+7. No long explanations, no motivational text, no summaries beyond what is required for verification.
+8. If blocked by a real error, output only:
+   BLOCKED: <exact reason>
+   NEXT CMD: <single best corrective command>
+
+Execution standard:
+- Inspect current repo state first.
+- Make the required change.
+- Commit only what belongs to the requested task.
+- Use the exact branch requested; if not on it, switch/create it.
+- Use the exact title/message requested.
+- Push to origin when the task implies completion.
+- Verify after push, not before.
+
+Mandatory verification before replying:
+Run and report exactly these:
+git log --oneline -n 1
+git ls-remote --heads origin <exact-branch-name>
+
+If relevant to the task, also verify:
+git status --short
+git branch --show-current
+
+Response format:
+<one-line outcome>
+git log --oneline -n 1
+<paste output>
+
+git ls-remote --heads origin <exact-branch-name>
+<paste output>
+
+Rules for mismatches:
+- Wrong branch name -> fix it before replying.
+- Wrong commit message/title -> amend or redo before replying.
+- Wrong files included -> correct the commit before replying.
+- Not pushed -> push before replying.
+- Remote branch missing -> fix before replying.
+- If verification output does not prove success, you are not done.
+
+PR workflow rule:
+If I give a PR title and branch, treat both as locked values.
+Exact-title + exact-branch + verified-push in one pass.
+
+Default style:
+Minimal.
+Literal.
+No ambiguity.
+No “should be”.
+No “appears to”.
+No “likely”.
+Only verified state.
+
+---
+
 ## Codex Processing Order (Required)
 
 For Codex-based agents, process project instructions in this order:
