@@ -223,6 +223,116 @@ void testComputedStyleResolutionFailuresAndDeterminism()
   const auto cycleResolvedRun = md::inspection::resolveRunFormatting(doc, *cycleParagraph, *cycleRun);
   require(!cycleResolvedRun.issues.empty(), "character style cycle should produce resolve issues");
 }
+
+void testLayoutSinglePageAndGeometry()
+{
+  md::Document doc;
+  auto section = doc.addSection();
+  section->prop_.size_.width_ = md::A4_W;
+  section->prop_.size_.height_ = md::A4_H;
+  section->prop_.margins_.left_ = 1000;
+  section->prop_.margins_.right_ = 1000;
+  section->prop_.margins_.top_ = 1200;
+  section->prop_.margins_.bottom_ = 1200;
+
+  auto paragraph = section->addParagraph();
+  paragraph->addRichText("Simple layout paragraph");
+
+  auto table = section->addTable(2, 2);
+  table->cellAt(0, 0)->addParagraph()->addRichText("A");
+  table->cellAt(0, 1)->addParagraph()->addRichText("B");
+  table->cellAt(1, 0)->addParagraph()->addRichText("C");
+  table->cellAt(1, 1)->addParagraph()->addRichText("D");
+
+  const auto layout = md::inspection::buildLayout(doc);
+  require(!layout.pages.empty(), "layout should contain at least one page");
+  require(layout.pages[0].pageRect.width == md::A4_W, "page width mismatch");
+  require(layout.pages[0].pageRect.height == md::A4_H, "page height mismatch");
+  require(layout.pages[0].contentRect.x == 1000, "content x mismatch");
+  require(layout.pages[0].contentRect.y == 1200, "content y mismatch");
+  require(layout.pages[0].contentRect.width == (md::A4_W - 2000), "content width mismatch");
+  require(layout.pages[0].contentRect.height == (md::A4_H - 2400), "content height mismatch");
+
+  bool hasParagraph = false;
+  bool hasTable = false;
+  bool hasCell = false;
+  for (const auto& node : layout.nodes) {
+    if (node.kind == md::inspection::LayoutNodeKind::Paragraph)
+      hasParagraph = true;
+    if (node.kind == md::inspection::LayoutNodeKind::Table)
+      hasTable = true;
+    if (node.kind == md::inspection::LayoutNodeKind::Cell)
+      hasCell = true;
+  }
+
+  require(hasParagraph, "layout should include paragraph node");
+  require(hasTable, "layout should include table node");
+  require(hasCell, "layout should include cell node");
+}
+
+void testLayoutMultiPageAndDeterminism()
+{
+  md::Document doc;
+  auto section = doc.addSection();
+  section->prop_.margins_.top_ = 600;
+  section->prop_.margins_.bottom_ = 600;
+  section->prop_.margins_.left_ = 600;
+  section->prop_.margins_.right_ = 600;
+
+  auto paragraph = section->addParagraph();
+  for (size_t i = 0; i < 220; i++)
+    paragraph->addRichText("This is a long line intended to force pagination.\n");
+
+  const auto layoutA = md::inspection::buildLayout(doc);
+  const auto layoutB = md::inspection::buildLayout(doc);
+
+  require(layoutA.pages.size() >= 2, "long content should span multiple pages");
+  require(layoutA.pages.size() == layoutB.pages.size(), "page count should be deterministic");
+  require(layoutA.nodes.size() == layoutB.nodes.size(), "node count should be deterministic");
+  require(layoutA.pages[0].lines.size() == layoutB.pages[0].lines.size(), "line count should be deterministic");
+}
+
+void testLayoutPicturePlacementAndMapping()
+{
+  md::Document doc;
+  auto section = doc.addSection();
+  auto paragraph = section->addParagraph();
+  paragraph->addRichText("Before image");
+
+  const md::Buffer png = {
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+      0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+      0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+      0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
+      0x89, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x44, 0x41,
+      0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+      0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
+      0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
+      0x42, 0x60, 0x82,
+  };
+
+  const auto imageId = doc.addImage(png, md::FileType::PNG);
+  auto picture = paragraph->addPicture(imageId);
+  picture->prop_.extent_.setSize(192, 96, 96, 100);
+
+  const auto layout = md::inspection::buildLayout(doc);
+  require(!layout.nodes.empty(), "layout node list should not be empty");
+
+  bool hasPictureNode = false;
+  bool hasLineNode = false;
+  for (const auto& node : layout.nodes) {
+    if (node.kind == md::inspection::LayoutNodeKind::Picture) {
+      hasPictureNode = true;
+      require(node.hasNodePath, "picture node should include semantic node path");
+      require(node.rect.width > 0 && node.rect.height > 0, "picture rect dimensions should be positive");
+    }
+    if (node.kind == md::inspection::LayoutNodeKind::Line)
+      hasLineNode = true;
+  }
+
+  require(hasPictureNode, "layout should include picture node");
+  require(hasLineNode, "layout should include line node");
+}
 }
 
 int main()
@@ -231,5 +341,8 @@ int main()
   testVisibleTextExtraction();
   testComputedStyleResolutionPrecedence();
   testComputedStyleResolutionFailuresAndDeterminism();
+  testLayoutSinglePageAndGeometry();
+  testLayoutMultiPageAndDeterminism();
+  testLayoutPicturePlacementAndMapping();
   return 0;
 }
