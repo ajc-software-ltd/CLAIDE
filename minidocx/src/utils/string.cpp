@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // MINIDOCX
 // ============================================================================
 // File:        string.cpp
@@ -9,12 +9,15 @@
 
 #include "utils/string.hpp"
 
+#include <algorithm>
+#include <cctype>
+
 
 namespace MINIDOCX_NAMESPACE
 {
   std::string removeSpaces(std::string str) {
     std::string tmp{ std::move(str) };
-    tmp.erase(std::remove_if(tmp.begin(), tmp.end(), std::isspace), tmp.end());
+    tmp.erase(std::remove_if(tmp.begin(), tmp.end(), [](unsigned char ch) { return std::isspace(ch) != 0; }), tmp.end());
     return tmp;
   }
 }

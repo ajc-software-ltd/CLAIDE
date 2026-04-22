@@ -63,3 +63,17 @@ if(BUILD_EXAMPLES)
   add_subdirectory(examples)
   set_directory_properties(PROPERTIES VS_STARTUP_PROJECT myapp)
 endif()
+
+
+if(BUILD_TESTS)
+  enable_testing()
+  add_executable(minidocx_regression tests/minidocx_regression.cpp)
+  target_link_libraries(minidocx_regression PRIVATE minidocx)
+  target_include_directories(minidocx_regression PRIVATE include include/minidocx)
+  target_compile_definitions(minidocx_regression PRIVATE
+    MINIDOCX_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    MINIDOCX_TESTDATA_DIR="${PROJECT_SOURCE_DIR}/testdata"
+    MINIDOCX_TEST_OUTPUT_DIR="${PROJECT_BINARY_DIR}")
+  add_test(NAME minidocx.regression COMMAND minidocx_regression)
+  set_target_properties(minidocx_regression PROPERTIES FOLDER tests)
+endif()
