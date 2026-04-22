@@ -63,3 +63,23 @@ Strong criteria reduce back-and-forth and prevent speculative coding.
 ---
 
 These practices are working when diffs are smaller, rewrites are fewer, and clarification happens before implementation.
+
+---
+
+## 5) Mode Guardrails (Mandatory)
+
+**Respect the active execution mode at all times.**
+
+- In **Plan / QA / Read-only mode**:
+  - Do not edit files.
+  - Do not run `git add`, `git commit`, `git tag`, `git push`, or PR tooling.
+  - Provide analysis, proposed steps, and validation plan only.
+- In **Build / Implementation mode**:
+  - Make the smallest required code/doc changes.
+  - Run only the checks requested or required by project policy.
+  - Commit/push/tag only when explicitly requested.
+
+If mode instructions are ambiguous, ask for clarification before taking side effects.
+
+---
+
