@@ -20,6 +20,12 @@ cmake --build build --target lint-fast
 
 # full lint
 cmake --build build --target lint
+
+# scoped full-scope lint chunks
+cmake --build build --target lint-core
+cmake --build build --target lint-ui
+cmake --build build --target lint-vulkan
+cmake --build build --target lint-tests
 ```
 
 ## Reporting
@@ -27,3 +33,23 @@ cmake --build build --target lint
 - Raw output: `build/reports/clang-tidy.changed.raw.txt`
 - Unique output: `build/reports/clang-tidy.changed.unique.txt`
 - Summary: `build/reports/clang-tidy.changed.summary.md`
+
+Scoped full-scope chunk runs write:
+- `build/reports/clang-tidy.core.*`
+- `build/reports/clang-tidy.ui.*`
+- `build/reports/clang-tidy.vulkan.*`
+- `build/reports/clang-tidy.tests.*`
+
+## Versioning per chunk
+
+Starting from `0.0.125-dev`, increment the patch version for every lint chunk commit.
+
+- Chunk A: `0.0.126-dev`
+- Chunk B: `0.0.127-dev`
+- Chunk C: `0.0.128-dev`
+- Chunk D: `0.0.129-dev`
+- Chunk E: `0.0.130-dev`
+- Chunk F: `0.0.131-dev`
+- Chunk G: `0.0.132-dev`
+
+If additional follow-up work is needed after the planned chunks, that follow-up must use the next version (for example `0.0.133-dev`).
