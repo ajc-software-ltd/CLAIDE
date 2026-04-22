@@ -44,7 +44,7 @@ The roadmap is currently being executed in milestone phases focused on core stab
 |-----------|-------|--------|
 | **Milestone 1** | Core IDE Shell | ✅ Complete |
 | **Milestone 2** | Vulkan Canvas (universal render layer) | ✅ Complete |
-| **Milestone 3** | M3.x Document Pipeline (DOCX-first) | ⏳ In Planning/Execution |
+| **Milestone 3** | M3.x Document Pipeline (minidocx-first) | ⏳ In Planning/Execution |
 | **Milestone 4** | Image processing | ⏳ Planned |
 | **Milestone 5** | Video player | ⏳ Planned |
 | **Milestone 6** | 3D model viewer | ⏳ Planned |
@@ -60,7 +60,7 @@ The roadmap is currently being executed in milestone phases focused on core stab
 See `milestones.md` for the canonical milestone breakdown and checkpoint workflow.
 
 ### M3.x direction
-- **M3.1**: DOCX-first integration using local `minidocx/` baseline + CLAIDE adapters.
+- **M3.1**: minidocx-first integration using local `minidocx/` baseline + CLAIDE adapters.
 - **M3.2**: XLSX implementation (deferred until M3.1 stabilizes).
 - **M3.3+**: SVG/TTF/PDF/AI workflow layers aligned to canvas-first architecture.
 - All document output must remain viewable through the Vulkan render surface.
@@ -244,6 +244,7 @@ cmake --build build --target validate
 - Release traceability map (milestone → commit → tag): `RELEASES.md`
 - Operational release checklist: `docs/release-checklist.md`
 - Branch/merge workflow: `docs/branch-policy.md`
+- Branch allowlist: `main` and `minidocx` only (never use `work`).
 - Required merge validation gates: `build_with_prereqs` + `format-check` + `lint` + full `ctest`
 - Scope rule: for docs/version/tag-only changes, skip full rebuild and run lightweight consistency checks only (`git diff --name-only` + targeted `rg`).
 

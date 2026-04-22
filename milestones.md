@@ -20,7 +20,7 @@ Current versioning baseline: `v0.0.106-dev` (commit-count based).
 |-----------|--------|
 | 1: Core IDE Shell | ✅ Complete |
 | 2: Vulkan Canvas (Universal Render Layer) | ✅ Complete |
-| 3: M3.x Document Pipeline (DOCX-first) | ⏳ In Planning/Execution |
+| 3: M3.x Document Pipeline (minidocx-first) | ⏳ In Planning/Execution |
 | 4: Image Processing (AVIM: Image) | ⏳ Planned |
 | 5: Video Player (AVIM: Video) | ⏳ Planned |
 | 6: 3D Model Viewer (AVIM: Model) | ⏳ Planned |
@@ -138,13 +138,13 @@ src/
 
 ---
 
-## Milestone 3: M3.x Document Pipeline (DOCX-first)
+## Milestone 3: M3.x Document Pipeline (minidocx-first)
 
 **Tag range:** `v0.0.144-dev` onward
 **Status:** In Planning/Execution
 
 ### M3.x split
-- **M3.1** DOCX-first integration using `minidocx` as baseline in repo root (`/minidocx`).
+- **M3.1** minidocx-first integration using `minidocx` as baseline in repo root (`/minidocx`).
 - **M3.2** XLSX implementation (deferred until M3.1 is stable).
 - **M3.3** SVG read/import/display.
 - **M3.4** TTF font pipeline (system/import/Google Fonts usage).
