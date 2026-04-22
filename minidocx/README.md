@@ -1,6 +1,23 @@
 minidocx is a modern, free, open-source, cross-platform, lightweight C++20 library for manipulating Microsoft Word documents (`.docx`) from code, without requiring MS Office/WPS Office.
 
-This branch has evolved from a basic create-and-save library into a layered document engine with read/write, inspection, style resolution, layout, and command-based editing APIs.
+This branch exposes a layered public surface: low-level model APIs plus higher-level command/query/style/layout APIs.
+
+## Public API Contract (PR9)
+
+- **Supported low-level workflow:** direct model mutation (`Document`/`Section`/`Paragraph`/`RichText`/etc.) for manual authoring in trusted code.
+- **Preferred higher-level workflow:** command-based edits + inspection APIs for deterministic integration paths.
+- **Recommended build-on-top surface for future adapter work:** `editing` + `inspection` first, model APIs as foundational support.
+
+## Include Surface
+
+- `#include "minidocx/minidocx.hpp"`
+  - umbrella include (all public layers)
+- `#include "minidocx/model.hpp"`
+  - low-level model-focused include
+- `#include "minidocx/editing.hpp"`
+  - command editing include
+- `#include "minidocx/inspection.hpp"`
+  - semantic/style/layout analysis include
 
 ## Current Capability Summary
 

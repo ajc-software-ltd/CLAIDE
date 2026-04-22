@@ -1,5 +1,8 @@
 #pragma once
 
+// Public computed-style resolution API.
+// Resolves effective paragraph/run formatting and reports resolution issues.
+
 #include "config.hpp"
 #include "inspection/semantic.hpp"
 #include "word/main/paragraph.hpp"

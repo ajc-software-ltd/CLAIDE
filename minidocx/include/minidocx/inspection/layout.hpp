@@ -1,5 +1,8 @@
 #pragma once
 
+// Public neutral layout API.
+// Builds renderer-independent page/line/node geometry from document state.
+
 #include "config.hpp"
 #include "inspection/semantic.hpp"
 

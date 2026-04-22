@@ -1,5 +1,8 @@
 #pragma once
 
+// Public semantic inspection/query API.
+// Provides structure traversal, summaries, and visible-text extraction.
+
 #include "word/main/document.hpp"
 #include "word/main/section.hpp"
 #include "word/main/paragraph.hpp"

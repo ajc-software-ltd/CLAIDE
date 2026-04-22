@@ -10,6 +10,17 @@ It is intentionally branch-scoped and does not claim full Microsoft Word parity.
 
 In short: direct mutation is valid for trusted authoring paths; command/query is preferred for repeatable workflow logic.
 
+## Public Layer Entry Points
+
+Use the include surface that matches your intent:
+
+- `#include "minidocx/minidocx.hpp"` for all public layers
+- `#include "minidocx/model.hpp"` for low-level model APIs
+- `#include "minidocx/editing.hpp"` for command-based mutation
+- `#include "minidocx/inspection.hpp"` for semantic/style/layout analysis
+
+For future integration-facing workflows, prefer `editing` + `inspection` as the primary contract surface and use model mutation where low-level control is intentionally required.
+
 ## Measuring Units
 
 minidocx uses point (`pt`), twentieth of a point (`tw`), and English Metric Unit (`emu`) for page, paragraph, and drawing geometry.

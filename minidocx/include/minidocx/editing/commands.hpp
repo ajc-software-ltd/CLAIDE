@@ -1,5 +1,8 @@
 #pragma once
 
+// Public command editing API.
+// Preferred mutation surface for deterministic integration workflows.
+
 #include "config.hpp"
 #include "inspection/semantic.hpp"
 #include "utils/file.hpp"

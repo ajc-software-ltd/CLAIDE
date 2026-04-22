@@ -5,7 +5,15 @@ _Last updated: 2026-04-22_
 ## Branch Contract Snapshot
 
 - PR0–PR7: complete on this branch.
-- PR8 scope: documentation/examples/branch-contract alignment only.
+- PR8: documentation/examples/branch-contract alignment complete.
+- PR9: public API contract clarification and surface-boundary tightening (no new engine features).
+
+## Public Usage Contract (Current)
+
+- Low-level model mutation is supported and remains first-class for manual/trusted authoring flows.
+- Command-based editing plus inspection APIs are the preferred surface for deterministic higher-level workflows.
+- Style resolution and layout are analysis layers built on document state and intended for read-model/reporting/render-prep usage.
+- Future adapter-style integration should build on `editing` + `inspection` first, using model APIs as foundational support.
 
 ## Supported Subset (Current Branch)
 
@@ -47,8 +55,8 @@ _Last updated: 2026-04-22_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR8)
+## Next Likely Chunks (After PR9)
 
-- Continue branch-local documentation hardening for supported subset behavior and limitations
-- Expand deterministic test coverage around existing inspection/style/layout/editing surfaces
+- Continue module-scoped tests and docs hardening around existing surfaces
+- Keep contract language consistent across headers/docs/examples as APIs evolve
 - Keep integration concerns (CLAIDE adapter/render/UI/AI) explicitly out of minidocx branch-contract PRs until separately scoped
