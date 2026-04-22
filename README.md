@@ -60,7 +60,7 @@ The roadmap is currently being executed in milestone phases focused on core stab
 See `milestones.md` for the canonical milestone breakdown and checkpoint workflow.
 
 ### M3.x direction
-- **M3.1**: minidocx-first integration using local `minidocx/` baseline + CLAIDE adapters.
+- **M3.1**: minidocx integration using local `minidocx/` baseline + CLAIDE adapters.
 - **M3.2**: XLSX implementation (deferred until M3.1 stabilizes).
 - **M3.3+**: SVG/TTF/PDF/AI workflow layers aligned to canvas-first architecture.
 - All document output must remain viewable through the Vulkan render surface.
