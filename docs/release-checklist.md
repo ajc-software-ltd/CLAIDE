@@ -4,7 +4,7 @@ Use this checklist whenever milestone status or release metadata changes.
 
 Branch policy note:
 - Use `main` as the single long-lived branch.
-- Create short-lived branches only for implementation work, then merge back to `main`.
+- Commit directly to `main` for approved changes; do not keep long-lived side branches in this repository.
 
 ## Milestone traceability checklist
 

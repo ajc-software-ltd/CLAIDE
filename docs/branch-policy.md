@@ -1,12 +1,12 @@
 # Branch and Merge Policy
 
-## Core branches
-- `main`: the only long-lived branch moving forward.
+## Core branch
+- `main`: the only branch used for project commits.
 
-## Merge flow
-1. open feature/fix branch from `main`
-2. validate in that short-lived branch
-3. merge/cherry-pick into `main` on explicit approval
+## Commit flow
+1. apply approved changes on `main`
+2. validate locally
+3. push `main`
 
 ## Promotion checks
 - configure/build succeeds
@@ -15,7 +15,7 @@
 
 ## Required validation gate commands
 
-Before merging into `main`, run:
+Before pushing `main`, run:
 
 ```bash
 ./scripts/build_with_prereqs.sh Debug on
