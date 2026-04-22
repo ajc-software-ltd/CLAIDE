@@ -33,13 +33,19 @@ namespace MINIDOCX_NAMESPACE
 
   public:
     inline std::list<BlockPointer> blocks() const { return blocks_; }
+    inline size_t blockCount() const { return blocks_.size(); }
+    BlockPointer blockAt(size_t index) const;
 
     ParagraphPointer addParagraph();
     ParagraphPointer addParagraph(ParagraphProperties prop);
+    ParagraphPointer insertParagraph(size_t index);
+    ParagraphPointer insertParagraph(size_t index, ParagraphProperties prop);
     
     TablePointer addTable(const size_t rows, const size_t cols);
+    TablePointer insertTable(size_t index, const size_t rows, const size_t cols);
     
     void deleteBlock(const BlockPointer& block);
+    bool deleteBlockAt(size_t index);
 
   public:
     void clear() override;

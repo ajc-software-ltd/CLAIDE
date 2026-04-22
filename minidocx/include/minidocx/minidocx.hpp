@@ -17,6 +17,7 @@
 #include "word/main/picture.hpp"
 #include "word/main/table.hpp"
 #include "word/main/cell.hpp"
+#include "editing/commands.hpp"
 #include "inspection/semantic.hpp"
 #include "inspection/style_resolution.hpp"
 #include "inspection/layout.hpp"

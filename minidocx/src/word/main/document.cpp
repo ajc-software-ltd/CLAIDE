@@ -1360,10 +1360,37 @@ namespace MINIDOCX_NAMESPACE
     return section;
   }
 
+  SectionPointer Document::sectionAt(const size_t index) const
+  {
+    if (index >= sections_.size())
+      throw invalid_parameter();
+    return *std::next(sections_.begin(), static_cast<std::ptrdiff_t>(index));
+  }
+
+  SectionPointer Document::insertSection(const size_t index)
+  {
+    if (index > sections_.size())
+      throw invalid_parameter();
+    auto section{ std::make_shared<Section>() };
+    const auto it = std::next(sections_.begin(), static_cast<std::ptrdiff_t>(index));
+    sections_.insert(it, section);
+    return section;
+  }
+
   void Document::deleteSection(const SectionPointer& section)
   {
     section->destroy();
     sections_.remove(section);
+  }
+
+  bool Document::deleteSectionAt(const size_t index)
+  {
+    if (index >= sections_.size())
+      return false;
+    auto it = std::next(sections_.begin(), static_cast<std::ptrdiff_t>(index));
+    (*it)->destroy();
+    sections_.erase(it);
+    return true;
   }
 
   void Document::clearSections()

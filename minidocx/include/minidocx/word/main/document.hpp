@@ -65,6 +65,10 @@ namespace MINIDOCX_NAMESPACE
 
   public:
     inline std::list<SectionPointer> sections() const { return sections_; }
+    inline size_t sectionCount() const { return sections_.size(); }
+    SectionPointer sectionAt(size_t index) const;
+    SectionPointer insertSection(size_t index);
+    bool deleteSectionAt(size_t index);
     inline const std::map<std::string, ParagraphStyle>& paragraphStyles() const { return paragraphStyles_; }
     inline const std::map<std::string, CharacterStyle>& characterStyles() const { return characterStyles_; }
     inline const std::map<NumberingId, AbstractNumberingDefinition>& abstractNumberingDefinitions() const { return abstractNumDefinitions_; }
