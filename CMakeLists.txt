@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(CLAIDE VERSION 0.0.123 LANGUAGES CXX)
+project(CLAIDE VERSION 0.0.140 LANGUAGES CXX)
 
-set(CLAIDE_VERSION_STRING "0.0.123-dev")
+set(CLAIDE_VERSION_STRING "0.0.140-dev")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -53,10 +53,12 @@ set(SOURCES
     src/core/TileCache.cpp
     src/core/MipmapGenerator.cpp
     src/core/CrashHandler.cpp
+    src/core/ShaderCompiler.cpp
     src/core/VulkanRuntimeLoader.cpp
     src/core/runtime/VulkanRenderHost.cpp
     src/render/Canvas.cpp
     src/render/CanvasDocument.cpp
+    src/render/CanvasRegistry.cpp
     src/render/CanvasView.cpp
     src/render/cpu/CPURenderer.cpp
     src/ui/Theme.cpp
@@ -75,6 +77,9 @@ set(SOURCES
     src/platform/PlatformPaths.cpp
     src/vulkan/runtime/VulkanSwapchain.cpp
     src/vulkan/runtime/VulkanRenderer.cpp
+    src/vulkan/runtime/VulkanTexture.cpp
+    src/vulkan/runtime/VulkanText.cpp
+    src/vulkan/runtime/VulkanDebug.cpp
 )
 
 set(HEADERS
@@ -89,17 +94,22 @@ set(HEADERS
     src/core/TileCache.hpp
     src/core/MipmapGenerator.hpp
     src/core/CrashHandler.hpp
+    src/core/ShaderCompiler.hpp
     src/core/VulkanRuntimeLoader.hpp
     src/core/runtime/RenderHost.hpp
     src/core/runtime/VulkanRenderHost.hpp
     src/render/Canvas.hpp
     src/render/CanvasDocument.hpp
+    src/render/CanvasRegistry.hpp
     src/render/CanvasView.hpp
     src/render/cpu/CPURenderer.hpp
     src/core/media/AudioProvider.hpp
     src/core/media/VideoFrameProvider.hpp
     src/vulkan/runtime/VulkanSwapchain.hpp
     src/vulkan/runtime/VulkanRenderer.hpp
+    src/vulkan/runtime/VulkanTexture.hpp
+    src/vulkan/runtime/VulkanText.hpp
+    src/vulkan/runtime/VulkanDebug.hpp
     src/ui/Theme.hpp
     src/ui/ThumbnailCache.hpp
     src/ui/FileBrowserPanel.hpp
@@ -216,10 +226,14 @@ if(Catch2_FOUND)
         src/core/runtime/VulkanRenderHost.cpp
         src/render/Canvas.cpp
         src/render/CanvasDocument.cpp
+        src/render/CanvasRegistry.cpp
         src/render/CanvasView.cpp
         src/render/cpu/CPURenderer.cpp
         src/vulkan/runtime/VulkanSwapchain.cpp
         src/vulkan/runtime/VulkanRenderer.cpp
+        src/vulkan/runtime/VulkanTexture.cpp
+        src/vulkan/runtime/VulkanText.cpp
+        src/vulkan/runtime/VulkanDebug.cpp
         src/platform/PlatformPaths.cpp
     )
     target_include_directories(CLAIDETests PRIVATE src include ${ImageMagick_INCLUDE_DIRS})
@@ -283,6 +297,50 @@ if(CLANG_TIDY)
             ${CMAKE_BINARY_DIR}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Running clang-tidy on changed files"
+    )
+
+    add_custom_target(lint-core
+        COMMAND ${CLANG_TIDY} --version
+        COMMAND ${CMAKE_COMMAND} -E env
+            CLANG_TIDY_BIN=${CLANG_TIDY}
+            LINT_SCOPE=core
+            ${CMAKE_SOURCE_DIR}/scripts/run_lint.sh
+            ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy on core/platform translation units"
+    )
+
+    add_custom_target(lint-ui
+        COMMAND ${CLANG_TIDY} --version
+        COMMAND ${CMAKE_COMMAND} -E env
+            CLANG_TIDY_BIN=${CLANG_TIDY}
+            LINT_SCOPE=ui
+            ${CMAKE_SOURCE_DIR}/scripts/run_lint.sh
+            ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy on UI translation units"
+    )
+
+    add_custom_target(lint-vulkan
+        COMMAND ${CLANG_TIDY} --version
+        COMMAND ${CMAKE_COMMAND} -E env
+            CLANG_TIDY_BIN=${CLANG_TIDY}
+            LINT_SCOPE=vulkan
+            ${CMAKE_SOURCE_DIR}/scripts/run_lint.sh
+            ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy on Vulkan/render translation units"
+    )
+
+    add_custom_target(lint-tests
+        COMMAND ${CLANG_TIDY} --version
+        COMMAND ${CMAKE_COMMAND} -E env
+            CLANG_TIDY_BIN=${CLANG_TIDY}
+            LINT_SCOPE=tests
+            ${CMAKE_SOURCE_DIR}/scripts/run_lint.sh
+            ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy on test translation units"
     )
 endif()
 

@@ -21,18 +21,18 @@ namespace Platform {
 
 std::filesystem::path GetAppDataDir() {
 #ifdef _WIN32
-    auto appData = std::getenv("APPDATA");
-    if (appData) {
+    auto* appData = std::getenv("APPDATA");
+    if (appData != nullptr) {
         return std::filesystem::path(appData) / "CLAIDE";
     }
     return std::filesystem::current_path();
 #else
-    auto xdg = std::getenv("XDG_CONFIG_HOME");
-    if (xdg) {
+    auto* xdg = std::getenv("XDG_CONFIG_HOME");
+    if (xdg != nullptr) {
         return std::filesystem::path(xdg) / "cliade";
     }
-    auto home = std::getenv("HOME");
-    if (home) {
+    auto* home = std::getenv("HOME");
+    if (home != nullptr) {
         return std::filesystem::path(home) / ".config" / "cliade";
     }
     return std::filesystem::current_path();
@@ -40,7 +40,7 @@ std::filesystem::path GetAppDataDir() {
 }
 
 std::filesystem::path GetProjectRoot() {
-    auto configuredRoot = std::getenv("CLAIDE_PROJECT_ROOT");
+    auto* configuredRoot = std::getenv("CLAIDE_PROJECT_ROOT");
     if (configuredRoot != nullptr) {
         std::error_code ec;
         auto configured = std::filesystem::weakly_canonical(configuredRoot, ec);
@@ -52,7 +52,7 @@ std::filesystem::path GetProjectRoot() {
     std::error_code ec;
     auto current = std::filesystem::current_path(ec);
     if (ec) {
-        return std::filesystem::path(".");
+        return std::filesystem::path{"."};
     }
 
     auto candidate = std::filesystem::weakly_canonical(current, ec);

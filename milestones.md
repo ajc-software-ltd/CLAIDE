@@ -19,7 +19,7 @@ Current versioning baseline: `v0.0.106-dev` (commit-count based).
 | Milestone | Status |
 |-----------|--------|
 | 1: Core IDE Shell | ✅ Complete |
-| 2: Vulkan Canvas (Universal Render Layer) | 🚧 In Progress (foundation landed) |
+| 2: Vulkan Canvas (Universal Render Layer) | ✅ Complete |
 | 3: Text Enhancement | ⏳ Planned |
 | 4: Image Processing (AVIM: Image) | ⏳ Planned |
 | 5: Video Player (AVIM: Video) | ⏳ Planned |

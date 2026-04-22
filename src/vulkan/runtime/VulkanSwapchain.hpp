@@ -10,8 +10,11 @@ class VulkanSwapchain
 {
   public:
     std::expected<void, std::string> Create(uint32_t width, uint32_t height);
+    std::expected<void, std::string> Recreate(uint32_t width, uint32_t height);
     void Destroy();
     bool IsCreated() const;
+    uint32_t GetWidth() const;
+    uint32_t GetHeight() const;
 
   private:
     bool m_created{false};
