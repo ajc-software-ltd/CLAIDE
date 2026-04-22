@@ -18,14 +18,6 @@ The intent is to keep changes simple, surgical, and verifiable while preserving 
 
 ---
 
-## Branch Allowlist Policy (Required)
-
-- Allowed long-lived branches in this repository: `main` and `minidocx`.
-- Deprecated/disallowed branch name: `work`.
-- Do not create, checkout, commit to, or push any `work` branch variant.
-
----
-
 ## Release + Merge Protocol (Required)
 
 When the user asks to merge a branch into `main`, complete all of the following unless explicitly told otherwise:

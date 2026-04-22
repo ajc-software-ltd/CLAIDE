@@ -244,7 +244,6 @@ cmake --build build --target validate
 - Release traceability map (milestone → commit → tag): `RELEASES.md`
 - Operational release checklist: `docs/release-checklist.md`
 - Branch/merge workflow: `docs/branch-policy.md`
-- Branch allowlist: use `main` and `minidocx` only; never use `work` branch names.
 - Required merge validation gates: `build_with_prereqs` + `format-check` + `lint` + full `ctest`
 - Scope rule: for docs/version/tag-only changes, skip full rebuild and run lightweight consistency checks only (`git diff --name-only` + targeted `rg`).
 

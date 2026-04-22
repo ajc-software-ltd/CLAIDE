@@ -1,17 +1,12 @@
 # Branch and Merge Policy
 
-## Allowed branches
-- `main`: primary integration and release branch.
-- `minidocx`: isolated feature branch for DOCX stream work.
-
-## Disallowed branch names
-- `work` (and similarly named variants) must not be created or used.
+## Core branch
+- `main`: the only branch used for project commits.
 
 ## Commit flow
 1. apply approved changes on `main`
 2. validate locally
 3. push `main`
-4. do not create or push `work` branches
 
 ## Promotion checks
 - configure/build succeeds
