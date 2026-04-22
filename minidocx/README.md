@@ -50,6 +50,15 @@ This branch exposes a layered public surface: low-level model APIs plus higher-l
 - **Direct model mutation** is suitable for low-level/manual authoring in trusted code.
 - **Command + inspection APIs** are preferred for deterministic higher-level workflows.
 
+## Validation & Readiness Gate (PR10)
+
+`minidocx` now defines a branch-local readiness contract.
+
+- Normal engine validation: build tests and run `minidocx_validate`
+- Pre-integration readiness check: run `minidocx_preintegration_gate`
+
+See [INTEGRATION_GATE.md](./INTEGRATION_GATE.md) for required checks and non-goals.
+
 ## Out of Scope in This Branch (Current)
 
 - CLAIDE adapter integration
@@ -94,3 +103,4 @@ A static library is built by default. To build shared, set `BUILD_SHARED=ON`.
 
 - [User Guide](./guide.md)
 - [Branch Status](./BRANCH_STATUS.md)
+- [Integration Gate](./INTEGRATION_GATE.md)

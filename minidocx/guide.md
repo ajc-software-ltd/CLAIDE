@@ -21,6 +21,21 @@ Use the include surface that matches your intent:
 
 For future integration-facing workflows, prefer `editing` + `inspection` as the primary contract surface and use model mutation where low-level control is intentionally required.
 
+## Branch Validation Flow (PR10)
+
+Use the branch gate commands for repeatable health checks:
+
+```bash
+cmake -S minidocx -B minidocx/out/gate -G Ninja -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON
+cmake --build minidocx/out/gate --target minidocx_validate
+cmake --build minidocx/out/gate --target minidocx_preintegration_gate
+```
+
+- `minidocx_validate` runs the branch test suite (`regression`, `inspection_pipeline`, `commands`).
+- `minidocx_preintegration_gate` is the explicit pre-integration readiness alias.
+
+For policy details and non-goals, see [INTEGRATION_GATE.md](./INTEGRATION_GATE.md).
+
 ## Measuring Units
 
 minidocx uses point (`pt`), twentieth of a point (`tw`), and English Metric Unit (`emu`) for page, paragraph, and drawing geometry.

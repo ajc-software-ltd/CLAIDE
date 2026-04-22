@@ -7,6 +7,7 @@ _Last updated: 2026-04-22_
 - PR0–PR7: complete on this branch.
 - PR8: documentation/examples/branch-contract alignment complete.
 - PR9: public API contract clarification and surface-boundary tightening (no new engine features).
+- PR10: pre-integration readiness gate and validation contract (no new engine features).
 
 ## Public Usage Contract (Current)
 
@@ -14,6 +15,13 @@ _Last updated: 2026-04-22_
 - Command-based editing plus inspection APIs are the preferred surface for deterministic higher-level workflows.
 - Style resolution and layout are analysis layers built on document state and intended for read-model/reporting/render-prep usage.
 - Future adapter-style integration should build on `editing` + `inspection` first, using model APIs as foundational support.
+
+
+## Readiness Gate (Current)
+
+- Normal branch health validation target: `minidocx_validate`
+- Pre-integration readiness target: `minidocx_preintegration_gate`
+- Canonical gate policy and command contract: [INTEGRATION_GATE.md](./INTEGRATION_GATE.md)
 
 ## Supported Subset (Current Branch)
 
@@ -55,7 +63,7 @@ _Last updated: 2026-04-22_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR9)
+## Next Likely Chunks (After PR10)
 
 - Continue module-scoped tests and docs hardening around existing surfaces
 - Keep contract language consistent across headers/docs/examples as APIs evolve

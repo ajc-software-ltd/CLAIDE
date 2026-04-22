@@ -88,4 +88,14 @@ if(BUILD_TESTS)
   target_include_directories(minidocx_commands PRIVATE include include/minidocx)
   add_test(NAME minidocx.commands COMMAND minidocx_commands)
   set_target_properties(minidocx_commands PROPERTIES FOLDER tests)
+
+  add_custom_target(minidocx_validate
+    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -R "minidocx\."
+    DEPENDS minidocx_regression minidocx_inspection_pipeline minidocx_commands
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMENT "Running minidocx branch validation suite")
+
+  add_custom_target(minidocx_preintegration_gate
+    DEPENDS minidocx_validate
+    COMMENT "Running minidocx pre-integration readiness gate")
 endif()
