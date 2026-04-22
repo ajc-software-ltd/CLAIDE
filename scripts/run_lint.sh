@@ -7,6 +7,7 @@ CLANG_TIDY_BIN="${CLANG_TIDY_BIN:-clang-tidy}"
 CORE_CHECKS="${CORE_CHECKS:--modernize-use-std-print}"
 TEST_CHECKS="${TEST_CHECKS:--modernize-use-std-print,-bugprone-chained-comparison}"
 LINT_SCOPE="${LINT_SCOPE:-full}"
+LINT_STD_ARG="${LINT_STD_ARG:---extra-arg=-std=gnu++23}"
 
 REPORT_DIR="${BUILD_DIR}/reports"
 REPORT_SCOPE="${LINT_SCOPE}"
@@ -59,7 +60,7 @@ fi
 set +e
 if [[ ${#CORE_FILES[@]} -gt 0 ]]; then
   echo "[lint] Running clang-tidy on scope '${LINT_SCOPE}' core translation units (${#CORE_FILES[@]} files)..."
-  "${CLANG_TIDY_BIN}" -p "${BUILD_DIR}" -checks="${CORE_CHECKS}" "${CORE_FILES[@]}" 2>&1 | tee "${RAW_REPORT}"
+  "${CLANG_TIDY_BIN}" -p "${BUILD_DIR}" -checks="${CORE_CHECKS}" "${LINT_STD_ARG}" "${CORE_FILES[@]}" 2>&1 | tee "${RAW_REPORT}"
   CORE_STATUS=${PIPESTATUS[0]}
 else
   : > "${RAW_REPORT}"
@@ -68,7 +69,7 @@ fi
 
 if [[ ${#TEST_FILES[@]} -gt 0 ]]; then
   echo "[lint] Running clang-tidy on scope '${LINT_SCOPE}' test translation units (${#TEST_FILES[@]} files)..."
-  "${CLANG_TIDY_BIN}" -p "${BUILD_DIR}" -checks="${TEST_CHECKS}" "${TEST_FILES[@]}" 2>&1 | tee -a "${RAW_REPORT}"
+  "${CLANG_TIDY_BIN}" -p "${BUILD_DIR}" -checks="${TEST_CHECKS}" "${LINT_STD_ARG}" "${TEST_FILES[@]}" 2>&1 | tee -a "${RAW_REPORT}"
   TEST_STATUS=${PIPESTATUS[0]}
 else
   TEST_STATUS=0
