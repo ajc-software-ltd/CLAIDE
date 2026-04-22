@@ -52,7 +52,7 @@ Starting from `0.0.125-dev`, increment the patch version for every lint chunk co
 - Chunk F: `0.0.131-dev`
 - Chunk G: `0.0.132-dev`
 
-If additional follow-up work is needed after the planned chunks, that follow-up must use the next version (for example `0.0.133-dev`).
+If additional follow-up effort is needed after the planned chunks, that follow-up must use the next version (for example `0.0.133-dev`).
 
 
 ## Execution status

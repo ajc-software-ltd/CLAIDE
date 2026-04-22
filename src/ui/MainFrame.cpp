@@ -572,7 +572,7 @@ void MainFrame::OpenPathUnified(const std::filesystem::path& path, bool addToRec
         m_auiManager.GetPane("ImageViewer").Hide();
         m_auiManager.GetPane("EditorTabs").Hide();
         m_auiManager.GetPane("CanvasPanel").Show();
-        m_canvasPanel->SetStatusText("Video workflow placeholder (Canvas connected)");
+        m_canvasPanel->SetStatusText("Video pipeline placeholder (Canvas connected)");
         m_currentMode = ActivityMode::Video;
         m_activityBar->SetActiveMode(ActivityMode::Video);
         m_auiManager.Update();
@@ -583,7 +583,7 @@ void MainFrame::OpenPathUnified(const std::filesystem::path& path, bool addToRec
         m_auiManager.GetPane("ImageViewer").Hide();
         m_auiManager.GetPane("EditorTabs").Hide();
         m_auiManager.GetPane("CanvasPanel").Show();
-        m_canvasPanel->SetStatusText("Audio workflow placeholder (Canvas connected)");
+        m_canvasPanel->SetStatusText("Audio pipeline placeholder (Canvas connected)");
         m_currentMode = ActivityMode::Audio;
         m_activityBar->SetActiveMode(ActivityMode::Audio);
         m_auiManager.Update();
@@ -594,7 +594,7 @@ void MainFrame::OpenPathUnified(const std::filesystem::path& path, bool addToRec
         m_auiManager.GetPane("ImageViewer").Hide();
         m_auiManager.GetPane("EditorTabs").Hide();
         m_auiManager.GetPane("CanvasPanel").Show();
-        m_canvasPanel->SetStatusText("3D model workflow placeholder (Canvas connected)");
+        m_canvasPanel->SetStatusText("3D model pipeline placeholder (Canvas connected)");
         m_currentMode = ActivityMode::Models;
         m_activityBar->SetActiveMode(ActivityMode::Models);
         m_auiManager.Update();
@@ -929,7 +929,7 @@ void MainFrame::OnAbout([[maybe_unused]] wxCommandEvent& event) {
                         wxString::Format("CLAIDE AI Content Creator\nVersion v%s\n\n"
                                          "AJC-Software Ltd \xC2\xA9 2026\n\n"
                                          "Cross-platform AIO IDE for code editing, media "
-                                         "workflows, and AI-powered content generation.",
+                                         "pipelines, and AI-powered content generation.",
                                          CLAIDE_VERSION_STRING),
                         "About CLAIDE", wxOK | wxICON_INFORMATION);
     dlg.ShowModal();
