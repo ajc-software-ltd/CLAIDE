@@ -3,8 +3,9 @@
 Use this checklist whenever milestone status or release metadata changes.
 
 Branch policy note:
-- Use `main` as the single long-lived branch.
-- Commit directly to `main` for approved changes; do not keep long-lived side branches in this repository.
+- Use `main` for release integration and `minidocx` only for isolated DOCX stream work.
+- Commit directly to `main` for approved changes unless an explicit `minidocx` stream task is active.
+- Do not create or use `work` branch names.
 
 ## Milestone traceability checklist
 
