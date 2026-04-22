@@ -53,3 +53,15 @@ Starting from `0.0.125-dev`, increment the patch version for every lint chunk co
 - Chunk G: `0.0.132-dev`
 
 If additional follow-up work is needed after the planned chunks, that follow-up must use the next version (for example `0.0.133-dev`).
+
+
+## Execution status
+
+- ✅ Chunk A (`0.0.126-dev`) tooling baseline landed.
+- ✅ Chunk B (`0.0.127-dev`) core/platform baseline landed.
+- ✅ Chunk C (`0.0.128-dev`) UI lint scope executed.
+- ✅ Chunk D (`0.0.129-dev`) Vulkan/render lint scope executed.
+- ✅ Chunk E (`0.0.130-dev`) tests lint scope executed.
+- ⏳ Chunk F (`0.0.131-dev`) docs/workflow cleanup (this revision).
+- ⏳ Chunk G (`0.0.132-dev`) pre-final reconciliation.
+- ⏳ Final full-sweep release (`0.0.133-dev`).
