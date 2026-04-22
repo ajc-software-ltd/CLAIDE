@@ -104,7 +104,11 @@ namespace MINIDOCX_NAMESPACE
     inline RelationshipId addRelationshipTo(Relationships& rels,
       const PartType type, const PartName& target, const Relationship::TargetMode mode)
     {
-      // TODO: Check if the target already exists.
+      for (const auto& ref : rels.map_) {
+        const auto& rel = ref.second;
+        if (rel.type_ == type && rel.target_ == target && rel.targetMode_ == mode)
+          return rel.id_;
+      }
       const RelationshipId id = ++rels.maxId_;
       rels.map_[id] = { id, type, target, mode };
       return id;

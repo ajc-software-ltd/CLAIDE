@@ -320,6 +320,185 @@ void caseLoadSaveReloadRoundTrip() {
           FailureKind::Semantic, "expected merged cell preserved after reload");
 }
 
+void caseParagraphPageBreakAfterRoundTrip() {
+  md::Document doc;
+  auto section = doc.addSection();
+  auto paragraph = section->addParagraph();
+  paragraph->prop_.pageBreakAfter_ = true;
+  paragraph->addRichText("Page break after");
+
+  const fs::path out = outputRoot() / "page_break_after.docx";
+  doc.saveAs(out.string());
+  const std::string xml = extractPart(out, "/word/document.xml");
+  require(xml.find("<w:pageBreakAfter") != std::string::npos, FailureKind::Semantic,
+          "pageBreakAfter element not serialized");
+
+  md::Document loaded;
+  loaded.load(out.string());
+  const auto blocks = loaded.sections().front()->blocks();
+  auto para = std::dynamic_pointer_cast<md::Paragraph>(blocks.front());
+  require(static_cast<bool>(para) && para->prop_.pageBreakAfter_, FailureKind::Semantic,
+          "pageBreakAfter did not round-trip");
+}
+
+void caseSectionDocGridRoundTrip() {
+  md::Document doc;
+  auto section = doc.addSection();
+  section->prop_.type_ = md::SectionProperties::Type::NextPage;
+  md::SectionProperties::DocGrid grid;
+  grid.type_ = md::SectionProperties::DocGrid::Type::LinesAndChars;
+  grid.linePitch_ = 420;
+  section->prop_.docGrid_ = grid;
+  section->addParagraph()->addRichText("Grid test");
+
+  const fs::path out = outputRoot() / "section_doc_grid.docx";
+  doc.saveAs(out.string());
+  const std::string xml = extractPart(out, "/word/document.xml");
+  require(xml.find("w:type w:val=\"nextPage\"") != std::string::npos, FailureKind::Semantic,
+          "section type not serialized");
+  require(xml.find("w:docGrid") != std::string::npos, FailureKind::Semantic,
+          "docGrid element not serialized");
+  require(xml.find("w:type=\"linesAndChars\"") != std::string::npos, FailureKind::Semantic,
+          "docGrid type not serialized");
+  require(xml.find("w:linePitch=\"420\"") != std::string::npos, FailureKind::Semantic,
+          "docGrid linePitch not serialized");
+
+  md::Document loaded;
+  loaded.load(out.string());
+  const auto loadedSections = loaded.sections();
+  require(!loadedSections.empty(), FailureKind::Semantic, "missing sections after doc-grid reload");
+  const auto& loadedSection = loadedSections.front();
+  require(loadedSection->prop_.type_ == md::SectionProperties::Type::NextPage, FailureKind::Semantic,
+          "section type did not round-trip");
+  require(loadedSection->prop_.docGrid_.has_value(), FailureKind::Semantic,
+          "docGrid missing after round-trip");
+  require(loadedSection->prop_.docGrid_->type_ == md::SectionProperties::DocGrid::Type::LinesAndChars,
+          FailureKind::Semantic, "docGrid type did not round-trip");
+  require(loadedSection->prop_.docGrid_->linePitch_ == 420, FailureKind::Semantic,
+          "docGrid linePitch did not round-trip");
+}
+
+void casePictureCropStretchRoundTrip() {
+  md::Document doc;
+  auto section = doc.addSection();
+
+  const md::Buffer png = {
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+      0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+      0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+      0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
+      0x89, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x44, 0x41,
+      0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+      0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
+      0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
+      0x42, 0x60, 0x82,
+  };
+
+  auto picture = section->addParagraph()->addPicture(doc.addImage(png, md::FileType::PNG));
+  md::PictureProperties::Cropping crop{1, 2, 3, 4};
+  md::PictureProperties::Stretching stretch{5, 6, 7, 8};
+  picture->prop_.cropping_ = crop;
+  picture->prop_.stretching_ = stretch;
+
+  const fs::path out = outputRoot() / "picture_crop_stretch.docx";
+  doc.saveAs(out.string());
+  const std::string xml = extractPart(out, "/word/document.xml");
+  require(xml.find("a:srcRect") != std::string::npos, FailureKind::Semantic,
+          "srcRect not serialized");
+  require(xml.find("a:fillRect") != std::string::npos, FailureKind::Semantic,
+          "fillRect not serialized");
+  require(xml.find("t=\"1\"") != std::string::npos, FailureKind::Semantic,
+          "crop top not serialized");
+  require(xml.find("r=\"8\"") != std::string::npos, FailureKind::Semantic,
+          "stretch right not serialized");
+
+  md::Document loaded;
+  loaded.load(out.string());
+  const auto loadedSections = loaded.sections();
+  require(!loadedSections.empty(), FailureKind::Semantic, "missing sections after picture reload");
+  const auto blocks = loadedSections.front()->blocks();
+  require(!blocks.empty(), FailureKind::Semantic, "missing paragraph after picture reload");
+  auto para = std::dynamic_pointer_cast<md::Paragraph>(blocks.front());
+  require(static_cast<bool>(para), FailureKind::Semantic, "first block is not paragraph after picture reload");
+  require(!para->runs().empty(), FailureKind::Semantic, "missing picture run after reload");
+  auto run = para->runs().back();
+  auto loadedPicture = std::dynamic_pointer_cast<md::Picture>(run);
+  require(static_cast<bool>(loadedPicture), FailureKind::Semantic, "picture missing after reload");
+  require(loadedPicture->prop_.cropping_.has_value(), FailureKind::Semantic, "crop missing after reload");
+  require(loadedPicture->prop_.stretching_.has_value(), FailureKind::Semantic, "stretch missing after reload");
+  require(loadedPicture->prop_.cropping_->left_ == 3, FailureKind::Semantic, "crop left mismatch after reload");
+  require(loadedPicture->prop_.stretching_->bottom_ == 6, FailureKind::Semantic, "stretch bottom mismatch after reload");
+}
+
+void caseNumberingStylesAndOverridesRoundTrip() {
+  md::Document doc;
+  auto section = doc.addSection();
+
+  md::AbstractNumberingDefinition abstractDef;
+  abstractDef.type_ = md::NumberingType::MultiLevel;
+  abstractDef.levels_[0].numStyle_ = md::NumberStyle::UpperRoman;
+  abstractDef.levels_[0].numFmt_ = "%1.";
+  abstractDef.levels_[1].numStyle_ = md::NumberStyle::UpperLetter;
+  abstractDef.levels_[1].numFmt_ = "%2)";
+  abstractDef.levels_[2].numStyle_ = md::NumberStyle::OrdinalText;
+  abstractDef.levels_[2].numFmt_ = "%3";
+  abstractDef.levels_[3].numStyle_ = md::NumberStyle::CardinalText;
+  abstractDef.levels_[3].numFmt_ = "%4";
+
+  const md::NumberingId abstractId = doc.addAbstractNumDefinition(abstractDef);
+  md::NumberingDefinition def(abstractId);
+  md::LevelDefinition overrideLevel;
+  overrideLevel.numStart_ = 5;
+  overrideLevel.numStyle_ = md::NumberStyle::LowerLetter;
+  overrideLevel.numFmt_ = "(%1)";
+  def.levelOverrides_[md::NumberingLevel::Level1] = overrideLevel;
+  const md::NumberingId numId = doc.addNumDefinition(def);
+
+  auto p = section->addParagraph();
+  p->numId_ = numId;
+  p->addRichText("override list");
+
+  const fs::path out = outputRoot() / "numbering_overrides.docx";
+  doc.saveAs(out.string());
+  const std::string xml = extractPart(out, "/word/numbering.xml");
+  require(xml.find("w:val=\"upperRoman\"") != std::string::npos, FailureKind::Semantic,
+          "upperRoman not serialized");
+  require(xml.find("w:val=\"upperLetter\"") != std::string::npos, FailureKind::Semantic,
+          "upperLetter not serialized");
+  require(xml.find("w:val=\"ordinalText\"") != std::string::npos, FailureKind::Semantic,
+          "ordinalText not serialized");
+  require(xml.find("w:val=\"cardinalText\"") != std::string::npos, FailureKind::Semantic,
+          "cardinalText not serialized");
+  require(xml.find("w:lvlOverride") != std::string::npos, FailureKind::Semantic,
+          "level override not serialized");
+  require(xml.find("w:startOverride") != std::string::npos, FailureKind::Semantic,
+          "start override not serialized");
+
+  md::Document loaded;
+  loaded.load(out.string());
+  const auto defs = loaded.numberingDefinitions();
+  require(defs.find(numId) != defs.end(), FailureKind::Semantic, "numbering definition missing after reload");
+  const auto& loadedDef = defs.at(numId);
+  require(loadedDef.levelOverrides_.find(md::NumberingLevel::Level1) != loadedDef.levelOverrides_.end(),
+          FailureKind::Semantic, "level override missing after reload");
+  require(loadedDef.levelOverrides_.at(md::NumberingLevel::Level1).numStart_ == 5,
+          FailureKind::Semantic, "level override start mismatch after reload");
+}
+
+void caseRelationshipTargetDeduplication() {
+  md::Document doc;
+  auto section = doc.addSection();
+  section->addParagraph()->addRichText("relationship dedup");
+  doc.addNumberedListDefinition();
+  doc.addNumberedListDefinition();
+
+  const fs::path out = outputRoot() / "relationships_dedup.docx";
+  doc.saveAs(out.string());
+  const std::string relsXml = extractPart(out, "/word/_rels/document.xml.rels");
+  require(countOccurrences(relsXml, "Target=\"numbering.xml\"") == 1, FailureKind::Relationships,
+          "numbering target relationship should be unique");
+}
+
 void caseImportFromGeneratedCorpus() {
   casePlainParagraphs();
   caseRichText();
@@ -373,6 +552,11 @@ int main() {
       {"multi-section document", caseMultiSection},
       {"create-save-reopen package parts", caseSmokeReopenParts},
       {"load-save-reload round trip", caseLoadSaveReloadRoundTrip},
+      {"paragraph page-break-after round trip", caseParagraphPageBreakAfterRoundTrip},
+      {"section doc-grid round trip", caseSectionDocGridRoundTrip},
+      {"picture crop/stretch round trip", casePictureCropStretchRoundTrip},
+      {"numbering styles and overrides round trip", caseNumberingStylesAndOverridesRoundTrip},
+      {"relationship target deduplication", caseRelationshipTargetDeduplication},
       {"import from generated corpus", caseImportFromGeneratedCorpus},
   };
 
