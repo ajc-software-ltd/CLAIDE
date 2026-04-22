@@ -1,21 +1,7 @@
 
-English | [简体中文](./README-zh_CN.md)
-
-<div align="center">
-  <img src="./assets/logo.png" width="100px">
-  <h1>minidocx</h1>
-  <p>C++ library for manipulating Microsoft Word Document</p>
-</div>
-
-## About
-
-minidocx is a modern, free, open-source, cross-platform, light-weight, and user-friendly C++20 library for manipulating Microsoft Word Document (.docx file) as described in [ECMA 376 5th edition](https://www.ecma-international.org/publications-and-standards/standards/ecma-376) or [ISO/IEC 29500-1:2016](https://www.iso.org/standard/71691.html) without installing MS Office or WPS Office.
-
-> [!WARNING]
-> minidocx 1.0 is currently in beta and should not be used in production.
-
-> [!NOTE]
-> Check out the master branch to view minidocx 0.6.
+minidocx is a modern, free, open-source, cross-platform, light-weight,
+and user-friendly C++20 library for manipulating Microsoft Word Document (.docx file)
+as described in [ECMA 376 5th edition](https://www.ecma-international.org/publications-and-standards/standards/ecma-376) or [ISO/IEC 29500-1:2016](https://www.iso.org/standard/71691.html) without installing MS Office or WPS Office.
 
 ## Features
 
@@ -69,7 +55,6 @@ int main()
 To build minidocx lib you'll need a C++20 compiler and CMake 3.28.
 
 ```bash
-git clone git@github.com:totravel/minidocx.git
 cd minidocx
 
 # Windows
@@ -88,21 +73,3 @@ A static library is built by default. If you want to use a shared build of minid
 ## Documentation
 
 - [User Guide](./guide.md)
-
-## Donation
-
-If you benefit from this project, please consider donating to help me sustain my projects actively and make more of my ideas come true.
-
-Alipay | WeChat Pay
------- | ----------
-![](./assets/qrcode/alipay.png) | ![](./assets/qrcode/wechat.png)
-
-## Sponsor
-
-You can sponsor this library at [AFDIAN](https://afdian.com/a/totravel).
-
-Your sponsorship means a lot to me. It will help me sustain my projects actively and make more of my ideas come true. Much appreciated! 💖 🙏
-
-## License
-
-minidocx is released to the public for free under the terms of the MIT License. See [LICENSE](./LICENSE) for the full text of the license. [LICENSE](./LICENSE) should be distributed alongside any assemblies that use minidocx in source or compiled form.

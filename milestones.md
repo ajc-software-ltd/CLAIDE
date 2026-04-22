@@ -140,7 +140,7 @@ src/
 
 ## Milestone 3: M3.x Document Pipeline (DOCX-first)
 
-**Tag range:** `v0.0.141-dev` onward
+**Tag range:** `v0.0.143-dev` onward
 **Status:** In Planning/Execution
 
 ### M3.x split

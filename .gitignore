@@ -52,3 +52,5 @@ coverage/
 
 # PDF reference docs (too large for git)
 *.pdf
+*.gpg
+*.asc

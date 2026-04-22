@@ -1,8 +1,11 @@
-﻿/**
- * Copyright (C) 2022-2025, Xie Zequn <totravel@foxmail.com>. All rights reserved.
- * Distributed under the MIT License (http://opensource.org/licenses/MIT)
- * Report bugs and download new versions at https://github.com/totravel/minidocx
- */
+// ============================================================================
+// MINIDOCX
+// ============================================================================
+// File:        container.cpp
+// Project:     CLAIDE
+// Copyright:   © 2026 AJC-Software Ltd
+// ============================================================================
+
 
 #include "word/main/container.hpp"
 #include "word/main/paragraph.hpp"
