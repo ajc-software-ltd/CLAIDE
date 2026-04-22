@@ -18,21 +18,6 @@ The intent is to keep changes simple, surgical, and verifiable while preserving 
 
 ---
 
-## Execution Mode Enforcement (Required)
-
-- **Plan mode / QA mode / Read-only mode**
-  - Inspect only; no file edits and no git side effects.
-  - Forbidden commands: `git add`, `git commit`, `git tag`, `git push`, PR creation tools.
-  - Output should be analysis + implementation instructions only.
-
-- **Build mode / Implementation mode**
-  - File edits, commits, tags, and pushes are allowed only when explicitly requested.
-  - Keep changes surgical and scoped to requested outcome.
-
-If there is any conflict or uncertainty about mode, stop and ask for explicit mode confirmation.
-
----
-
 ## Branch Allowlist Policy (Required)
 
 - Allowed long-lived branches in this repository: `main` and `minidocx`.
