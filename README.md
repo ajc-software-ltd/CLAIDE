@@ -44,7 +44,7 @@ The roadmap is currently being executed in milestone phases focused on core stab
 |-----------|-------|--------|
 | **Milestone 1** | Core IDE Shell | ✅ Complete |
 | **Milestone 2** | Vulkan Canvas (universal render layer) | ✅ Complete |
-| **Milestone 3** | M3.x Document Pipeline (minidocx-first) | ⏳ In Planning/Execution |
+| **Milestone 3** | M3.x Document Pipeline (minidocx) | ⏳ In Planning/Execution |
 | **Milestone 4** | Image processing | ⏳ Planned |
 | **Milestone 5** | Video player | ⏳ Planned |
 | **Milestone 6** | 3D model viewer | ⏳ Planned |
