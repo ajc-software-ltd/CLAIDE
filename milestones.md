@@ -20,7 +20,7 @@ Current versioning baseline: `v0.0.106-dev` (commit-count based).
 |-----------|--------|
 | 1: Core IDE Shell | ✅ Complete |
 | 2: Vulkan Canvas (Universal Render Layer) | ✅ Complete |
-| 3: Text Enhancement | ⏳ Planned |
+| 3: M3.x Document Pipeline (DOCX-first) | ⏳ In Planning/Execution |
 | 4: Image Processing (AVIM: Image) | ⏳ Planned |
 | 5: Video Player (AVIM: Video) | ⏳ Planned |
 | 6: 3D Model Viewer (AVIM: Model) | ⏳ Planned |
@@ -138,29 +138,29 @@ src/
 
 ---
 
-## Milestone 3: Text Enhancement
+## Milestone 3: M3.x Document Pipeline (DOCX-first)
 
-**Tag:** `v0.0.3-dev`
-**Status:** Planned
+**Tag range:** `v0.0.141-dev` onward
+**Status:** In Planning/Execution
 
-### Deliverables
-- Rich text formatting (bold, italic, underline, fonts, colors, sizes)
-- Paragraph formatting (alignment, indentation, spacing)
-- Lists (bulleted, numbered)
-- Tables
-- Headers/footers
-- Page layout (margins, orientation, size)
-- Format support: DOCX, PDF, RTF, ODT, TXT, MD
-- Format conversion between types
-- AI-accessible document model (structured content)
-- Text rendering through Vulkan Canvas
+### M3.x split
+- **M3.1** DOCX-first integration using `minidocx` as baseline in repo root (`/minidocx`).
+- **M3.2** XLSX implementation (deferred until M3.1 is stable).
+- **M3.3** SVG read/import/display.
+- **M3.4** TTF font pipeline (system/import/Google Fonts usage).
+- **M3.5+** PDF/AI interoperability and release hardening.
 
-### Dependencies Added
-- libzip (BSD, DOCX parsing)
-- poppler (GPL, PDF rendering) or MuPDF (AGPL)
+### Core architectural rule
+All document outputs must be viewable via the Vulkan Canvas render surface.
+
+### M3.1 deliverables
+- Import and pin `minidocx` upstream source.
+- Add CLAIDE-side office adapter boundary in `src/core/office` (planned implementation phase).
+- Define AI document operation contracts for DOCX workflows.
+- Document/render contract for Vulkan canvas visibility.
 
 ### Checkpoint
-- Auto-commit with tag `v0.0.3-dev`
+- M3.1 planning/docs complete before implementation commits.
 
 ---
 

@@ -44,7 +44,7 @@ The roadmap is currently being executed in milestone phases focused on core stab
 |-----------|-------|--------|
 | **Milestone 1** | Core IDE Shell | ✅ Complete |
 | **Milestone 2** | Vulkan Canvas (universal render layer) | ✅ Complete |
-| **Milestone 3** | Text enhancement | ⏳ Planned |
+| **Milestone 3** | M3.x Document Pipeline (DOCX-first) | ⏳ In Planning/Execution |
 | **Milestone 4** | Image processing | ⏳ Planned |
 | **Milestone 5** | Video player | ⏳ Planned |
 | **Milestone 6** | 3D model viewer | ⏳ Planned |
@@ -58,6 +58,12 @@ The roadmap is currently being executed in milestone phases focused on core stab
 - ⏳ Feature tracks (text/image/video/3D/AI) build on the unified render surface roadmap.
 
 See `milestones.md` for the canonical milestone breakdown and checkpoint workflow.
+
+### M3.x direction
+- **M3.1**: DOCX-first integration using local `minidocx/` baseline + CLAIDE adapters.
+- **M3.2**: XLSX implementation (deferred until M3.1 stabilizes).
+- **M3.3+**: SVG/TTF/PDF/AI workflow layers aligned to canvas-first architecture.
+- All document output must remain viewable through the Vulkan render surface.
 
 ## Current Implementation Scope
 
@@ -77,6 +83,12 @@ See `milestones.md` for the canonical milestone breakdown and checkpoint workflo
 - Full Vulkan compute/render path replacing CPU fallback for image operations
 
 ---
+
+
+## Repository Layout Note
+
+- `minidocx/` is now vendored at project root as the DOCX baseline library for M3.1.
+- CLAIDE integration and AI/canvas adaptation remain in CLAIDE-owned source directories.
 
 ## Prerequisites
 
