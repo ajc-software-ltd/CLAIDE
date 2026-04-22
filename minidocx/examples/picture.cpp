@@ -3,8 +3,8 @@
 #include <iostream>
 
 #define TEXT1 u8"\
-In China, the spring festival marks the beginning of the new year. It falls on \
-the first day of the first month of the Chinese calendar and involves a variety \
+The spring festival marks the beginning of the new year. It falls on \
+the first day of the first month of the lunar calendar and involves a variety \
 of social practices to usher in the new year, pray for good fortune, celebrate \
 family reunions and promote community harmony. This process of celebration is \
 known as ‘guonian’ (crossing the year)."
@@ -19,7 +19,7 @@ cultural institutions, social groups and art troupes."
 
 #define TEXT3 "\
 The spring festival promotes family values, social cohesion and peace while \
-providing a sense of identity and continuity for the Chinese people."
+providing a sense of identity and continuity for the local people."
 
 
 int main()

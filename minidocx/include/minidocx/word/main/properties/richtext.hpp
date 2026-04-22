@@ -35,7 +35,7 @@ namespace MINIDOCX_NAMESPACE
 
       // Asian text font 
       std::string eastAsia_ = "Simsun";
-      // East Asian (i.e., CJK)
+      // East Asian scripts
       // 
 
       // High ANSI

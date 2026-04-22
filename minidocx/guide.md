@@ -90,7 +90,7 @@ doc.saveAs("example.docx");
 The `prop_` public data member of the `Document` object is a `PackageProperties` object, which is used to store additional information about the document, such as title, subject, author, and company.
 
 ```cpp
-doc.prop_.title_ = "Chinese New Year";
+doc.prop_.title_ = "New Year";
 doc.prop_.author_ = "John";
 doc.prop_.lastModifiedBy_ = "Peter";
 ```
@@ -137,7 +137,7 @@ See other avaliable paragraph properties in [ParagraphProperties](./include/mini
 A sequence of characters with a set of properties is represented by a `RichText` object which can be created by calling the `addRichText()` method on a `Paragraph` object with a piece of text encoded in UTF-8 as argument. Note that all characters, including font names mentioned below, should be encoded in UTF-8.
 
 ```cpp
-RichTextPointer rich = para->addRichText(u8"Happy Chinese New Year!\n");
+RichTextPointer rich = para->addRichText(u8"Happy New Year!\n");
 ```
 
 As you can see, the escape character `\n` (line break) is allowed. Note that the tab character `\t` is also allowed but the carriage return character `\r` is omitted. 

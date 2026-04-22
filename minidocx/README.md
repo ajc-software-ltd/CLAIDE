@@ -37,7 +37,7 @@ int main()
     ParagraphPointer para = sect->addParagraph();
     para->prop_.align_ = Alignment::Centered;
 
-    RichTextPointer rich = para->addRichText("Happy Chinese New Year!");
+    RichTextPointer rich = para->addRichText("Happy New Year!");
     rich->prop_.fontSize_ = 32;
     rich->prop_.color_ = "FF0000";
 
