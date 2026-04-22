@@ -247,6 +247,7 @@ cmake --build build --target validate
 - Branch allowlist: use `main` and `minidocx` only; never use `work` branch names.
 - Required merge validation gates: `build_with_prereqs` + `format-check` + `lint` + full `ctest`
 - Scope rule: for docs/version/tag-only changes, skip full rebuild and run lightweight consistency checks only (`git diff --name-only` + targeted `rg`).
+- Agent mode rule: use Plan/QA mode for analysis-only tasks; use Build mode only when explicit write/commit/push actions are requested.
 
 ## Project Structure
 
