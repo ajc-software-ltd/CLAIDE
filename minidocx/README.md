@@ -72,6 +72,18 @@ Bridge hardening guarantees (PR12):
 - Capability probe reports provider availability, versions, and capabilities before execution
 - Result provenance indicates provider-assisted origin
 
+## Python Providers: Template Rendering and Style Audit (PR13)
+
+Added optional second-wave providers (still companion-only):
+
+- `docxtpl.render_template`
+  - single-template + single-context + single-output DOCX rendering
+  - not mail merge / not bulk generation
+- `python_docx.style_audit`
+  - style inventory/reporting helper for diagnostics and compatibility checks
+
+Both providers return explicit provenance through the PR12 bridge contract and do not replace native minidocx model/editing/inspection behavior.
+
 ## Validation & Readiness Gate (PR10)
 
 `minidocx` now defines a branch-local readiness contract.

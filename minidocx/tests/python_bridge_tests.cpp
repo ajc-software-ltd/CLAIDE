@@ -1,4 +1,4 @@
-#include "minidocx/providers/python_bridge.hpp"
+#include "minidocx/minidocx.hpp"
 
 #include <cstdlib>
 #include <filesystem>
@@ -30,6 +30,17 @@ std::string findPythonExecutable()
   return {};
 }
 
+bool providerAvailable(
+    const std::vector<md::providers::ProviderInfo>& providers,
+    const std::string& name)
+{
+  for (const auto& p : providers) {
+    if (p.name == name)
+      return p.available;
+  }
+  return false;
+}
+
 #ifndef _WIN32
 std::filesystem::path writeFakeWorker(const std::string& name, const std::string& body)
 {
@@ -53,7 +64,7 @@ std::filesystem::path writeFakeWorker(const std::string& name, const std::string
   return scriptPath;
 }
 #endif
-}
+} // namespace
 
 int main()
 {
@@ -101,6 +112,56 @@ int main()
   require(mammoth.code == PythonBridgeCode::ProviderUnavailable || mammoth.code == PythonBridgeCode::InvalidRequest,
           "mammoth unavailable/missing-input path should be deterministic");
 
+  // PR13: docxtpl template rendering provider.
+  const auto tempDir = std::filesystem::temp_directory_path();
+  const auto templatePath = (tempDir / "minidocx_tpl_template.docx").string();
+  const auto renderedPath = (tempDir / "minidocx_tpl_rendered.docx").string();
+
+  md::Document doc;
+  auto section = doc.addSection();
+  section->addParagraph()->addRichText("Hello {{ name }}");
+  doc.saveAs(templatePath);
+
+  PythonProviderRequest renderRequest;
+  renderRequest.provider = "docxtpl";
+  renderRequest.operation = "render_template";
+  renderRequest.inputPath = templatePath;
+  renderRequest.outputPath = renderedPath;
+  renderRequest.payload = "{\"name\":\"Alice\"}";
+
+  const auto renderResult = invokePythonProvider(cfg, renderRequest);
+  if (providerAvailable(probe.providers, "docxtpl")) {
+    require(renderResult.code == PythonBridgeCode::Ok, "docxtpl render should succeed when provider is available");
+    require(std::filesystem::exists(renderedPath), "rendered docx should exist");
+  } else {
+    require(renderResult.code == PythonBridgeCode::ProviderUnavailable,
+            "docxtpl provider should return provider-unavailable when dependency is missing");
+  }
+
+  PythonProviderRequest badRenderRequest = renderRequest;
+  badRenderRequest.payload = "not-json";
+  const auto badRender = invokePythonProvider(cfg, badRenderRequest);
+  if (providerAvailable(probe.providers, "docxtpl")) {
+    require(badRender.code == PythonBridgeCode::InvalidRequest,
+            "docxtpl malformed context should normalize to invalid request");
+  }
+
+  // PR13: python-docx style audit provider.
+  PythonProviderRequest styleAuditRequest;
+  styleAuditRequest.provider = "python_docx";
+  styleAuditRequest.operation = "style_audit";
+  styleAuditRequest.inputPath = templatePath;
+
+  const auto styleAudit = invokePythonProvider(cfg, styleAuditRequest);
+  if (providerAvailable(probe.providers, "python_docx")) {
+    require(styleAudit.code == PythonBridgeCode::Ok, "style audit should succeed when provider is available");
+    require(styleAudit.text.find("style_count") != std::string::npos,
+            "style audit response should include style_count");
+  } else {
+    require(styleAudit.code == PythonBridgeCode::ProviderUnavailable,
+            "python-docx provider should return provider-unavailable when dependency is missing");
+  }
+
 #ifndef _WIN32
   {
     PythonBridgeConfig fakeCfg;
@@ -125,5 +186,7 @@ int main()
   }
 #endif
 
+  std::filesystem::remove(templatePath);
+  std::filesystem::remove(renderedPath);
   return 0;
 }

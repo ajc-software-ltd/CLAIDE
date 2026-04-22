@@ -10,6 +10,7 @@ _Last updated: 2026-04-22_
 - PR10: pre-integration readiness gate and validation contract (no new engine features).
 - PR11: optional out-of-process Python provider bridge (companion layer, not core replacement).
 - PR12: Python bridge hardening (explicit pathing, probing, protocol validation, normalized errors, provenance).
+- PR13: optional template-render and style-audit providers via hardened Python bridge.
 
 ## Public Usage Contract (Current)
 
@@ -27,7 +28,7 @@ _Last updated: 2026-04-22_
 - Bridge hardening: explicit launch config, capability probing, versioned protocol validation, normalized errors
 - Bridge model: out-of-process Python worker with explicit request/response payloads
 - Build default: disabled (`MINIDOCX_ENABLE_PYTHON_BRIDGE=OFF`)
-- Companion providers: smoke, mammoth export, docxcompose append, optional lxml expert workflows
+- Companion providers: smoke, mammoth export, docxcompose append, optional lxml expert workflows, docxtpl template rendering, python-docx style audit
 - Core C++ engine remains authoritative when bridge is disabled or unavailable
 
 - Normal branch health validation target: `minidocx_validate`
@@ -74,7 +75,7 @@ _Last updated: 2026-04-22_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR12)
+## Next Likely Chunks (After PR13)
 
 - Continue module-scoped tests and docs hardening around existing surfaces
 - Keep contract language consistent across headers/docs/examples as APIs evolve

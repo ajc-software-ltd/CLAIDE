@@ -8,6 +8,7 @@ add_executable(table table.cpp)
 add_executable(style style.cpp)
 add_executable(list list.cpp)
 add_executable(inspection_workflow inspection_workflow.cpp)
+add_executable(pyproviders python_providers.cpp)
 
 set_target_properties(
   myapp
@@ -16,4 +17,5 @@ set_target_properties(
   style
   list
   inspection_workflow
+  pyproviders
   PROPERTIES FOLDER examples)

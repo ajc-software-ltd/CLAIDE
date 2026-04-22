@@ -51,6 +51,18 @@ No implicit current-working-directory or hidden fallback scanning is part of the
 
 ### Capability probing and error normalization
 
+### PR13 provider operations
+
+- `docxtpl.render_template`
+  - input: template docx path + JSON context payload
+  - output: rendered docx path
+  - bounded to single-template/single-context/single-output flow
+- `python_docx.style_audit`
+  - input: docx path
+  - output: structured style inventory/report JSON
+
+Both are optional provider-backed companion features and keep native minidocx engine responsibilities unchanged.
+
 Always call `probePythonProviders` before provider execution when bridge mode is enabled.
 The bridge normalizes failures into a stable error taxonomy (`BridgeUnavailable`, `WorkerLaunchFailed`, `ProviderUnavailable`, `ProtocolMismatch`, `MalformedResponse`, etc.).
 

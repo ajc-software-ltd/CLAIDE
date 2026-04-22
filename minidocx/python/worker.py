@@ -5,6 +5,7 @@ import argparse
 import base64
 import importlib
 import io
+import json
 import os
 import traceback
 from typing import Dict, List, Tuple
@@ -17,6 +18,8 @@ ALLOWED_PROVIDERS = {
     "mammoth": {"docx_to_html"},
     "docxcompose": {"compose_append"},
     "lxml": {"xpath_query", "xslt_transform"},
+    "docxtpl": {"render_template"},
+    "python_docx": {"style_audit"},
 }
 
 PROVIDER_CAPABILITIES = {
@@ -24,6 +27,8 @@ PROVIDER_CAPABILITIES = {
     "mammoth": ["docx_to_html"],
     "docxcompose": ["compose_append"],
     "lxml": ["xpath_query", "xslt_transform"],
+    "docxtpl": ["render_template"],
+    "python_docx": ["style_audit"],
 }
 
 
@@ -105,6 +110,12 @@ def provider_probe() -> Dict[str, str]:
 
     okl, verl, msgl = module_version("lxml")
     providers.append(("lxml", okl, verl, PROVIDER_CAPABILITIES["lxml"], "available" if okl else msgl))
+
+    okt, vert, msqt = module_version("docxtpl")
+    providers.append(("docxtpl", okt, vert, PROVIDER_CAPABILITIES["docxtpl"], "available" if okt else msqt))
+
+    okd, verd, msgd = module_version("docx")
+    providers.append(("python_docx", okd, verd, PROVIDER_CAPABILITIES["python_docx"], "available" if okd else msgd))
 
     return {
         "code": "ok",
@@ -210,6 +221,75 @@ def provider_lxml_xslt_transform(input_path: str, xslt_text: str) -> Dict[str, s
     }
 
 
+def provider_docxtpl_render_template(template_path: str, context_json: str, output_path: str) -> Dict[str, str]:
+    try:
+        from docxtpl import DocxTemplate  # type: ignore
+    except Exception as ex:
+        return error("provider_unavailable", f"docxtpl unavailable: {ex}")
+
+    if not template_path or not output_path or not os.path.exists(template_path):
+        return error("invalid_request", "template input_path and output_path are required")
+
+    try:
+        context = json.loads(context_json) if context_json else {}
+        if not isinstance(context, dict):
+            return error("invalid_request", "template context payload must be a JSON object")
+    except Exception as ex:
+        return error("invalid_request", f"invalid template context JSON: {ex}")
+
+    tpl = DocxTemplate(template_path)
+    tpl.render(context)
+    tpl.save(output_path)
+
+    return {
+        "code": "ok",
+        "message": "docxtpl render complete",
+        "provenance": "python_provider",
+        "output_path": output_path,
+    }
+
+
+def provider_python_docx_style_audit(input_path: str) -> Dict[str, str]:
+    try:
+        from docx import Document  # type: ignore
+    except Exception as ex:
+        return error("provider_unavailable", f"python-docx unavailable: {ex}")
+
+    if not input_path or not os.path.exists(input_path):
+        return error("invalid_request", "input_path is required for style audit")
+
+    doc = Document(input_path)
+    styles = []
+    style_names = set()
+    for style in doc.styles:
+        style_names.add(style.name)
+        styles.append({
+            "name": style.name,
+            "type": str(style.type),
+            "builtin": bool(getattr(style, "builtin", False)),
+        })
+
+    missing_references = []
+    for idx, para in enumerate(doc.paragraphs):
+        if para.style is None:
+            continue
+        if para.style.name not in style_names:
+            missing_references.append({"kind": "paragraph", "index": idx, "style": para.style.name})
+
+    report = {
+        "style_count": len(styles),
+        "styles": styles,
+        "missing_references": missing_references,
+    }
+
+    return {
+        "code": "ok",
+        "message": "python-docx style audit complete",
+        "provenance": "python_provider",
+        "text_b64": encode_text(json.dumps(report, ensure_ascii=False)),
+    }
+
+
 def validate_request(values: Dict[str, str]) -> Tuple[bool, Dict[str, str]]:
     required = ["protocol_version", "provider", "operation"]
     for field in required:
@@ -253,6 +333,10 @@ def run(values: Dict[str, str]) -> Dict[str, str]:
         return provider_lxml_xpath_query(input_path, payload)
     if provider == "lxml" and operation == "xslt_transform":
         return provider_lxml_xslt_transform(input_path, payload)
+    if provider == "docxtpl" and operation == "render_template":
+        return provider_docxtpl_render_template(input_path, payload, output_path)
+    if provider == "python_docx" and operation == "style_audit":
+        return provider_python_docx_style_audit(input_path)
 
     return error("invalid_request", "unhandled provider operation")
 
