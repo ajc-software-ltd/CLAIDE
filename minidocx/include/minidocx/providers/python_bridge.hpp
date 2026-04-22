@@ -72,10 +72,12 @@ namespace MINIDOCX_NAMESPACE::providers
 
     std::string text;
     std::string outputPath;
+    std::vector<std::string> warnings;
 
     PythonResultProvenance provenance = PythonResultProvenance::PythonProvider;
     std::string providerName;
     std::string providerOperation;
+    std::string providerVersion;
 
     std::string launchMode;
     std::string launchTarget;

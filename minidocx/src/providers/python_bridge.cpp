@@ -166,6 +166,19 @@ std::map<std::string, std::string> readKeyValues(const std::filesystem::path& pa
   return out;
 }
 
+
+std::vector<std::string> splitLines(const std::string& text)
+{
+  std::vector<std::string> out;
+  std::stringstream ss(text);
+  std::string line;
+  while (std::getline(ss, line)) {
+    if (!line.empty())
+      out.push_back(line);
+  }
+  return out;
+}
+
 std::vector<std::string> split(const std::string& in, const char sep)
 {
   std::vector<std::string> out;
@@ -355,6 +368,12 @@ PythonProviderResponse callWorker(const PythonBridgeConfig& config, const Python
   if (const auto itOutPath = values.find("output_path"); itOutPath != values.end())
     response.outputPath = unescapeField(itOutPath->second);
 
+  if (const auto itWarnings = values.find("warnings_b64"); itWarnings != values.end())
+    response.warnings = splitLines(base64Decode(itWarnings->second));
+
+  if (const auto itProviderVersion = values.find("provider_version"); itProviderVersion != values.end())
+    response.providerVersion = unescapeField(itProviderVersion->second);
+
   if (const auto itProv = values.find("provenance"); itProv != values.end())
     response.provenance = parseProvenance(itProv->second);
 
@@ -367,8 +386,13 @@ PythonProviderResponse callWorker(const PythonBridgeConfig& config, const Python
 
 PythonProviderResponse probePythonProviders(const PythonBridgeConfig& config)
 {
-  if (!config.enabled)
-    return {PythonBridgeCode::Disabled, "python bridge disabled by configuration", {}, {}, {}, PythonResultProvenance::Native, {}, {}, {}, {}, {}};
+  if (!config.enabled) {
+    PythonProviderResponse response;
+    response.code = PythonBridgeCode::Disabled;
+    response.message = "python bridge disabled by configuration";
+    response.provenance = PythonResultProvenance::Native;
+    return response;
+  }
 
   PythonProviderRequest request;
   request.provider = "system";
@@ -380,11 +404,23 @@ PythonProviderResponse invokePythonProvider(
     const PythonBridgeConfig& config,
     const PythonProviderRequest& request)
 {
-  if (!config.enabled)
-    return {PythonBridgeCode::Disabled, "python bridge disabled by configuration", {}, {}, {}, PythonResultProvenance::Native, {}, {}, {}, {}, {}};
+  if (!config.enabled) {
+    PythonProviderResponse response;
+    response.code = PythonBridgeCode::Disabled;
+    response.message = "python bridge disabled by configuration";
+    response.provenance = PythonResultProvenance::Native;
+    return response;
+  }
 
-  if (request.provider.empty() || request.operation.empty())
-    return {PythonBridgeCode::InvalidRequest, "provider and operation are required", {}, {}, {}, PythonResultProvenance::PythonProvider, request.provider, request.operation, {}, {}, {}};
+  if (request.provider.empty() || request.operation.empty()) {
+    PythonProviderResponse response;
+    response.code = PythonBridgeCode::InvalidRequest;
+    response.message = "provider and operation are required";
+    response.provenance = PythonResultProvenance::PythonProvider;
+    response.providerName = request.provider;
+    response.providerOperation = request.operation;
+    return response;
+  }
 
   return callWorker(config, request);
 }

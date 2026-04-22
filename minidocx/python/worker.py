@@ -16,6 +16,7 @@ ALLOWED_PROVIDERS = {
     "system": {"probe"},
     "smoke": {"ping"},
     "mammoth": {"docx_to_html"},
+    "mammoth_semantic": {"export_html", "extract_raw_text"},
     "docxcompose": {"compose_append"},
     "lxml": {"xpath_query", "xslt_transform"},
     "docxtpl": {"render_template"},
@@ -25,6 +26,7 @@ ALLOWED_PROVIDERS = {
 PROVIDER_CAPABILITIES = {
     "smoke": ["ping"],
     "mammoth": ["docx_to_html"],
+    "mammoth_semantic": ["export_html", "extract_raw_text"],
     "docxcompose": ["compose_append"],
     "lxml": ["xpath_query", "xslt_transform"],
     "docxtpl": ["render_template"],
@@ -97,6 +99,15 @@ def pack_providers(providers: List[Tuple[str, bool, str, List[str], str]]) -> st
     return ";".join(chunks)
 
 
+def mammoth_messages_to_warning_text(messages: List[object]) -> str:
+    lines = []
+    for m in messages:
+        text = getattr(m, "message", str(m))
+        level = getattr(m, "type", "warning")
+        lines.append(f"{level}:{text}")
+    return "\n".join(lines)
+
+
 def provider_probe() -> Dict[str, str]:
     providers: List[Tuple[str, bool, str, List[str], str]] = []
 
@@ -104,6 +115,7 @@ def provider_probe() -> Dict[str, str]:
 
     ok, ver, msg = module_version("mammoth")
     providers.append(("mammoth", ok, ver, PROVIDER_CAPABILITIES["mammoth"], "available" if ok else msg))
+    providers.append(("mammoth_semantic", ok, ver, PROVIDER_CAPABILITIES["mammoth_semantic"], "available" if ok else msg))
 
     okc, verc, msgc = module_version("docxcompose")
     providers.append(("docxcompose", okc, verc, PROVIDER_CAPABILITIES["docxcompose"], "available" if okc else msgc))
@@ -148,9 +160,78 @@ def provider_mammoth_docx_to_html(input_path: str) -> Dict[str, str]:
     return {
         "code": "ok",
         "message": "mammoth conversion complete",
+        "provider_version": getattr(mammoth, "__version__", "unknown"),
         "provenance": "python_provider",
         "text_b64": encode_text(result.value),
     }
+
+
+def provider_mammoth_semantic_export_html(input_path: str, payload: str) -> Dict[str, str]:
+    try:
+        import mammoth  # type: ignore
+    except Exception as ex:
+        return error("provider_unavailable", f"mammoth unavailable: {ex}")
+
+    if not input_path or not os.path.exists(input_path):
+        return error("invalid_request", "input_path for mammoth_semantic.export_html is required")
+
+    style_map = None
+    include_default_style_map = True
+    if payload:
+        try:
+            params = json.loads(payload)
+            if not isinstance(params, dict):
+                return error("invalid_request", "payload must be a JSON object")
+            style_map = params.get("style_map")
+            include_default_style_map = bool(params.get("include_default_style_map", True))
+        except Exception as ex:
+            return error("invalid_request", f"invalid payload JSON: {ex}")
+
+    kwargs = {"include_default_style_map": include_default_style_map}
+    if style_map:
+        kwargs["style_map"] = style_map
+
+    with open(input_path, "rb") as docx_file:
+        result = mammoth.convert_to_html(docx_file, **kwargs)
+
+    warnings = mammoth_messages_to_warning_text(result.messages)
+
+    out = {
+        "code": "ok",
+        "message": "mammoth semantic html export complete",
+        "provider_version": getattr(mammoth, "__version__", "unknown"),
+        "provenance": "python_provider",
+        "text_b64": encode_text(result.value),
+    }
+    if warnings:
+        out["warnings_b64"] = encode_text(warnings)
+    return out
+
+
+def provider_mammoth_semantic_extract_text(input_path: str) -> Dict[str, str]:
+    try:
+        import mammoth  # type: ignore
+    except Exception as ex:
+        return error("provider_unavailable", f"mammoth unavailable: {ex}")
+
+    if not input_path or not os.path.exists(input_path):
+        return error("invalid_request", "input_path for mammoth_semantic.extract_raw_text is required")
+
+    with open(input_path, "rb") as docx_file:
+        result = mammoth.extract_raw_text(docx_file)
+
+    warnings = mammoth_messages_to_warning_text(getattr(result, "messages", []))
+
+    out = {
+        "code": "ok",
+        "message": "mammoth semantic raw text extraction complete",
+        "provider_version": getattr(mammoth, "__version__", "unknown"),
+        "provenance": "python_provider",
+        "text_b64": encode_text(result.value),
+    }
+    if warnings:
+        out["warnings_b64"] = encode_text(warnings)
+    return out
 
 
 def provider_docxcompose_append(base_path: str, append_path: str, output_path: str) -> Dict[str, str]:
@@ -327,6 +408,10 @@ def run(values: Dict[str, str]) -> Dict[str, str]:
         return provider_smoke_ping()
     if provider == "mammoth" and operation == "docx_to_html":
         return provider_mammoth_docx_to_html(input_path)
+    if provider == "mammoth_semantic" and operation == "export_html":
+        return provider_mammoth_semantic_export_html(input_path, payload)
+    if provider == "mammoth_semantic" and operation == "extract_raw_text":
+        return provider_mammoth_semantic_extract_text(input_path)
     if provider == "docxcompose" and operation == "compose_append":
         return provider_docxcompose_append(input_path, payload, output_path)
     if provider == "lxml" and operation == "xpath_query":
