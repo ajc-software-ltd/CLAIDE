@@ -34,5 +34,5 @@ This branch introduces `VulkanAI` as the Vulkan runtime module consumed by CLAID
 - `core/runtime/RenderHost.hpp` defines a render-host boundary for wx/native integration.
 - `core/runtime/VulkanRenderHost.{hpp,cpp}` provides initial Vulkan runtime host adapter scaffold.
 - `core/media/VideoFrameProvider.hpp` and `core/media/AudioProvider.hpp` define future ffmpeg/miniaudio module seams.
-- `docs/branch-policy.md` documents branch workflow (`runtime -> work -> main`).
+- `docs/branch-policy.md` documents branch workflow (`short-lived branch -> main`).
 - `MainFrame` now drives a minimal runtime-host frame loop (`BeginFrame/EndFrame/Present`) and resize handling.

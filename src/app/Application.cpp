@@ -20,6 +20,7 @@
 #include <wx/log.h>
 
 #include "core/CrashHandler.hpp"
+#include "core/ShaderCompiler.hpp"
 #include "platform/PlatformPaths.hpp"
 #include "ui/MainFrame.hpp"
 #include "ui/Theme.hpp"
@@ -111,6 +112,10 @@ bool Application::OnInit() {
 
     wxImage::AddHandler(new wxPNGHandler());
     Magick::InitializeMagick(nullptr);
+
+    if (!Core::ShaderCompiler::CompileProjectShaders()) {
+        spdlog::warn("Application: shader compile at startup completed with warnings/failures");
+    }
 
 #ifndef NDEBUG
     wxHandleFatalExceptions(true);

@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.123-dev`**
+- Current build version: **`0.0.140-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.123-dev`**
+- Example for current state: **`v0.0.140-dev`**
 
 ## Repository Rename Readiness
 
@@ -43,7 +43,7 @@ The roadmap is currently being executed in milestone phases focused on core stab
 | Milestone | Focus | Status |
 |-----------|-------|--------|
 | **Milestone 1** | Core IDE Shell | ✅ Complete |
-| **Milestone 2** | Vulkan Canvas (universal render layer) | 🚧 In Progress (foundation landed) |
+| **Milestone 2** | Vulkan Canvas (universal render layer) | ✅ Complete |
 | **Milestone 3** | Text enhancement | ⏳ Planned |
 | **Milestone 4** | Image processing | ⏳ Planned |
 | **Milestone 5** | Video player | ⏳ Planned |
@@ -54,7 +54,7 @@ The roadmap is currently being executed in milestone phases focused on core stab
 
 ### Current stream status (at this time)
 - ✅ **Core IDE Shell** is complete (Milestone 1).
-- 🚧 **Vulkan Canvas** foundation is landed and active development is in progress (Milestone 2).
+- ✅ **Vulkan Canvas** milestone is complete with runtime + canvas integration baseline.
 - ⏳ Feature tracks (text/image/video/3D/AI) build on the unified render surface roadmap.
 
 See `milestones.md` for the canonical milestone breakdown and checkpoint workflow.
@@ -69,7 +69,7 @@ See `milestones.md` for the canonical milestone breakdown and checkpoint workflo
 - Unit test suite for core modules via Catch2/CTest
 
 ### Planned or placeholder
-- Full Vulkan canvas/render-layer implementation completion (Milestone 2 in progress)
+- Vulkan canvas/render-layer baseline is complete (Milestone 2)
 - Full image-processing milestone work (Milestone 3+)
 - Full video/audio playback UI and controls
 - 3D model rendering pipeline
@@ -208,6 +208,12 @@ cmake --build build --target format-check
 
 # Fast local static analysis (changed files only)
 cmake --build build --target lint-fast
+
+# Scoped lint chunks
+cmake --build build --target lint-core
+cmake --build build --target lint-ui
+cmake --build build --target lint-vulkan
+cmake --build build --target lint-tests
 
 # Full static analysis
 cmake --build build --target lint
