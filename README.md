@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.128-dev`**
+- Current build version: **`0.0.129-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.128-dev`**
+- Example for current state: **`v0.0.129-dev`**
 
 ## Repository Rename Readiness
 
