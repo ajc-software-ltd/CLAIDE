@@ -50,6 +50,20 @@ This branch exposes a layered public surface: low-level model APIs plus higher-l
 - **Direct model mutation** is suitable for low-level/manual authoring in trusted code.
 - **Command + inspection APIs** are preferred for deterministic higher-level workflows.
 
+## Optional Python Provider Bridge (PR11)
+
+`minidocx` now supports an optional out-of-process Python provider bridge.
+
+- Core C++ model/editing/inspection/layout remains authoritative.
+- Python providers are companion capabilities and are disabled by default (`MINIDOCX_ENABLE_PYTHON_BRIDGE=OFF`).
+- Current provider set:
+  - `smoke.ping` (bridge health check)
+  - `mammoth.docx_to_html` (semantic DOCX -> HTML export helper)
+  - `docxcompose.compose_append` (append one DOCX into another)
+  - optional expert workflows via `lxml.xpath_query` / `lxml.xslt_transform`
+
+Bridge failures are surfaced as explicit response codes; missing Python/provider dependencies do not break core engine use.
+
 ## Validation & Readiness Gate (PR10)
 
 `minidocx` now defines a branch-local readiness contract.

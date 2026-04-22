@@ -21,6 +21,24 @@ Use the include surface that matches your intent:
 
 For future integration-facing workflows, prefer `editing` + `inspection` as the primary contract surface and use model mutation where low-level control is intentionally required.
 
+## Optional Python Provider Bridge (PR11)
+
+The Python bridge is an optional out-of-process provider layer.
+
+### Build mode
+
+- Disabled by default: `-DMINIDOCX_ENABLE_PYTHON_BRIDGE=OFF`
+- Enable bridge: `-DMINIDOCX_ENABLE_PYTHON_BRIDGE=ON`
+
+### Current bridge providers
+
+- `smoke.ping` -> returns `pong`
+- `mammoth.docx_to_html` -> semantic HTML export helper
+- `docxcompose.compose_append` -> append/compose DOCX output
+- optional expert XML operations through `lxml.xpath_query` and `lxml.xslt_transform`
+
+Python dependencies are discovered at runtime by the worker and reported deterministically as availability or provider-unavailable errors.
+
 ## Branch Validation Flow (PR10)
 
 Use the branch gate commands for repeatable health checks:

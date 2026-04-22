@@ -6,6 +6,7 @@ option(BUILD_SHARED    "Build shared library"         OFF)
 option(BUILD_EXAMPLES  "Build the examples"           ON)
 option(BUILD_TESTS     "Build the unit tests"         OFF)
 option(WITH_STATIC_CRT "Use static C Runtime library" OFF)
+option(MINIDOCX_ENABLE_PYTHON_BRIDGE "Enable optional out-of-process Python provider bridge" OFF)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -52,7 +53,9 @@ source_group(TREE "${PROJECT_SOURCE_DIR}/src"
 target_sources(minidocx PRIVATE ${headers} ${sources})
 target_include_directories(minidocx PRIVATE include/minidocx)
 target_include_directories(minidocx INTERFACE include)
-target_compile_definitions(minidocx PRIVATE MINIDOCX_NAMESPACE=md)
+target_compile_definitions(minidocx PRIVATE
+  MINIDOCX_NAMESPACE=md
+  $<$<BOOL:${MINIDOCX_ENABLE_PYTHON_BRIDGE}>:MINIDOCX_ENABLE_PYTHON_BRIDGE=1>)
 target_link_libraries(minidocx PRIVATE miniz pugixml)
 if(WITH_STATIC_CRT)
   set_target_properties(minidocx PROPERTIES
@@ -89,9 +92,17 @@ if(BUILD_TESTS)
   add_test(NAME minidocx.commands COMMAND minidocx_commands)
   set_target_properties(minidocx_commands PROPERTIES FOLDER tests)
 
+  add_executable(minidocx_python_bridge tests/python_bridge_tests.cpp)
+  target_link_libraries(minidocx_python_bridge PRIVATE minidocx)
+  target_include_directories(minidocx_python_bridge PRIVATE include include/minidocx)
+  target_compile_definitions(minidocx_python_bridge PRIVATE
+    MINIDOCX_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+  add_test(NAME minidocx.python_bridge COMMAND minidocx_python_bridge)
+  set_target_properties(minidocx_python_bridge PROPERTIES FOLDER tests)
+
   add_custom_target(minidocx_validate
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -R "minidocx\."
-    DEPENDS minidocx_regression minidocx_inspection_pipeline minidocx_commands
+    DEPENDS minidocx_regression minidocx_inspection_pipeline minidocx_commands minidocx_python_bridge
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Running minidocx branch validation suite")
 

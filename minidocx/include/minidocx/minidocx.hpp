@@ -21,3 +21,5 @@
 #include "model.hpp"
 #include "editing.hpp"
 #include "inspection.hpp"
+
+#include "providers.hpp"

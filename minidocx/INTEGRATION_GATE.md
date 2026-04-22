@@ -1,4 +1,4 @@
-# minidocx Pre-Integration Readiness Gate (PR10)
+# minidocx Pre-Integration Readiness Gate (PR10/PR11)
 
 _Last updated: 2026-04-22_
 
@@ -44,11 +44,23 @@ In addition to normal branch health checks:
 2. Branch non-goals remain respected (no adapter/render/UI/AI wiring).
 3. No failing/disabled minidocx gate tests are carried forward.
 
+
+### C) Python bridge checks (optional mode)
+
+When building with `MINIDOCX_ENABLE_PYTHON_BRIDGE=ON`:
+
+1. `minidocx.python_bridge` test must pass.
+2. Probe and smoke operations must return deterministic results.
+3. Missing third-party Python dependencies must return actionable provider-unavailable errors (not crashes).
+
 ## Branch Validation Commands
 
 ```bash
-# Configure with tests
+# Configure with tests (core mode)
 cmake -S minidocx -B minidocx/out/gate -G Ninja -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON
+
+# Configure with optional Python bridge
+cmake -S minidocx -B minidocx/out/gate-py -G Ninja -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON -DMINIDOCX_ENABLE_PYTHON_BRIDGE=ON
 
 # Normal validation suite
 cmake --build minidocx/out/gate --target minidocx_validate
@@ -72,5 +84,5 @@ The following remain out of scope:
 
 ## Change Policy
 
-PR10 is validation/process hardening only.
-Do not use this gate document to introduce new engine capability claims.
+PR10/PR11 are validation/process and optional-provider hardening only.
+Do not use this gate document to introduce unsupported engine capability claims.

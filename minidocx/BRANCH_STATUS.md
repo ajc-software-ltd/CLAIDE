@@ -8,6 +8,7 @@ _Last updated: 2026-04-22_
 - PR8: documentation/examples/branch-contract alignment complete.
 - PR9: public API contract clarification and surface-boundary tightening (no new engine features).
 - PR10: pre-integration readiness gate and validation contract (no new engine features).
+- PR11: optional out-of-process Python provider bridge (companion layer, not core replacement).
 
 ## Public Usage Contract (Current)
 
@@ -18,6 +19,14 @@ _Last updated: 2026-04-22_
 
 
 ## Readiness Gate (Current)
+
+
+## Optional Provider Bridge (Current)
+
+- Bridge model: out-of-process Python worker with explicit request/response payloads
+- Build default: disabled (`MINIDOCX_ENABLE_PYTHON_BRIDGE=OFF`)
+- Companion providers: smoke, mammoth export, docxcompose append, optional lxml expert workflows
+- Core C++ engine remains authoritative when bridge is disabled or unavailable
 
 - Normal branch health validation target: `minidocx_validate`
 - Pre-integration readiness target: `minidocx_preintegration_gate`
@@ -63,7 +72,7 @@ _Last updated: 2026-04-22_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR10)
+## Next Likely Chunks (After PR11)
 
 - Continue module-scoped tests and docs hardening around existing surfaces
 - Keep contract language consistent across headers/docs/examples as APIs evolve
