@@ -18,4 +18,5 @@
 #include "word/main/table.hpp"
 #include "word/main/cell.hpp"
 #include "inspection/semantic.hpp"
+#include "inspection/style_resolution.hpp"
 #include "utils/exceptions.hpp"

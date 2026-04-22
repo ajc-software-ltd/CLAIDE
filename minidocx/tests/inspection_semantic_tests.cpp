@@ -109,11 +109,127 @@ void testVisibleTextExtraction()
   const std::string missingSectionText = md::inspection::extractSectionVisibleText(doc, 99);
   require(missingSectionText.empty(), "out-of-range section text should be empty");
 }
+
+void testComputedStyleResolutionPrecedence()
+{
+  md::Document doc;
+  auto section = doc.addSection();
+
+  md::ParagraphStyle baseParagraphStyle;
+  baseParagraphStyle.name_ = "Base Heading";
+  baseParagraphStyle.outlineLevel_ = md::ParagraphProperties::OutlineLevel::Level3;
+  baseParagraphStyle.fontSize_ = 24;
+  baseParagraphStyle.color_ = "112233";
+  doc.addParagraphStyle(baseParagraphStyle);
+
+  md::ParagraphStyle derivedParagraphStyle;
+  derivedParagraphStyle.name_ = "Derived Heading";
+  derivedParagraphStyle.basedOn_ = "BaseHeading";
+  derivedParagraphStyle.align_ = md::Alignment::Right;
+  doc.addParagraphStyle(derivedParagraphStyle);
+
+  md::CharacterStyle baseCharacterStyle;
+  baseCharacterStyle.name_ = "Base Char";
+  baseCharacterStyle.fontStyle_.italic_ = true;
+  baseCharacterStyle.color_ = "445566";
+  doc.addCharacterStyle(baseCharacterStyle);
+
+  md::CharacterStyle derivedCharacterStyle;
+  derivedCharacterStyle.name_ = "Derived Char";
+  derivedCharacterStyle.basedOn_ = "BaseChar";
+  derivedCharacterStyle.fontStyle_.bold_ = true;
+  doc.addCharacterStyle(derivedCharacterStyle);
+
+  const md::NumberingId listId = doc.addNumberedListDefinition();
+  auto paragraph = section->addParagraph();
+  paragraph->prop_.style_ = "Derived Heading";
+  paragraph->numId_ = listId;
+  paragraph->level_ = md::NumberingLevel::Level2;
+  paragraph->prop_.align_ = md::Alignment::Centered;
+
+  auto run = paragraph->addRichText("Resolved");
+  run->prop_.style_ = "Derived Char";
+  run->prop_.fontStyle_.italic_ = false; // represented as default/unset in current model
+  run->prop_.fontSize_ = 30;
+
+  const auto resolvedParagraph = md::inspection::resolveParagraphFormatting(doc, *paragraph);
+  require(resolvedParagraph.paragraphStyleId == "DerivedHeading", "paragraph style id should be normalized");
+  require(resolvedParagraph.paragraphStyleChain.size() == 2, "paragraph style chain depth mismatch");
+  require(resolvedParagraph.paragraph.align_.has_value(), "paragraph alignment should resolve");
+  require(resolvedParagraph.paragraph.align_.value() == md::Alignment::Centered,
+          "direct paragraph alignment should override style alignment");
+  require(resolvedParagraph.paragraph.outlineLevel_ == md::ParagraphProperties::OutlineLevel::Level3,
+          "outline level should be inherited from basedOn style");
+  require(resolvedParagraph.headingLike, "resolved heading flag should be true");
+  require(resolvedParagraph.list.hasNumbering, "list formatting should resolve");
+  require(resolvedParagraph.list.level == md::NumberingLevel::Level2, "resolved list level mismatch");
+  require(!resolvedParagraph.list.format.empty(), "resolved list format should be present");
+
+  const auto resolvedRun = md::inspection::resolveRunFormatting(doc, *paragraph, *run);
+  require(resolvedRun.characterStyleId == "DerivedChar", "character style id should be normalized");
+  require(resolvedRun.characterStyleChain.size() == 2, "character style chain depth mismatch");
+  require(resolvedRun.run.fontStyle_.bold_, "bold should be inherited from derived character style");
+  require(resolvedRun.run.fontStyle_.italic_, "italic should be inherited from basedOn character style");
+  require(resolvedRun.run.fontSize_ == 30, "direct run font size should override paragraph style");
+}
+
+void testComputedStyleResolutionFailuresAndDeterminism()
+{
+  md::Document doc;
+  auto section = doc.addSection();
+
+  md::ParagraphStyle cycleParagraphStyleA;
+  cycleParagraphStyleA.name_ = "Cycle A";
+  cycleParagraphStyleA.basedOn_ = "CycleB";
+  doc.addParagraphStyle(cycleParagraphStyleA);
+
+  md::ParagraphStyle cycleParagraphStyleB;
+  cycleParagraphStyleB.name_ = "Cycle B";
+  cycleParagraphStyleB.basedOn_ = "CycleA";
+  doc.addParagraphStyle(cycleParagraphStyleB);
+
+  md::CharacterStyle cycleCharacterStyleA;
+  cycleCharacterStyleA.name_ = "Cycle Char A";
+  cycleCharacterStyleA.basedOn_ = "CycleCharB";
+  doc.addCharacterStyle(cycleCharacterStyleA);
+
+  md::CharacterStyle cycleCharacterStyleB;
+  cycleCharacterStyleB.name_ = "Cycle Char B";
+  cycleCharacterStyleB.basedOn_ = "CycleCharA";
+  doc.addCharacterStyle(cycleCharacterStyleB);
+
+  auto missingStyleParagraph = section->addParagraph();
+  missingStyleParagraph->prop_.style_ = "Missing Paragraph";
+  missingStyleParagraph->numId_ = 42;
+  auto missingStyleRun = missingStyleParagraph->addRichText("Missing");
+  missingStyleRun->prop_.style_ = "Missing Run";
+
+  auto cycleParagraph = section->addParagraph();
+  cycleParagraph->prop_.style_ = "Cycle A";
+  auto cycleRun = cycleParagraph->addRichText("Cycle");
+  cycleRun->prop_.style_ = "Cycle Char A";
+
+  const auto missingResolvedParagraphA = md::inspection::resolveParagraphFormatting(doc, *missingStyleParagraph);
+  const auto missingResolvedParagraphB = md::inspection::resolveParagraphFormatting(doc, *missingStyleParagraph);
+  require(missingResolvedParagraphA.issues == missingResolvedParagraphB.issues, "paragraph resolution should be deterministic");
+  require(!missingResolvedParagraphA.issues.empty(), "missing references should produce resolve issues");
+
+  const auto missingResolvedRun = md::inspection::resolveRunFormatting(doc, *missingStyleParagraph, *missingStyleRun);
+  require(!missingResolvedRun.issues.empty(), "missing run style should produce resolve issues");
+
+  const auto cycleResolvedParagraph = md::inspection::resolveParagraphFormatting(doc, *cycleParagraph);
+  require(!cycleResolvedParagraph.issues.empty(), "paragraph style cycle should produce resolve issues");
+
+  const auto cycleResolvedRun = md::inspection::resolveRunFormatting(doc, *cycleParagraph, *cycleRun);
+  require(!cycleResolvedRun.issues.empty(), "character style cycle should produce resolve issues");
+}
 }
 
 int main()
 {
   testSummarizeAndListing();
   testVisibleTextExtraction();
+  testComputedStyleResolutionPrecedence();
+  testComputedStyleResolutionFailuresAndDeterminism();
   return 0;
 }
