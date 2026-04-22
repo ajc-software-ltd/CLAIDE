@@ -13,7 +13,7 @@ cmake --build build --target lint-core
 
 - Configure succeeded after installing ImageMagick++ development dependencies.
 - `lint-core` started and produced `build/reports/clang-tidy.core.raw.txt`.
-- The raw report currently shows high-volume diagnostics/warning counters from core translation units and indicates further core cleanup work is still required.
+- The raw report currently shows high-volume diagnostics/warning counters from core translation units and indicates further core cleanup is still required.
 
 ## Tooling adjustment in this chunk
 

@@ -76,7 +76,7 @@ See `milestones.md` for the canonical milestone breakdown and checkpoint workflo
 
 ### Planned or placeholder
 - Vulkan canvas/render-layer baseline is complete (Milestone 2)
-- Full image-processing milestone work (Milestone 3+)
+- Full image-processing milestone implementation (Milestone 3+)
 - Full video/audio playback UI and controls
 - 3D model rendering pipeline
 - AI chat/provider integration panels and generation workflows

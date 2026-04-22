@@ -23,7 +23,7 @@ This document maps milestone progress to concrete commits and release tags.
 | Milestone | Final Tag | Final Commit SHA | Status | Evidence |
 |---|---|---:|---|---|
 | M1: Core IDE Shell | `v0.0.1-dev` | `ae06874` | ✅ Finalized (signed tag) | Initial baseline commit message explicitly references `v0.0.1-dev`. |
-| M2: Vulkan Canvas / image-processing foundation | `v0.0.2-dev` | `fc25ac1` | ⏳ In progress (candidate anchor) | Commit message marks Milestone 2 work-in-progress for image processing + explorer integration. |
+| M2: Vulkan Canvas / image-processing foundation | `v0.0.2-dev` | `fc25ac1` | ⏳ In progress (candidate anchor) | Commit message marks Milestone 2 in-progress for image processing + explorer integration. |
 | M2.1: Vulkan foundation follow-up | `v0.0.3-dev` | `b6bce56` | ✅ Finalized (signed tag) | Commit message references Vulkan foundation completion against `0.0.3-dev`. |
 
 > Notes
