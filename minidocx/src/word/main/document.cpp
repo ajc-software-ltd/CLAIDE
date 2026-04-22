@@ -21,14 +21,25 @@
 #include "pugixml.hpp"
 
 #include <cmath>
+#include <fstream>
 #include <cstring>
 #include <map>
 #include <optional>
 #include <sstream>
+#include <chrono>
 
 
 namespace MINIDOCX_NAMESPACE
 {
+  namespace
+  {
+    fs::path temporaryDocxPath()
+    {
+      const auto ticks = std::chrono::steady_clock::now().time_since_epoch().count();
+      return fs::temp_directory_path() / ("minidocx_" + std::to_string(ticks) + ".docx");
+    }
+  }
+
   Document::Document()
   {
     init();
@@ -47,6 +58,42 @@ namespace MINIDOCX_NAMESPACE
     clear();
     load();
     Zip::close();
+  }
+
+  void Document::saveToStream(std::ostream& stream)
+  {
+    const fs::path tmp = temporaryDocxPath();
+    saveAs(tmp.string());
+    Buffer data;
+    readFile(data, tmp);
+    stream.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+    fs::remove(tmp);
+  }
+
+  Buffer Document::saveToBuffer()
+  {
+    std::stringstream stream;
+    saveToStream(stream);
+    const std::string data = stream.str();
+    return Buffer(data.begin(), data.end());
+  }
+
+  void Document::loadFromStream(std::istream& stream)
+  {
+    const fs::path tmp = temporaryDocxPath();
+    std::ofstream out(tmp, std::ios::binary | std::ios::out);
+    out << stream.rdbuf();
+    out.close();
+    load(tmp.string());
+    fs::remove(tmp);
+  }
+
+  void Document::loadFromBuffer(const Buffer& buffer)
+  {
+    const fs::path tmp = temporaryDocxPath();
+    writeFile(buffer, tmp);
+    load(tmp.string());
+    fs::remove(tmp);
   }
 
 

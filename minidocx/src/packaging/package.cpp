@@ -38,6 +38,7 @@ namespace MINIDOCX_NAMESPACE
 
   void Package::clear()
   {
+    buffered_.clear();
     defaultContentTypes_.clear();
     overrideContentTypes_.clear();
     relationships_.clear();
@@ -46,6 +47,7 @@ namespace MINIDOCX_NAMESPACE
 
   void Package::load()
   {
+    preserveLoadedParts();
     readContentTypes();
     readPkgRelationships();
     readCoreProperties();
@@ -67,6 +69,22 @@ namespace MINIDOCX_NAMESPACE
     std::stringstream ss;
     doc.save(ss, "", pugi::format_raw);
     addFileFromStream(name, ss);
+    buffered_.erase(name);
+  }
+
+  void Package::preserveLoadedParts()
+  {
+    buffered_.clear();
+    for (const auto& partName : listEntries()) {
+      const auto normalized = partName.lexically_normal();
+      if (normalized.empty())
+        continue;
+      const auto name = normalized.generic_string();
+      if (!name.empty() && name.back() == '/')
+        continue;
+      const std::string raw = extractFileToString(normalized);
+      buffered_[normalized] = Buffer(raw.begin(), raw.end());
+    }
   }
 
 

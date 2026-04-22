@@ -60,6 +60,7 @@ namespace MINIDOCX_NAMESPACE
 
   private:
     std::map<PartName, Buffer> buffered_;
+    void preserveLoadedParts();
 
     void writeBufferedParts();
 

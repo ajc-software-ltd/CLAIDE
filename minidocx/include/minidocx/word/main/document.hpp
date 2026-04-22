@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <iosfwd>
 #include <list>
 #include <map>
 
@@ -34,8 +35,12 @@ namespace MINIDOCX_NAMESPACE
   public:
     Document();
     void saveAs(const std::string& filename);
+    void saveToStream(std::ostream& stream);
+    Buffer saveToBuffer();
 
     void load(const std::string& filename);
+    void loadFromStream(std::istream& stream);
+    void loadFromBuffer(const Buffer& buffer);
     inline void save() { saveAs(filename_); }
 
     inline void reset() { clear(); init(); }

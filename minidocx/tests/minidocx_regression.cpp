@@ -499,6 +499,66 @@ void caseRelationshipTargetDeduplication() {
           "numbering target relationship should be unique");
 }
 
+void caseBufferAndStreamIoParity() {
+  md::Document source;
+  auto section = source.addSection();
+  section->addParagraph()->addRichText("buffer stream parity");
+  section->addParagraph()->addRichText("line two");
+
+  const md::Buffer savedBuffer = source.saveToBuffer();
+  require(!savedBuffer.empty(), FailureKind::Packaging, "saveToBuffer returned empty buffer");
+
+  md::Document fromBuffer;
+  fromBuffer.loadFromBuffer(savedBuffer);
+  require(!fromBuffer.sections().empty(), FailureKind::Semantic, "loadFromBuffer produced no sections");
+
+  std::stringstream ss;
+  source.saveToStream(ss);
+  md::Document fromStream;
+  fromStream.loadFromStream(ss);
+  require(!fromStream.sections().empty(), FailureKind::Semantic, "loadFromStream produced no sections");
+
+  const fs::path out = outputRoot() / "buffer_stream_parity.docx";
+  fromStream.saveAs(out.string());
+  ensurePartsExist(out, {"/[Content_Types].xml", "/_rels/.rels", "/word/document.xml"});
+}
+
+void casePreserveUnknownPartsAndMedia() {
+  md::Document doc;
+  auto section = doc.addSection();
+  const md::Buffer png = {
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+      0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+      0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+      0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
+      0x89, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x44, 0x41,
+      0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+      0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
+      0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
+      0x42, 0x60, 0x82,
+  };
+  section->addParagraph()->addPicture(doc.addImage(png, md::FileType::PNG));
+  const fs::path original = outputRoot() / "preserve_unknown_original.docx";
+  doc.saveAs(original.string());
+
+  md::Zip zip;
+  zip.open(original.string(), md::Zip::OpenMode::Update);
+  zip.addFileFromString("/customXml/item1.xml", "<custom><value>preserve</value></custom>");
+  zip.close();
+
+  md::Document loaded;
+  loaded.load(original.string());
+  loaded.sections().front()->addParagraph()->addRichText("supported edit");
+
+  const fs::path resaved = outputRoot() / "preserve_unknown_resaved.docx";
+  loaded.saveAs(resaved.string());
+
+  ensurePartsExist(resaved, {"/customXml/item1.xml", "/word/media/image1.png", "/word/document.xml"});
+  const std::string customXml = extractPart(resaved, "/customXml/item1.xml");
+  require(customXml.find("preserve") != std::string::npos, FailureKind::Semantic,
+          "custom unknown part content was not preserved");
+}
+
 void caseImportFromGeneratedCorpus() {
   casePlainParagraphs();
   caseRichText();
@@ -557,6 +617,8 @@ int main() {
       {"picture crop/stretch round trip", casePictureCropStretchRoundTrip},
       {"numbering styles and overrides round trip", caseNumberingStylesAndOverridesRoundTrip},
       {"relationship target deduplication", caseRelationshipTargetDeduplication},
+      {"buffer and stream io parity", caseBufferAndStreamIoParity},
+      {"preserve unknown parts and media", casePreserveUnknownPartsAndMedia},
       {"import from generated corpus", caseImportFromGeneratedCorpus},
   };
 
