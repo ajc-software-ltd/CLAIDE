@@ -4,7 +4,7 @@ Milestone 3 is split into focused sub-milestones to keep implementation controll
 
 ## M3.x structure
 
-- **M3.1** DOCX-first integration using `minidocx`
+- **M3.1** minidocx-first integration using `minidocx`
 - **M3.2** XLSX implementation (deferred)
 - **M3.3** SVG read/import/display pipeline
 - **M3.4** TTF font pipeline (system/import/Google Fonts)
