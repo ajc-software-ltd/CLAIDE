@@ -62,6 +62,12 @@ When building with `MINIDOCX_ENABLE_PYTHON_BRIDGE=ON`:
    - PR18: minimal PDF text extraction only via pypdf (no OCR fallback/rendering/advanced PDF analysis)
    - PR19: advanced PDF text/layout analysis only via pdfminer.six (no OCR/rendering/editing workflows)
 
+Provider taxonomy used by branch docs/gate:
+- DOCX companion providers
+- XML expert/validation providers
+- Image OCR providers
+- PDF companion providers
+
 ## Branch Validation Commands
 
 ```bash

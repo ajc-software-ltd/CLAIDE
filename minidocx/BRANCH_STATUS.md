@@ -38,6 +38,13 @@ _Last updated: 2026-04-23_
   optional advanced pdfminer analysis, docxtpl template rendering, python-docx style audit
 - Core C++ engine remains authoritative when bridge is disabled or unavailable
 
+### Provider taxonomy (current)
+
+- **DOCX companion providers:** smoke, mammoth export, docxcompose append, docxtpl render, python-docx style audit
+- **XML expert/validation providers:** lxml XPath/XSLT, Schematron validation (allowlisted DOCX XML parts)
+- **Image OCR providers:** Tesseract/pytesseract OCR extract-text
+- **PDF companion providers:** pypdf minimal extraction, pdfminer advanced text/layout analysis
+
 - Normal branch health validation target: `minidocx_validate`
 - Pre-integration readiness target: `minidocx_preintegration_gate`
 - Canonical gate policy and command contract: [INTEGRATION_GATE.md](./INTEGRATION_GATE.md)

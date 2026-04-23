@@ -14,6 +14,7 @@ int main()
   const auto probe = providers::probePythonProviders(cfg);
   std::cout << "Probe code: " << static_cast<int>(probe.code) << '\n';
 
+  // DOCX companion providers.
   providers::PythonProviderRequest renderReq;
   renderReq.provider = "docxtpl";
   renderReq.operation = "render_template";
@@ -32,12 +33,13 @@ int main()
   const auto audit = providers::invokePythonProvider(cfg, auditReq);
   std::cout << "Audit code: " << static_cast<int>(audit.code) << '\n';
 
+  // XML expert/validation providers.
   providers::PythonProviderRequest xpathReq;
   xpathReq.provider = "lxml";
   xpathReq.operation = "xpath_query";
   xpathReq.inputPath = "rendered.docx";
   xpathReq.payload =
-      R"({"part":"word/document.xml","xpath":"count(//w:p)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"xpath"})";
+      R"JSON({"part":"word/document.xml","xpath":"count(//w:p)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"xpath"})JSON";
   const auto xpath = providers::invokePythonProvider(cfg, xpathReq);
   std::cout << "XPath code: " << static_cast<int>(xpath.code) << '\n';
 
@@ -46,7 +48,7 @@ int main()
   xsltReq.operation = "xslt_transform";
   xsltReq.inputPath = "rendered.docx";
   xsltReq.payload =
-      R"({"part":"word/document.xml","output_mode":"text","params":{"prefix":"p-count:"},"xslt":"<?xml version=\"1.0\" encoding=\"UTF-8\"?><xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><xsl:param name=\"prefix\"/><xsl:output method=\"text\"/><xsl:template match=\"/\"><xsl:value-of select=\"$prefix\"/><xsl:value-of select=\"count(//w:p)\"/></xsl:template></xsl:stylesheet>"})";
+      R"JSON({"part":"word/document.xml","output_mode":"text","params":{"prefix":"p-count:"},"xslt":"<?xml version=\"1.0\" encoding=\"UTF-8\"?><xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><xsl:param name=\"prefix\"/><xsl:output method=\"text\"/><xsl:template match=\"/\"><xsl:value-of select=\"$prefix\"/><xsl:value-of select=\"count(//w:p)\"/></xsl:template></xsl:stylesheet>"})JSON";
   const auto xslt = providers::invokePythonProvider(cfg, xsltReq);
   std::cout << "XSLT code: " << static_cast<int>(xslt.code) << '\n';
 
@@ -55,23 +57,25 @@ int main()
   schematronReq.operation = "validate_part";
   schematronReq.inputPath = "rendered.docx";
   schematronReq.payload =
-      R"({"part":"word/document.xml","store_report":true,"schema_text":"<sch:schema xmlns:sch=\"http://purl.oclc.org/dsdl/schematron\" queryBinding=\"xslt\"><sch:ns prefix=\"w\" uri=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"/><sch:pattern id=\"p\"><sch:rule context=\"w:document\"><sch:assert test=\"count(//w:p) &gt;= 1\">document should have at least one paragraph</sch:assert></sch:rule></sch:pattern></sch:schema>"})";
+      R"JSON({"part":"word/document.xml","store_report":true,"schema_text":"<sch:schema xmlns:sch=\"http://purl.oclc.org/dsdl/schematron\" queryBinding=\"xslt\"><sch:ns prefix=\"w\" uri=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"/><sch:pattern id=\"p\"><sch:rule context=\"w:document\"><sch:assert test=\"count(//w:p) &gt;= 1\">document should have at least one paragraph</sch:assert></sch:rule></sch:pattern></sch:schema>"})JSON";
   const auto schematron = providers::invokePythonProvider(cfg, schematronReq);
   std::cout << "Schematron code: " << static_cast<int>(schematron.code) << '\n';
 
+  // Image OCR providers.
   providers::PythonProviderRequest ocrReq;
   ocrReq.provider = "ocr";
   ocrReq.operation = "extract_text";
   ocrReq.payload =
-      R"({"image_b64":"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7Zf6sAAAAASUVORK5CYII=","image_format":"png","lang":"eng","psm":6})";
+      R"JSON({"image_b64":"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7Zf6sAAAAASUVORK5CYII=","image_format":"png","lang":"eng","psm":6})JSON";
   const auto ocr = providers::invokePythonProvider(cfg, ocrReq);
   std::cout << "OCR code: " << static_cast<int>(ocr.code) << '\n';
 
+  // PDF companion providers.
   providers::PythonProviderRequest pdfReq;
   pdfReq.provider = "pypdf";
   pdfReq.operation = "extract_text";
   pdfReq.inputPath = "sample.pdf";
-  pdfReq.payload = R"({"mode":"plain"})";
+  pdfReq.payload = R"JSON({"mode":"plain"})JSON";
   const auto pdf = providers::invokePythonProvider(cfg, pdfReq);
   std::cout << "PDF extract code: " << static_cast<int>(pdf.code) << '\n';
 
@@ -79,7 +83,7 @@ int main()
   pdfminerTextReq.provider = "pdfminer";
   pdfminerTextReq.operation = "extract_text";
   pdfminerTextReq.inputPath = "sample.pdf";
-  pdfminerTextReq.payload = R"({"page_numbers":[0]})";
+  pdfminerTextReq.payload = R"JSON({"page_numbers":[0]})JSON";
   const auto pdfminerText = providers::invokePythonProvider(cfg, pdfminerTextReq);
   std::cout << "PDFMiner text code: " << static_cast<int>(pdfminerText.code) << '\n';
 
@@ -87,7 +91,7 @@ int main()
   pdfminerLayoutReq.provider = "pdfminer";
   pdfminerLayoutReq.operation = "extract_layout";
   pdfminerLayoutReq.inputPath = "sample.pdf";
-  pdfminerLayoutReq.payload = R"({"page_numbers":[0],"laparams":{"char_margin":2.0}})";
+  pdfminerLayoutReq.payload = R"JSON({"page_numbers":[0],"laparams":{"char_margin":2.0}})JSON";
   const auto pdfminerLayout = providers::invokePythonProvider(cfg, pdfminerLayoutReq);
   std::cout << "PDFMiner layout code: " << static_cast<int>(pdfminerLayout.code) << '\n';
 

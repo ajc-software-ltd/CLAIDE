@@ -56,27 +56,26 @@ This branch exposes a layered public surface: low-level model APIs plus higher-l
 
 - Core C++ model/editing/inspection/layout remains authoritative.
 - Python providers are companion capabilities and are disabled by default (`MINIDOCX_ENABLE_PYTHON_BRIDGE=OFF`).
-- Current provider set:
-  - `smoke.ping` (bridge health check)
-  - `mammoth.docx_to_html` (semantic DOCX -> HTML export helper)
-  - `docxcompose.compose_append` (append one DOCX into another)
-  - optional expert XML workflows via `lxml.xpath_query` / `lxml.xslt_transform`
-    - allowlisted parts only: `word/document.xml`, `word/styles.xml`, `word/numbering.xml`,
-      `_rels/.rels`, `word/_rels/document.xml.rels`, `[Content_Types].xml`
-    - explicit JSON request contract with operation + part + output mode
-    - structured JSON result payload with provenance and normalized warnings/errors
-  - optional OCR image text extraction via `ocr.extract_text` (pytesseract + Tesseract runtime)
-    - image input path or base64 image payload
-    - constrained option surface (`lang`, allowlisted `psm`)
-    - explicit normalized provider errors for missing runtime/language data
-  - optional minimal PDF extraction via `pypdf.extract_text`
-    - plain mode and optional layout mode
-    - text extraction only (no rendering/OCR/advanced PDF analysis)
+- Provider taxonomy (companion-only):
+  - **DOCX companion providers**
+    - `smoke.ping`
+    - `mammoth.docx_to_html`
+    - `docxcompose.compose_append`
+    - `docxtpl.render_template`
+    - `python_docx.style_audit`
+  - **XML expert/validation providers**
+    - `lxml.xpath_query`
+    - `lxml.xslt_transform`
+    - `schematron.validate_part`
+    - allowlisted DOCX XML parts only (`word/document.xml`, `word/styles.xml`, `word/numbering.xml`,
+      `_rels/.rels`, `word/_rels/document.xml.rels`, `[Content_Types].xml`)
+  - **Image OCR providers**
+    - `ocr.extract_text` (pytesseract + Tesseract runtime)
+    - bounded options (`lang`, allowlisted `psm`)
+  - **PDF companion providers**
+    - `pypdf.extract_text` (minimal plain/layout extraction)
+    - `pdfminer.extract_text` / `pdfminer.extract_layout` (advanced text/layout analysis)
     - scanned/image-only PDFs may require OCR in a separate workflow
-  - optional advanced PDF analysis via `pdfminer.extract_text` / `pdfminer.extract_layout`
-    - structured page/layout summaries (text boxes/lines/chars counts)
-    - limited allowlisted LAParams controls
-    - analysis-only (no OCR/rendering/editing workflows)
 
 Bridge failures are surfaced as explicit response codes; missing Python/provider dependencies do not break core engine use.
 
@@ -180,6 +179,11 @@ See [INTEGRATION_GATE.md](./INTEGRATION_GATE.md) for required checks and non-goa
 Examples are in `minidocx/examples/` and include:
 - document creation/styling/media/table/list samples
 - inspection + command workflow sample (`inspection_workflow.cpp`)
+- provider umbrella smoke example (`python_providers.cpp`)
+- provider family-focused examples:
+  - `python_providers_docx_companions.cpp`
+  - `python_providers_xml_expert.cpp`
+  - `python_providers_media_pdf.cpp`
 
 ## Building
 
@@ -204,7 +208,3 @@ A static library is built by default. To build shared, set `BUILD_SHARED=ON`.
 - [User Guide](./guide.md)
 - [Branch Status](./BRANCH_STATUS.md)
 - [Integration Gate](./INTEGRATION_GATE.md)
-  - optional Schematron validation via `schematron.validate_part` (lxml.isoschematron)
-    - validation restricted to allowlisted DOCX XML parts
-    - schema input by text or file path, optional phase support
-    - structured pass/fail + failed-assert/report payloads

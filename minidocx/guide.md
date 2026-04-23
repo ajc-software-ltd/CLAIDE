@@ -30,31 +30,25 @@ The Python bridge is an optional out-of-process provider layer.
 - Disabled by default: `-DMINIDOCX_ENABLE_PYTHON_BRIDGE=OFF`
 - Enable bridge: `-DMINIDOCX_ENABLE_PYTHON_BRIDGE=ON`
 
-### Current bridge providers
+### Provider taxonomy
 
-- `smoke.ping` -> returns `pong`
-- `mammoth.docx_to_html` -> semantic HTML export helper
-- `docxcompose.compose_append` -> append/compose DOCX output
-- optional expert XML operations through `lxml.xpath_query` and `lxml.xslt_transform`
-  - bounded to allowlisted DOCX package parts only
-  - explicit JSON payload contract (`part`, operation-specific fields, optional params)
-  - structured JSON output payload with provenance + normalized warnings/errors
-- optional OCR image-text extraction through `ocr.extract_text`
-  - requires pytesseract + installed Tesseract runtime
-  - supports image path input or base64 image payload
-  - option surface remains constrained (`lang`, allowlisted `psm`)
-- optional Schematron validation through `schematron.validate_part`
-  - requires `lxml.isoschematron`
-  - validates only allowlisted DOCX XML parts
-  - supports schema text or schema file input, optional phase
-- optional minimal PDF text extraction through `pypdf.extract_text`
-  - plain and layout extraction modes
-  - text extraction only (no OCR/rendering pipeline)
-  - scanned/image-only PDFs may require OCR outside this provider
-- optional advanced PDF analysis through `pdfminer.extract_text` / `pdfminer.extract_layout`
-  - page-wise text/layout summaries from `extract_pages`
-  - bounded `laparams` option subset
-  - analysis-only (no OCR/rendering/editing workflows)
+- **DOCX companion providers**
+  - `smoke.ping`
+  - `mammoth.docx_to_html`
+  - `docxcompose.compose_append`
+  - `docxtpl.render_template`
+  - `python_docx.style_audit`
+- **XML expert/validation providers**
+  - `lxml.xpath_query` / `lxml.xslt_transform`
+  - `schematron.validate_part`
+  - bounded to allowlisted DOCX XML parts
+- **Image OCR providers**
+  - `ocr.extract_text` (pytesseract/Tesseract)
+  - constrained option surface (`lang`, allowlisted `psm`)
+- **PDF companion providers**
+  - `pypdf.extract_text` (minimal extraction)
+  - `pdfminer.extract_text` / `pdfminer.extract_layout` (advanced analysis)
+  - scanned/image-only PDFs may require OCR outside provider scope
 
 Python dependencies are discovered at runtime by the worker and reported deterministically as availability or provider-unavailable errors.
 
@@ -137,6 +131,14 @@ Always call `probePythonProviders` before provider execution when bridge mode is
 The bridge normalizes failures into a stable error taxonomy (`BridgeUnavailable`, `WorkerLaunchFailed`, `ProviderUnavailable`, `ProtocolMismatch`, `MalformedResponse`, etc.).
 
 Bridge responses include provenance metadata so provider-assisted outputs are not confused with native core engine behavior.
+
+### Provider examples
+
+- umbrella smoke example: `examples/python_providers.cpp`
+- family-focused examples:
+  - `examples/python_providers_docx_companions.cpp`
+  - `examples/python_providers_xml_expert.cpp`
+  - `examples/python_providers_media_pdf.cpp`
 
 ## Branch Validation Flow (PR10)
 
