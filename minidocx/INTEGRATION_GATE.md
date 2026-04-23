@@ -20,6 +20,16 @@ The current branch guarantees, for the implemented subset:
 - command-based editing APIs
 - deterministic branch regression/inspection/commands test coverage
 
+
+## Feature Freeze and Merge-Readiness Phase (PR24)
+
+For the current branch scope, `minidocx` is now in **feature-freeze** mode while merge readiness is audited.
+
+- No new engine/provider capabilities are to be introduced in this phase unless required by a documented merge blocker.
+- Scope contract remains frozen: native engine authoritative, editing+inspection preferred high-level surface, Python provider bridge optional companion-only, shared-library consumption supported.
+- CLAIDE-side adapter/render/UI/AI integration remains out of scope in this phase.
+- Merge-readiness checklist and blocker tracking are maintained in [MERGE_READINESS.md](./MERGE_READINESS.md).
+
 ## Validation Contract
 
 ### A) Required for normal branch health
@@ -112,5 +122,5 @@ The following remain out of scope:
 
 ## Change Policy
 
-PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR20/PR21/PR22/PR23 are validation/process, optional-provider hardening, and shared-library consumption-readiness only.
+PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR20/PR21/PR22/PR23/PR24 are validation/process, optional-provider hardening, shared-library consumption-readiness, and merge-readiness-audit only.
 Do not use this gate document to introduce unsupported engine capability claims.

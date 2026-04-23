@@ -4,6 +4,15 @@ This guide documents the currently supported minidocx branch capabilities.
 `minidocx` is intended to be consumed as CLAIDE's authoritative text/document engine module.
 It is intentionally branch-scoped and does not claim full Microsoft Word parity.
 
+
+## Feature Freeze and Merge-Readiness (PR24)
+
+The current branch scope is now in feature-freeze mode for merge preparation.
+
+- Do not add new engine/provider capabilities in this phase unless required by a documented merge blocker.
+- Preserve the current contract: native engine authority, editing+inspection preferred high-level surface, Python bridge companion-only and optional.
+- Use [MERGE_READINESS.md](./MERGE_READINESS.md) as the merge checklist and blocker/non-blocker tracker.
+
 ## Recommended Usage Style
 
 - **Direct mutation (Document/Section/Paragraph/Run APIs):** use for low-level, manual authoring where caller code fully controls the model.

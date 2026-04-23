@@ -211,8 +211,18 @@ Shared-library artifact expectations:
 
 Examples/tests are optional consumers (`BUILD_EXAMPLES`, `BUILD_TESTS`) and are not required for parent-project library consumption.
 
+
+## Feature Freeze and Merge-Readiness (PR24)
+
+`minidocx` is now in a feature-complete freeze phase for the current branch scope.
+
+- No new engine/provider capability expansion is intended during this phase unless required by a merge blocker.
+- Current contract is frozen for merge-prep: native engine authoritative, Python providers optional companion-only, shared-library consumption supported.
+- Merge-readiness checklist (blockers vs non-blockers, required evidence): [MERGE_READINESS.md](./MERGE_READINESS.md).
+
 ## Documentation
 
 - [User Guide](./guide.md)
 - [Branch Status](./BRANCH_STATUS.md)
 - [Integration Gate](./INTEGRATION_GATE.md)
+- [Merge Readiness](./MERGE_READINESS.md)

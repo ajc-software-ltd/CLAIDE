@@ -20,6 +20,14 @@ _Last updated: 2026-04-23_
 - PR21: provider-platform maintainability consolidation (worker internals, dispatch registry hygiene, test/platform organization).
 - PR22: shared-library readiness for CLAIDE consumption (visibility/export hygiene, consumer linkage, shared-consumer smoke validation).
 - PR23: shared-library consumption validation and branch chronology cleanup.
+- PR24: feature-complete freeze and merge-readiness audit for main-branch integration.
+
+
+## Feature Freeze Phase (PR24)
+
+- Branch status: **feature-complete freeze** for the current minidocx scope.
+- During freeze: no new engine/provider features unless a merge blocker requires a targeted fix.
+- Merge-readiness checklist and blocker tracking: [MERGE_READINESS.md](./MERGE_READINESS.md).
 
 ## Public Usage Contract (Current)
 
@@ -93,7 +101,7 @@ _Last updated: 2026-04-23_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR23)
+## Next Likely Chunks (After PR24)
 
 - Continue module-scoped tests and docs hardening around existing surfaces
 - Keep contract language consistent across headers/docs/examples as APIs evolve
