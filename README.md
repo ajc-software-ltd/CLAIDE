@@ -68,15 +68,15 @@ See `milestones.md` for the canonical milestone breakdown and checkpoint workflo
 ## Current Implementation Scope
 
 ### Functional now
-- Text editor workflow (new/open/edit tabs) with document state tracking
-- Image loading/viewing workflow with metadata display
-- File type routing for text/image/video/audio/model extensions
+- Core IDE workflow with document state tracking, file/browser services, and media routing
+- Vulkan Canvas runtime foundation integrated (Milestone 2 complete baseline)
+- `minidocx/` DOCX engine baseline merged into `main` for M3.1
 - Core services: encoding, file IO, media type detection, document state, mipmap/tile cache utilities
 - Unit test suite for core modules via Catch2/CTest
 
 ### Planned or placeholder
 - Vulkan canvas/render-layer baseline is complete (Milestone 2)
-- Full image-processing milestone implementation (Milestone 3+)
+- Active next phase: CLAIDE-side M3.1 adapter/service/render integration (no engine-scope expansion in this cleanup step)
 - Full video/audio playback UI and controls
 - 3D model rendering pipeline
 - AI chat/provider integration panels and generation workflows
@@ -244,7 +244,7 @@ cmake --build build --target validate
 - Release traceability map (milestone → commit → tag): `RELEASES.md`
 - Operational release checklist: `docs/release-checklist.md`
 - Branch/merge workflow: `docs/branch-policy.md`
-- Branch allowlist: `main` and `minidocx` only (never use `work`).
+- Branch allowlist: `main`, `minidocx`, and `miniexcelx` (never use `work`).
 - Required merge validation gates: `build_with_prereqs` + `format-check` + `lint` + full `ctest`
 - Scope rule: for docs/version/tag-only changes, skip full rebuild and run lightweight consistency checks only (`git diff --name-only` + targeted `rg`).
 

@@ -74,7 +74,7 @@ Current versioning baseline: `v0.0.174-dev` (commit-count based).
 ## Milestone 2: Vulkan Canvas (Universal Render Layer)
 
 **Tag:** `v0.0.2-dev`
-**Status:** In Progress (runtime foundation integrated)
+**Status:** Complete (runtime foundation integrated)
 
 ### Vision
 The Vulkan Canvas is the **universal render surface** for all content types in CLAIDE. Every piece of content — text, images, video, 3D models — renders through the Canvas. The AI uses Canvas instances programmatically to create, composite, and output content.

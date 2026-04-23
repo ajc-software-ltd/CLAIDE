@@ -2,7 +2,8 @@
 
 ## Allowed branches
 - `main`: primary integration branch.
-- `minidocx`: dedicated document-stream branch.
+- `minidocx`: dedicated DOCX engine stream branch.
+- `miniexcelx`: reserved next sibling engine stream branch (XLSX/M3.2).
 
 ## Disallowed branch
 - `work` branch name is not allowed.
