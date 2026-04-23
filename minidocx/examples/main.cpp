@@ -14,13 +14,13 @@ int main()
     ParagraphPointer para = sect->addParagraph();
     para->prop_.align_ = Alignment::Centered;
 
-    RichTextPointer rich = para->addRichText("Happy Chinese New Year!");
+    RichTextPointer rich = para->addRichText("Happy New Year!");
     rich->prop_.fontSize_ = 32;
     rich->prop_.color_ = "FF0000";
 
     sect->addParagraph()->addRichText(
-      "Spring Festival, known as the Chinese New Year, "
-      "is the most important festival celebrated by the Chinese people. "
+      "Spring Festival, known as the New Year, "
+      "is the most important festival celebrated by the local people. "
       "UNESCO inscribed Spring Festival on the Representative List of "
       "the Intangible Cultural Heritage of Humanity in 2024.");
 
@@ -28,7 +28,7 @@ int main()
       ->addPicture(doc.addImage("assets/samples/17533.jpg"));
     pict->prop_.extent_.setSize(4643, 6199, 300, 20);
 
-    doc.prop_.title_ = "Chinese New Year";
+    doc.prop_.title_ = "New Year";
     doc.prop_.author_ = "Quinn";
     doc.prop_.lastModifiedBy_ = "John";
     doc.saveAs("out/example.docx");

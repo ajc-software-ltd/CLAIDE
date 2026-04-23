@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // MINIDOCX
 // ============================================================================
 // File:        package.cpp
@@ -11,6 +11,8 @@
 #include "utils/exceptions.hpp"
 
 #include "pugixml.hpp"
+
+#include <cstring>
 
 #ifndef NDEBUG
 #include <iostream>
@@ -36,6 +38,7 @@ namespace MINIDOCX_NAMESPACE
 
   void Package::clear()
   {
+    buffered_.clear();
     defaultContentTypes_.clear();
     overrideContentTypes_.clear();
     relationships_.clear();
@@ -44,8 +47,11 @@ namespace MINIDOCX_NAMESPACE
 
   void Package::load()
   {
+    preserveLoadedParts();
     readContentTypes();
     readPkgRelationships();
+    readCoreProperties();
+    readExtendedProperties();
   }
 
 
@@ -63,6 +69,22 @@ namespace MINIDOCX_NAMESPACE
     std::stringstream ss;
     doc.save(ss, "", pugi::format_raw);
     addFileFromStream(name, ss);
+    buffered_.erase(name);
+  }
+
+  void Package::preserveLoadedParts()
+  {
+    buffered_.clear();
+    for (const auto& partName : listEntries()) {
+      const auto normalized = partName.lexically_normal();
+      if (normalized.empty())
+        continue;
+      const auto name = normalized.generic_string();
+      if (!name.empty() && name.back() == '/')
+        continue;
+      const std::string raw = extractFileToString(normalized);
+      buffered_[normalized] = Buffer(raw.begin(), raw.end());
+    }
   }
 
 
@@ -261,6 +283,54 @@ namespace MINIDOCX_NAMESPACE
     root.append_child("AppVersion").append_child(pugi::node_pcdata).set_value("10.0000"); // XX.YYYY
 
     writePart(appPart_, doc);
+  }
+
+  void Package::readCoreProperties()
+  {
+    pugi::xml_document doc;
+    std::string xml;
+    try {
+      xml = extractFileToString(corePart_);
+    }
+    catch (...) {
+      return;
+    }
+    if (!doc.load_string(xml.c_str()))
+      return;
+
+    const pugi::xml_node root = doc.child("cp:coreProperties");
+    if (!root)
+      return;
+
+    if (const auto n = root.child("dc:title")) prop_.title_ = n.text().get();
+    if (const auto n = root.child("dc:subject")) prop_.subject_ = n.text().get();
+    if (const auto n = root.child("dc:creator")) prop_.author_ = n.text().get();
+    if (const auto n = root.child("cp:lastModifiedBy")) prop_.lastModifiedBy_ = n.text().get();
+    if (const auto n = root.child("cp:company")) prop_.company_ = n.text().get();
+  }
+
+  void Package::readExtendedProperties()
+  {
+    pugi::xml_document doc;
+    std::string xml;
+    try {
+      xml = extractFileToString(appPart_);
+    }
+    catch (...) {
+      return;
+    }
+    if (!doc.load_string(xml.c_str()))
+      return;
+
+    const pugi::xml_node root = doc.child("Properties");
+    if (!root)
+      return;
+
+    if (const auto n = root.child("Company")) {
+      const char* company = n.text().get();
+      if (company && company[0] != '\0')
+        prop_.company_ = company;
+    }
   }
 
 }

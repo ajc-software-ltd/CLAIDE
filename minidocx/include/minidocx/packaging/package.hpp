@@ -17,6 +17,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <optional>
 
 
 namespace pugi { class xml_document; }
@@ -38,6 +39,17 @@ namespace MINIDOCX_NAMESPACE
   public:
     PackageProperties prop_;
 
+    std::string readPartText(const PartName& name)
+    {
+      return extractFileToString(name);
+    }
+
+    Buffer readPartBinary(const PartName& name)
+    {
+      const std::string raw = extractFileToString(name);
+      return Buffer(raw.begin(), raw.end());
+    }
+
   protected:
     void init();
     void flush();
@@ -48,6 +60,7 @@ namespace MINIDOCX_NAMESPACE
 
   private:
     std::map<PartName, Buffer> buffered_;
+    void preserveLoadedParts();
 
     void writeBufferedParts();
 
@@ -92,7 +105,11 @@ namespace MINIDOCX_NAMESPACE
     inline RelationshipId addRelationshipTo(Relationships& rels,
       const PartType type, const PartName& target, const Relationship::TargetMode mode)
     {
-      // TODO: Check if the target already exists.
+      for (const auto& ref : rels.map_) {
+        const auto& rel = ref.second;
+        if (rel.type_ == type && rel.target_ == target && rel.targetMode_ == mode)
+          return rel.id_;
+      }
       const RelationshipId id = ++rels.maxId_;
       rels.map_[id] = { id, type, target, mode };
       return id;
@@ -143,7 +160,30 @@ namespace MINIDOCX_NAMESPACE
     inline void readRelationshipsFor(const PartName& src)
     {
       initRelationshipsFor(src);
-      readRelationships(src, relationships_[src]);
+      readRelationships(toRelationshipsPartName(src), relationships_[src]);
+    }
+
+
+  public:
+    std::optional<Relationship> findRelationshipFor(const PartName& src, const RelationshipId id) const
+    {
+      const auto relsIt = relationships_.find(src);
+      if (relsIt == relationships_.end())
+        return std::nullopt;
+
+      const auto relIt = relsIt->second.map_.find(id);
+      if (relIt == relsIt->second.map_.end())
+        return std::nullopt;
+
+      return relIt->second;
+    }
+
+    std::optional<Relationship> findPackageRelationship(const RelationshipId id) const
+    {
+      const auto relIt = packageRelationships_.map_.find(id);
+      if (relIt == packageRelationships_.map_.end())
+        return std::nullopt;
+      return relIt->second;
     }
 
   private:
@@ -153,7 +193,7 @@ namespace MINIDOCX_NAMESPACE
     void writeCoreProperties();
     void writeExtendedProperties();
 
-    //void readCoreProperties();
-    //void readExtendedProperties();
+    void readCoreProperties();
+    void readExtendedProperties();
   };
 }

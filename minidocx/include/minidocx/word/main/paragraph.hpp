@@ -43,15 +43,20 @@ namespace MINIDOCX_NAMESPACE
 
   public:
     inline std::list<RunPointer> runs() const { return runs_; }
+    inline size_t runCount() const { return runs_.size(); }
+    RunPointer runAt(size_t index) const;
 
     RichTextPointer addRichText(const char* text);
     inline RichTextPointer addRichText(const char8_t* text) { return addRichText(reinterpret_cast<const char*>(text)); }
     RichTextPointer addRichText(std::string text);
     inline RichTextPointer addRichText(std::u8string text) { return addRichText(std::string(reinterpret_cast<const char*>(text.c_str()), text.size())); }
+    RichTextPointer insertRichText(size_t index, std::string text);
 
     PicturePointer addPicture(const RelationshipId id);
+    PicturePointer insertPicture(size_t index, const RelationshipId id);
 
     void deleteRun(const RunPointer& run);
+    bool deleteRunAt(size_t index);
 
   public:
     void clear() override;

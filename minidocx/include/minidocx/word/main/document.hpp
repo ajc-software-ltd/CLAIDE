@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <iosfwd>
 #include <list>
 #include <map>
 
@@ -34,8 +35,12 @@ namespace MINIDOCX_NAMESPACE
   public:
     Document();
     void saveAs(const std::string& filename);
+    void saveToStream(std::ostream& stream);
+    Buffer saveToBuffer();
 
     void load(const std::string& filename);
+    void loadFromStream(std::istream& stream);
+    void loadFromBuffer(const Buffer& buffer);
     inline void save() { saveAs(filename_); }
 
     inline void reset() { clear(); init(); }
@@ -53,13 +58,21 @@ namespace MINIDOCX_NAMESPACE
     void initRelationships();
 
     void writeOfficeDocument();
-    //void readOfficeDocument();
+    void readOfficeDocument();
 
   private:
     std::list<SectionPointer> sections_;
 
   public:
     inline std::list<SectionPointer> sections() const { return sections_; }
+    inline size_t sectionCount() const { return sections_.size(); }
+    SectionPointer sectionAt(size_t index) const;
+    SectionPointer insertSection(size_t index);
+    bool deleteSectionAt(size_t index);
+    inline const std::map<std::string, ParagraphStyle>& paragraphStyles() const { return paragraphStyles_; }
+    inline const std::map<std::string, CharacterStyle>& characterStyles() const { return characterStyles_; }
+    inline const std::map<NumberingId, AbstractNumberingDefinition>& abstractNumberingDefinitions() const { return abstractNumDefinitions_; }
+    inline const std::map<NumberingId, NumberingDefinition>& numberingDefinitions() const { return numDefinitions_; }
     SectionPointer addSection();
     void deleteSection(const SectionPointer& section);
     void clearSections();
@@ -78,6 +91,7 @@ namespace MINIDOCX_NAMESPACE
     std::map<std::string, CharacterStyle> characterStyles_;
 
     void writeStyles();
+    void readStyles();
 
   public:
     void addParagraphStyle(const ParagraphStyle& style);
@@ -92,6 +106,7 @@ namespace MINIDOCX_NAMESPACE
     std::map<NumberingId, NumberingDefinition> numDefinitions_;
 
     void writeNumDefinitions();
+    void readNumDefinitions();
 
   public:
     // Adds abstract numbering definition.

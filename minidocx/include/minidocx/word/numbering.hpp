@@ -28,7 +28,7 @@ namespace MINIDOCX_NAMESPACE
 
   enum class NumberStyle
   {
-    Bullet,      // Bullets 项目符号
+    Bullet,      // Bullets 
     Decimal,     // 1, 2, 3, etc.
     UpperRoman,  // I, II, III, IV, etc.
     LowerRoman,  // i, ii, iii, iv, etc.

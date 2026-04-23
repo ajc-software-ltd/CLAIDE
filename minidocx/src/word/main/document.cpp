@@ -20,9 +20,26 @@
 
 #include "pugixml.hpp"
 
+#include <cmath>
+#include <fstream>
+#include <cstring>
+#include <map>
+#include <optional>
+#include <sstream>
+#include <chrono>
+
 
 namespace MINIDOCX_NAMESPACE
 {
+  namespace
+  {
+    fs::path temporaryDocxPath()
+    {
+      const auto ticks = std::chrono::steady_clock::now().time_since_epoch().count();
+      return fs::temp_directory_path() / ("minidocx_" + std::to_string(ticks) + ".docx");
+    }
+  }
+
   Document::Document()
   {
     init();
@@ -41,6 +58,42 @@ namespace MINIDOCX_NAMESPACE
     clear();
     load();
     Zip::close();
+  }
+
+  void Document::saveToStream(std::ostream& stream)
+  {
+    const fs::path tmp = temporaryDocxPath();
+    saveAs(tmp.string());
+    Buffer data;
+    readFile(data, tmp);
+    stream.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+    fs::remove(tmp);
+  }
+
+  Buffer Document::saveToBuffer()
+  {
+    std::stringstream stream;
+    saveToStream(stream);
+    const std::string data = stream.str();
+    return Buffer(data.begin(), data.end());
+  }
+
+  void Document::loadFromStream(std::istream& stream)
+  {
+    const fs::path tmp = temporaryDocxPath();
+    std::ofstream out(tmp, std::ios::binary | std::ios::out);
+    out << stream.rdbuf();
+    out.close();
+    load(tmp.string());
+    fs::remove(tmp);
+  }
+
+  void Document::loadFromBuffer(const Buffer& buffer)
+  {
+    const fs::path tmp = temporaryDocxPath();
+    writeFile(buffer, tmp);
+    load(tmp.string());
+    fs::remove(tmp);
   }
 
 
@@ -68,8 +121,14 @@ namespace MINIDOCX_NAMESPACE
   void Document::load()
   {
     Package::load();
-    //readRelationshipsFor(mainPart_);
-    //readOfficeDocument();
+    initRelationshipsFor(mainPart_);
+    try {
+      readRelationshipsFor(mainPart_);
+    }
+    catch (...) {}
+    readStyles();
+    readNumDefinitions();
+    readOfficeDocument();
   }
 
 
@@ -275,6 +334,9 @@ namespace MINIDOCX_NAMESPACE
 
     if (prop.pageBreakBefore_)
       w_pPr.append_child("w:pageBreakBefore");
+
+    if (prop.pageBreakAfter_)
+      w_pPr.append_child("w:pageBreakAfter");
   }
 
   static void writeRichTextProperties(pugi::xml_node w_rPr, const RichTextProperties& prop)
@@ -632,8 +694,24 @@ namespace MINIDOCX_NAMESPACE
     pugi::xml_node pic_blipFill = pic_pic.append_child("pic:blipFill");
     pugi::xml_node a_blip = pic_blipFill.append_child("a:blip");
     a_blip.append_attribute("r:embed") = Relationship::stringifyId(pict.id_).c_str();
-    pic_blipFill.append_child("a:srcRect"); // Cropping
-    pic_blipFill.append_child("a:stretch").append_child("a:fillRect"); // Stretching 
+    if (prop.cropping_.has_value()) {
+      pugi::xml_node a_srcRect = pic_blipFill.append_child("a:srcRect");
+      a_srcRect.append_attribute("t") = static_cast<long long>(std::llround(prop.cropping_->top_));
+      a_srcRect.append_attribute("b") = static_cast<long long>(std::llround(prop.cropping_->bottom_));
+      a_srcRect.append_attribute("l") = static_cast<long long>(std::llround(prop.cropping_->left_));
+      a_srcRect.append_attribute("r") = static_cast<long long>(std::llround(prop.cropping_->right_));
+    }
+
+    if (prop.stretching_.has_value()) {
+      pugi::xml_node a_fillRect = pic_blipFill.append_child("a:stretch").append_child("a:fillRect");
+      a_fillRect.append_attribute("t") = static_cast<long long>(std::llround(prop.stretching_->top_));
+      a_fillRect.append_attribute("b") = static_cast<long long>(std::llround(prop.stretching_->bottom_));
+      a_fillRect.append_attribute("l") = static_cast<long long>(std::llround(prop.stretching_->left_));
+      a_fillRect.append_attribute("r") = static_cast<long long>(std::llround(prop.stretching_->right_));
+    }
+    else {
+      pic_blipFill.append_child("a:stretch").append_child("a:fillRect");
+    }
 
     pugi::xml_node pic_spPr = pic_pic.append_child("pic:spPr");
     pic_spPr.append_attribute("bwMode") = "auto";
@@ -829,7 +907,13 @@ namespace MINIDOCX_NAMESPACE
     pugi::xml_node w_sectPr = w_pPr.append_child("w:sectPr");
 
     pugi::xml_node w_type = w_sectPr.append_child("w:type");
-    w_type.append_attribute("w:val") = "nextPage";
+    switch (prop.type_)
+    {
+    case SectionProperties::Type::NextPage:
+    default:
+      w_type.append_attribute("w:val") = "nextPage";
+      break;
+    }
 
     pugi::xml_node w_pgSz = w_sectPr.append_child("w:pgSz");
     if (prop.landscape_) {
@@ -850,6 +934,25 @@ namespace MINIDOCX_NAMESPACE
     w_pgMar.append_attribute("w:header") = prop.margins_.header_;
     w_pgMar.append_attribute("w:footer") = prop.margins_.footer_;
     w_pgMar.append_attribute("w:gutter") = prop.margins_.gutter_;
+
+    if (prop.docGrid_.has_value()) {
+      pugi::xml_node w_docGrid = w_sectPr.append_child("w:docGrid");
+      switch (prop.docGrid_->type_) {
+      case SectionProperties::DocGrid::Type::Default:
+        w_docGrid.append_attribute("w:type") = "default";
+        break;
+      case SectionProperties::DocGrid::Type::Lines:
+        w_docGrid.append_attribute("w:type") = "lines";
+        break;
+      case SectionProperties::DocGrid::Type::LinesAndChars:
+        w_docGrid.append_attribute("w:type") = "linesAndChars";
+        break;
+      case SectionProperties::DocGrid::Type::SnapToChars:
+        w_docGrid.append_attribute("w:type") = "snapToChars";
+        break;
+      }
+      w_docGrid.append_attribute("w:linePitch") = prop.docGrid_->linePitch_;
+    }
   }
 
   void Document::writeOfficeDocument()
@@ -901,6 +1004,354 @@ namespace MINIDOCX_NAMESPACE
     pictCount = 0;
   }
 
+  static std::string localName(const char* name)
+  {
+    const char* p = std::strchr(name, ':');
+    return p ? std::string(p + 1) : std::string(name);
+  }
+
+  static std::optional<size_t> readSizeAttr(const pugi::xml_node& node, const char* key)
+  {
+    const pugi::xml_attribute attr = node.attribute(key);
+    if (!attr)
+      return std::nullopt;
+    return static_cast<size_t>(std::strtoull(attr.value(), nullptr, 10));
+  }
+
+  static void readSectionProperties(SectionProperties& prop, const pugi::xml_node& w_sectPr)
+  {
+    if (!w_sectPr)
+      return;
+
+    const pugi::xml_node w_pgSz = w_sectPr.child("w:pgSz");
+    if (w_pgSz) {
+      if (const auto w = readSizeAttr(w_pgSz, "w:w"); w.has_value())
+        prop.size_.width_ = w.value();
+      if (const auto h = readSizeAttr(w_pgSz, "w:h"); h.has_value())
+        prop.size_.height_ = h.value();
+      prop.landscape_ = std::string(w_pgSz.attribute("w:orient").value()) == "landscape";
+    }
+
+    const pugi::xml_node w_pgMar = w_sectPr.child("w:pgMar");
+    if (w_pgMar) {
+      if (const auto v = readSizeAttr(w_pgMar, "w:top"); v.has_value()) prop.margins_.top_ = v.value();
+      if (const auto v = readSizeAttr(w_pgMar, "w:bottom"); v.has_value()) prop.margins_.bottom_ = v.value();
+      if (const auto v = readSizeAttr(w_pgMar, "w:left"); v.has_value()) prop.margins_.left_ = v.value();
+      if (const auto v = readSizeAttr(w_pgMar, "w:right"); v.has_value()) prop.margins_.right_ = v.value();
+      if (const auto v = readSizeAttr(w_pgMar, "w:header"); v.has_value()) prop.margins_.header_ = v.value();
+      if (const auto v = readSizeAttr(w_pgMar, "w:footer"); v.has_value()) prop.margins_.footer_ = v.value();
+      if (const auto v = readSizeAttr(w_pgMar, "w:gutter"); v.has_value()) prop.margins_.gutter_ = v.value();
+    }
+
+    if (const pugi::xml_node w_type = w_sectPr.child("w:type")) {
+      const std::string val = w_type.attribute("w:val").value();
+      if (val == "nextPage")
+        prop.type_ = SectionProperties::Type::NextPage;
+    }
+
+    if (const pugi::xml_node w_docGrid = w_sectPr.child("w:docGrid")) {
+      SectionProperties::DocGrid grid;
+      const std::string type = w_docGrid.attribute("w:type").value();
+      if (type == "default") grid.type_ = SectionProperties::DocGrid::Type::Default;
+      else if (type == "lines") grid.type_ = SectionProperties::DocGrid::Type::Lines;
+      else if (type == "linesAndChars") grid.type_ = SectionProperties::DocGrid::Type::LinesAndChars;
+      else if (type == "snapToChars") grid.type_ = SectionProperties::DocGrid::Type::SnapToChars;
+      if (const auto pitch = readSizeAttr(w_docGrid, "w:linePitch"); pitch.has_value())
+        grid.linePitch_ = pitch.value();
+      prop.docGrid_ = grid;
+    }
+    else {
+      prop.docGrid_ = std::nullopt;
+    }
+  }
+
+  static void readParagraphProperties(ParagraphProperties& prop, const pugi::xml_node& w_pPr)
+  {
+    if (!w_pPr)
+      return;
+
+    if (const auto n = w_pPr.child("w:pStyle")) prop.style_ = n.attribute("w:val").value();
+
+    if (const auto n = w_pPr.child("w:jc")) {
+      const std::string val = n.attribute("w:val").value();
+      if (val == "start") prop.align_ = Alignment::Left;
+      else if (val == "end") prop.align_ = Alignment::Right;
+      else if (val == "center") prop.align_ = Alignment::Centered;
+      else if (val == "both") prop.align_ = Alignment::Justified;
+      else if (val == "distribute") prop.align_ = Alignment::Distributed;
+    }
+
+    if (const auto n = w_pPr.child("w:outlineLvl")) {
+      const unsigned long long lvl = std::strtoull(n.attribute("w:val").value(), nullptr, 10);
+      if (lvl <= static_cast<unsigned long long>(ParagraphProperties::OutlineLevel::Level9)) {
+        prop.outlineLevel_ = static_cast<ParagraphProperties::OutlineLevel>(lvl);
+      }
+    }
+
+    prop.pageBreakBefore_ = static_cast<bool>(w_pPr.child("w:pageBreakBefore"));
+    prop.pageBreakAfter_ = static_cast<bool>(w_pPr.child("w:pageBreakAfter"));
+  }
+
+  static void readRichTextProperties(RichTextProperties& prop, const pugi::xml_node& w_rPr)
+  {
+    if (!w_rPr)
+      return;
+
+    if (const auto n = w_rPr.child("w:rStyle")) prop.style_ = n.attribute("w:val").value();
+    prop.fontStyle_.bold_ = static_cast<bool>(w_rPr.child("w:b"));
+    prop.fontStyle_.italic_ = static_cast<bool>(w_rPr.child("w:i"));
+    if (const auto n = w_rPr.child("w:color")) prop.color_ = n.attribute("w:val").value();
+
+    if (const auto n = w_rPr.child("w:u")) {
+      const std::string val = n.attribute("w:val").value();
+      if (val == "single") prop.underline_.style_ = RichTextProperties::UnderlineStyle::Single;
+      else if (val == "double") prop.underline_.style_ = RichTextProperties::UnderlineStyle::Double;
+      else if (val == "wave") prop.underline_.style_ = RichTextProperties::UnderlineStyle::Wave;
+      else if (val == "words") prop.underline_.style_ = RichTextProperties::UnderlineStyle::Words;
+      if (const char* c = n.attribute("w:color").value(); c && c[0] != '\0') prop.underline_.color_ = c;
+    }
+  }
+
+  static std::string readRunText(const pugi::xml_node& w_r)
+  {
+    std::string text;
+    for (const pugi::xml_node child : w_r.children()) {
+      const std::string name = localName(child.name());
+      if (name == "t") {
+        text += child.text().get();
+      }
+      else if (name == "br") {
+        text.push_back('\n');
+      }
+      else if (name == "tab") {
+        text.push_back('\t');
+      }
+      else if (name == "cr") {
+        text.push_back('\r');
+      }
+    }
+    return text;
+  }
+
+  static NumberingLevel readLevel(const pugi::xml_node& w_ilvl)
+  {
+    const unsigned long long value = std::strtoull(w_ilvl.attribute("w:val").value(), nullptr, 10);
+    const unsigned long long capped = std::min<unsigned long long>(value, 8);
+    return static_cast<NumberingLevel>(capped);
+  }
+
+  static void readParagraph(Document& doc, Container& container, const pugi::xml_node& w_p, const PartName& mainPart)
+  {
+    ParagraphPointer para = container.addParagraph();
+    const pugi::xml_node w_pPr = w_p.child("w:pPr");
+    readParagraphProperties(para->prop_, w_pPr);
+
+    if (const pugi::xml_node w_numPr = w_pPr.child("w:numPr")) {
+      if (const pugi::xml_node w_numId = w_numPr.child("w:numId")) {
+        para->numId_ = static_cast<NumberingId>(std::strtoull(w_numId.attribute("w:val").value(), nullptr, 10));
+      }
+      if (const pugi::xml_node w_ilvl = w_numPr.child("w:ilvl")) {
+        para->level_ = readLevel(w_ilvl);
+      }
+    }
+
+    for (const pugi::xml_node child : w_p.children("w:r")) {
+      const pugi::xml_node w_rPr = child.child("w:rPr");
+      const pugi::xml_node w_drawing = child.child("w:drawing");
+      if (w_drawing) {
+        const pugi::xml_node a_blip = w_drawing.child("wp:inline").child("a:graphic")
+          .child("a:graphicData").child("pic:pic").child("pic:blipFill").child("a:blip");
+        if (a_blip) {
+          const char* rid = a_blip.attribute("r:embed").value();
+          if (rid && rid[0] != '\0') {
+            const RelationshipId relId = Relationship::parseId(rid);
+            const auto rel = doc.findRelationshipFor(mainPart, relId);
+            if (rel.has_value()) {
+              PartName target = rel->target_;
+              if (target.is_relative()) {
+                target = (mainPart.parent_path() / target).lexically_normal();
+              }
+              Buffer imgBuf;
+              imgBuf = doc.readPartBinary(target);
+              const FileType type = getFileType(target);
+              if (type != FileType::Unknown) {
+                const RelationshipId newId = doc.addImage(std::move(imgBuf), type);
+                PicturePointer pict = para->addPicture(newId);
+                const pugi::xml_node wp_extent = w_drawing.child("wp:inline").child("wp:extent");
+                if (wp_extent) {
+                  pict->prop_.extent_.width_ = static_cast<size_t>(std::strtoull(wp_extent.attribute("cx").value(), nullptr, 10));
+                  pict->prop_.extent_.height_ = static_cast<size_t>(std::strtoull(wp_extent.attribute("cy").value(), nullptr, 10));
+                }
+                const pugi::xml_node pic_blipFill = w_drawing.child("wp:inline").child("a:graphic")
+                  .child("a:graphicData").child("pic:pic").child("pic:blipFill");
+                if (const pugi::xml_node a_srcRect = pic_blipFill.child("a:srcRect")) {
+                  PictureProperties::Cropping cropping;
+                  cropping.top_ = std::strtod(a_srcRect.attribute("t").value(), nullptr);
+                  cropping.bottom_ = std::strtod(a_srcRect.attribute("b").value(), nullptr);
+                  cropping.left_ = std::strtod(a_srcRect.attribute("l").value(), nullptr);
+                  cropping.right_ = std::strtod(a_srcRect.attribute("r").value(), nullptr);
+                  pict->prop_.cropping_ = cropping;
+                }
+                if (const pugi::xml_node a_fillRect = pic_blipFill.child("a:stretch").child("a:fillRect")) {
+                  const bool hasStretchAttrs = a_fillRect.attribute("t") || a_fillRect.attribute("b") ||
+                                               a_fillRect.attribute("l") || a_fillRect.attribute("r");
+                  if (hasStretchAttrs) {
+                    PictureProperties::Stretching stretching;
+                    stretching.top_ = std::strtod(a_fillRect.attribute("t").value(), nullptr);
+                    stretching.bottom_ = std::strtod(a_fillRect.attribute("b").value(), nullptr);
+                    stretching.left_ = std::strtod(a_fillRect.attribute("l").value(), nullptr);
+                    stretching.right_ = std::strtod(a_fillRect.attribute("r").value(), nullptr);
+                    pict->prop_.stretching_ = stretching;
+                  }
+                }
+              }
+            }
+          }
+        }
+        continue;
+      }
+
+      const std::string text = readRunText(child);
+      if (!text.empty()) {
+        RichTextPointer rich = para->addRichText(text);
+        readRichTextProperties(rich->prop_, w_rPr);
+      }
+    }
+  }
+
+  static void readTable(Document& doc, Container& container, const pugi::xml_node& w_tbl, const PartName& mainPart)
+  {
+    size_t rows = 0;
+    size_t cols = 0;
+    for (const pugi::xml_node row : w_tbl.children("w:tr")) {
+      rows++;
+      size_t c = 0;
+      for (const pugi::xml_node cell : row.children("w:tc")) {
+        const pugi::xml_node w_tcPr = cell.child("w:tcPr");
+        const pugi::xml_node w_gridSpan = w_tcPr.child("w:gridSpan");
+        const size_t span = w_gridSpan ? static_cast<size_t>(std::strtoull(w_gridSpan.attribute("w:val").value(), nullptr, 10)) : 1;
+        c += std::max<size_t>(span, 1);
+      }
+      cols = std::max(cols, c);
+    }
+    if (rows == 0 || cols == 0) {
+      container.addTable(1, 1);
+      return;
+    }
+
+    TablePointer table = container.addTable(rows, cols);
+    const pugi::xml_node w_tblPr = w_tbl.child("w:tblPr");
+    if (const pugi::xml_node w_tblW = w_tblPr.child("w:tblW")) {
+      const std::string type = w_tblW.attribute("w:type").value();
+      if (type == "pct") {
+        table->prop_.width_.type_ = TableProperties::WidthType::Percent;
+        table->prop_.width_.value_ = static_cast<size_t>(std::strtoull(w_tblW.attribute("w:w").value(), nullptr, 10));
+      }
+      else if (type == "dxa") {
+        table->prop_.width_.type_ = TableProperties::WidthType::Absolute;
+        table->prop_.width_.value_ = static_cast<size_t>(std::strtoull(w_tblW.attribute("w:w").value(), nullptr, 10));
+      }
+    }
+
+    struct ActiveMerge { size_t row; size_t col; size_t rows; size_t cols; bool touched; };
+    std::map<size_t, ActiveMerge> activeVertical;
+
+    size_t rowIndex = 0;
+    for (const pugi::xml_node w_tr : w_tbl.children("w:tr")) {
+      for (auto& ref : activeVertical) ref.second.touched = false;
+
+      size_t colIndex = 0;
+      for (const pugi::xml_node w_tc : w_tr.children("w:tc")) {
+        const pugi::xml_node w_tcPr = w_tc.child("w:tcPr");
+        const pugi::xml_node w_gridSpan = w_tcPr.child("w:gridSpan");
+        const size_t colSpan = w_gridSpan ? static_cast<size_t>(std::strtoull(w_gridSpan.attribute("w:val").value(), nullptr, 10)) : 1;
+
+        const pugi::xml_node w_vMerge = w_tcPr.child("w:vMerge");
+        const bool hasVMerge = static_cast<bool>(w_vMerge);
+        const std::string mergeMode = w_vMerge.attribute("w:val").value();
+
+        if (hasVMerge && mergeMode == "restart") {
+          activeVertical[colIndex] = {rowIndex, colIndex, 1, colSpan, true};
+        }
+        else if (hasVMerge) {
+          auto it = activeVertical.find(colIndex);
+          if (it != activeVertical.end()) {
+            it->second.rows++;
+            it->second.touched = true;
+          }
+        }
+
+        if (!(hasVMerge && mergeMode != "restart")) {
+          CellPointer cell = table->cellAt(rowIndex, colIndex);
+          for (const pugi::xml_node w_p : w_tc.children("w:p")) {
+            readParagraph(doc, *cell, w_p, mainPart);
+          }
+        }
+
+        if (colSpan > 1) {
+          table->merge(rowIndex, colIndex, 1, colSpan);
+        }
+        colIndex += colSpan;
+      }
+
+      std::vector<size_t> finished;
+      for (const auto& ref : activeVertical) {
+        if (!ref.second.touched && rowIndex > ref.second.row) {
+          table->merge(ref.second.row, ref.second.col, ref.second.rows, ref.second.cols);
+          finished.push_back(ref.first);
+        }
+      }
+      for (const size_t key : finished) activeVertical.erase(key);
+      rowIndex++;
+    }
+
+    for (const auto& ref : activeVertical) {
+      table->merge(ref.second.row, ref.second.col, ref.second.rows, ref.second.cols);
+    }
+  }
+
+  void Document::readOfficeDocument()
+  {
+    pugi::xml_document doc;
+    if (!doc.load_string(readPartText(mainPart_).c_str()))
+      throw Exception("Cannot load office document xml");
+
+    const pugi::xml_node root = doc.child("w:document");
+    if (!root)
+      throw io_error(mainPart_.string(), "Invalid office document");
+    const pugi::xml_node body = root.child("w:body");
+    if (!body)
+      throw io_error(mainPart_.string(), "Missing document body");
+
+    clearSections();
+    SectionPointer current = addSection();
+
+    for (const pugi::xml_node child : body.children()) {
+      const std::string name = localName(child.name());
+      if (name == "p") {
+        readParagraph(*this, *current, child, mainPart_);
+        const pugi::xml_node w_sectPr = child.child("w:pPr").child("w:sectPr");
+        if (w_sectPr) {
+          readSectionProperties(current->prop_, w_sectPr);
+          current = addSection();
+        }
+      }
+      else if (name == "tbl") {
+        readTable(*this, *current, child, mainPart_);
+      }
+      else if (name == "sectPr") {
+        readSectionProperties(current->prop_, child);
+      }
+    }
+
+    if (sections_.size() > 1 && sections_.back()->blocks().empty()) {
+      deleteSection(sections_.back());
+    }
+    if (sections_.empty()) {
+      addSection();
+    }
+  }
+
 
   SectionPointer Document::addSection()
   {
@@ -909,10 +1360,37 @@ namespace MINIDOCX_NAMESPACE
     return section;
   }
 
+  SectionPointer Document::sectionAt(const size_t index) const
+  {
+    if (index >= sections_.size())
+      throw invalid_parameter();
+    return *std::next(sections_.begin(), static_cast<std::ptrdiff_t>(index));
+  }
+
+  SectionPointer Document::insertSection(const size_t index)
+  {
+    if (index > sections_.size())
+      throw invalid_parameter();
+    auto section{ std::make_shared<Section>() };
+    const auto it = std::next(sections_.begin(), static_cast<std::ptrdiff_t>(index));
+    sections_.insert(it, section);
+    return section;
+  }
+
   void Document::deleteSection(const SectionPointer& section)
   {
     section->destroy();
     sections_.remove(section);
+  }
+
+  bool Document::deleteSectionAt(const size_t index)
+  {
+    if (index >= sections_.size())
+      return false;
+    auto it = std::next(sections_.begin(), static_cast<std::ptrdiff_t>(index));
+    (*it)->destroy();
+    sections_.erase(it);
+    return true;
   }
 
   void Document::clearSections()
@@ -992,6 +1470,51 @@ namespace MINIDOCX_NAMESPACE
     writePart(stylePart_, doc);
   }
 
+  void Document::readStyles()
+  {
+    paragraphStyles_.clear();
+    characterStyles_.clear();
+
+    pugi::xml_document doc;
+    std::string xml;
+    try {
+      xml = readPartText(stylePart_);
+    }
+    catch (...) {
+      return;
+    }
+    if (!doc.load_string(xml.c_str()))
+      return;
+
+    const pugi::xml_node root = doc.child("w:styles");
+    if (!root)
+      return;
+
+    for (const pugi::xml_node w_style : root.children("w:style")) {
+      const std::string type = w_style.attribute("w:type").value();
+      const std::string id = w_style.attribute("w:styleId").value();
+      if (id.empty())
+        continue;
+
+      if (type == "paragraph") {
+        ParagraphStyle style;
+        style.name_ = w_style.child("w:name").attribute("w:val").value();
+        style.next_ = w_style.child("w:next").attribute("w:val").value();
+        style.basedOn_ = w_style.child("w:basedOn").attribute("w:val").value();
+        readParagraphProperties(style, w_style.child("w:pPr"));
+        readRichTextProperties(style, w_style.child("w:rPr"));
+        paragraphStyles_[id] = std::move(style);
+      }
+      else if (type == "character") {
+        CharacterStyle style;
+        style.name_ = w_style.child("w:name").attribute("w:val").value();
+        style.basedOn_ = w_style.child("w:basedOn").attribute("w:val").value();
+        readRichTextProperties(style, w_style.child("w:rPr"));
+        characterStyles_[id] = std::move(style);
+      }
+    }
+  }
+
   void Document::addParagraphStyle(const ParagraphStyle& style)
   {
     paragraphStyles_[removeSpaces(style.name_)] = style;
@@ -1000,6 +1523,172 @@ namespace MINIDOCX_NAMESPACE
   void Document::addCharacterStyle(const CharacterStyle& style)
   {
     characterStyles_[removeSpaces(style.name_)] = style;
+  }
+
+  static NumberStyle parseNumberStyle(const std::string& style)
+  {
+    if (style == "decimal")
+      return NumberStyle::Decimal;
+    if (style == "upperRoman")
+      return NumberStyle::UpperRoman;
+    if (style == "lowerRoman")
+      return NumberStyle::LowerRoman;
+    if (style == "upperLetter")
+      return NumberStyle::UpperLetter;
+    if (style == "lowerLetter")
+      return NumberStyle::LowerLetter;
+    if (style == "ordinalText")
+      return NumberStyle::OrdinalText;
+    if (style == "cardinalText")
+      return NumberStyle::CardinalText;
+    return NumberStyle::Bullet;
+  }
+
+  static NumberingType parseNumberingType(const std::string& type)
+  {
+    if (type == "singleLevel")
+      return NumberingType::SingLevel;
+    if (type == "multiLevel")
+      return NumberingType::MultiLevel;
+    return NumberingType::HybridMultiLevel;
+  }
+
+  static const char* numberStyleToXml(const NumberStyle style)
+  {
+    switch (style)
+    {
+    case NumberStyle::Decimal:
+      return "decimal";
+    case NumberStyle::UpperRoman:
+      return "upperRoman";
+    case NumberStyle::LowerRoman:
+      return "lowerRoman";
+    case NumberStyle::UpperLetter:
+      return "upperLetter";
+    case NumberStyle::LowerLetter:
+      return "lowerLetter";
+    case NumberStyle::OrdinalText:
+      return "ordinalText";
+    case NumberStyle::CardinalText:
+      return "cardinalText";
+    case NumberStyle::Bullet:
+    default:
+      return "bullet";
+    }
+  }
+
+  static void writeNumberingLevel(pugi::xml_node w_parent, const LevelDefinition& lvl, const size_t ilvl)
+  {
+    pugi::xml_node w_lvl = w_parent.append_child("w:lvl");
+    w_lvl.append_attribute("w:ilvl") = ilvl;
+    w_lvl.append_child("w:start").append_attribute("w:val") = lvl.numStart_;
+    w_lvl.append_child("w:numFmt").append_attribute("w:val") = numberStyleToXml(lvl.numStyle_);
+    w_lvl.append_child("w:lvlText").append_attribute("w:val") = lvl.numFmt_.c_str();
+
+    switch (lvl.numAlign_) {
+    case Alignment::Left:
+      w_lvl.append_child("w:lvlJc").append_attribute("w:val") = "left";
+      break;
+    case Alignment::Right:
+      w_lvl.append_child("w:lvlJc").append_attribute("w:val") = "right";
+      break;
+    case Alignment::Centered:
+      w_lvl.append_child("w:lvlJc").append_attribute("w:val") = "center";
+      break;
+    case Alignment::Justified:
+      w_lvl.append_child("w:lvlJc").append_attribute("w:val") = "both";
+      break;
+    case Alignment::Distributed:
+      w_lvl.append_child("w:lvlJc").append_attribute("w:val") = "distribute";
+      break;
+    }
+
+    writeParagraphProperties(w_lvl.append_child("w:pPr"), lvl);
+    writeRichTextProperties(w_lvl.append_child("w:rPr"), lvl);
+  }
+
+  static void readNumberingLevel(LevelDefinition& level, const pugi::xml_node& w_lvl)
+  {
+    level.numStart_ = static_cast<size_t>(std::strtoull(w_lvl.child("w:start").attribute("w:val").value(), nullptr, 10));
+    level.numStyle_ = parseNumberStyle(w_lvl.child("w:numFmt").attribute("w:val").value());
+    level.numFmt_ = w_lvl.child("w:lvlText").attribute("w:val").value();
+    if (const pugi::xml_node w_lvlJc = w_lvl.child("w:lvlJc")) {
+      const std::string val = w_lvlJc.attribute("w:val").value();
+      if (val == "left")
+        level.numAlign_ = Alignment::Left;
+      else if (val == "right")
+        level.numAlign_ = Alignment::Right;
+      else if (val == "center")
+        level.numAlign_ = Alignment::Centered;
+      else if (val == "both")
+        level.numAlign_ = Alignment::Justified;
+      else if (val == "distribute")
+        level.numAlign_ = Alignment::Distributed;
+    }
+  }
+
+  void Document::readNumDefinitions()
+  {
+    abstractNumDefinitions_.clear();
+    numDefinitions_.clear();
+    nextAbstractNumId_ = 0;
+    nextNumId_ = 1;
+
+    pugi::xml_document doc;
+    std::string xml;
+    try {
+      xml = readPartText(numPart_);
+    }
+    catch (...) {
+      return;
+    }
+    if (!doc.load_string(xml.c_str()))
+      return;
+
+    const pugi::xml_node root = doc.child("w:numbering");
+    if (!root)
+      return;
+
+    for (const pugi::xml_node w_abstractNum : root.children("w:abstractNum")) {
+      const NumberingId abstractId = static_cast<NumberingId>(std::strtoull(w_abstractNum.attribute("w:abstractNumId").value(), nullptr, 10));
+      AbstractNumberingDefinition def;
+      def.type_ = parseNumberingType(w_abstractNum.child("w:multiLevelType").attribute("w:val").value());
+
+      for (const pugi::xml_node w_lvl : w_abstractNum.children("w:lvl")) {
+        const size_t ilvl = static_cast<size_t>(std::strtoull(w_lvl.attribute("w:ilvl").value(), nullptr, 10));
+        if (ilvl > 8)
+          continue;
+        auto& level = def.levels_[ilvl];
+        readNumberingLevel(level, w_lvl);
+      }
+
+      abstractNumDefinitions_[abstractId] = std::move(def);
+      nextAbstractNumId_ = std::max(nextAbstractNumId_, abstractId + 1);
+    }
+
+    for (const pugi::xml_node w_num : root.children("w:num")) {
+      const NumberingId numId = static_cast<NumberingId>(std::strtoull(w_num.attribute("w:numId").value(), nullptr, 10));
+      NumberingDefinition def;
+      def.id_ = static_cast<NumberingId>(std::strtoull(w_num.child("w:abstractNumId").attribute("w:val").value(), nullptr, 10));
+      for (const pugi::xml_node w_lvlOverride : w_num.children("w:lvlOverride")) {
+        const size_t ilvl = static_cast<size_t>(std::strtoull(w_lvlOverride.attribute("w:ilvl").value(), nullptr, 10));
+        if (ilvl > 8)
+          continue;
+        if (abstractNumDefinitions_.find(def.id_) == abstractNumDefinitions_.end())
+          continue;
+        const NumberingLevel level = static_cast<NumberingLevel>(ilvl);
+        LevelDefinition overrideDef = abstractNumDefinitions_[def.id_].levels_[ilvl];
+        if (const pugi::xml_node w_startOverride = w_lvlOverride.child("w:startOverride")) {
+          overrideDef.numStart_ = static_cast<size_t>(std::strtoull(w_startOverride.attribute("w:val").value(), nullptr, 10));
+        }
+        if (const pugi::xml_node w_lvl = w_lvlOverride.child("w:lvl")) {
+          readNumberingLevel(overrideDef, w_lvl);
+        }
+        def.levelOverrides_[level] = overrideDef;
+      }
+      numDefinitions_[numId] = std::move(def);
+      nextNumId_ = std::max(nextNumId_, numId + 1);
+    }
   }
 
 
@@ -1022,11 +1711,11 @@ namespace MINIDOCX_NAMESPACE
       switch (numDef.second.type_)
       {
       case NumberingType::SingLevel:
-        w_abstractNum.append_child("w:multiLevelType").append_attribute("w:val") = "singlelevel";
+        w_abstractNum.append_child("w:multiLevelType").append_attribute("w:val") = "singleLevel";
         break;
 
       case NumberingType::MultiLevel:
-        w_abstractNum.append_child("w:multiLevelType").append_attribute("w:val") = "multilevel";
+        w_abstractNum.append_child("w:multiLevelType").append_attribute("w:val") = "multiLevel";
         break;
 
       case NumberingType::HybridMultiLevel:
@@ -1040,55 +1729,7 @@ namespace MINIDOCX_NAMESPACE
 
       size_t count = 0;
       for (const auto& lvl : numDef.second.levels_) {
-        pugi::xml_node w_lvl = w_abstractNum.append_child("w:lvl");
-        w_lvl.append_attribute("w:ilvl") = count++;
-
-        w_lvl.append_child("w:start").append_attribute("w:val") = lvl.numStart_;
-
-        switch (lvl.numStyle_)
-        {
-        case NumberStyle::Decimal:
-          w_lvl.append_child("w:numFmt").append_attribute("w:val") = "decimal";
-          break;
-
-        case NumberStyle::LowerLetter:
-          w_lvl.append_child("w:numFmt").append_attribute("w:val") = "lowerLetter";
-          break;
-
-        case NumberStyle::LowerRoman:
-          w_lvl.append_child("w:numFmt").append_attribute("w:val") = "lowerRoman";
-          break;
-
-        default:
-          w_lvl.append_child("w:numFmt").append_attribute("w:val") = "bullet";
-          break;
-        }
-        
-        w_lvl.append_child("w:lvlText").append_attribute("w:val") = lvl.numFmt_.c_str();
-
-        switch (lvl.numAlign_) {
-        case Alignment::Left:
-          w_lvl.append_child("w:lvlJc").append_attribute("w:val") = "left";
-          break;
-
-        case Alignment::Right:
-          w_lvl.append_child("w:lvlJc").append_attribute("w:val") = "right";
-          break;
-
-        case Alignment::Centered:
-          w_lvl.append_child("w:lvlJc").append_attribute("w:val") = "center";
-          break;
-
-        case Alignment::Justified:
-          w_lvl.append_child("w:lvlJc").append_attribute("w:val") = "both";
-          break;
-
-        case Alignment::Distributed:
-          w_lvl.append_child("w:lvlJc").append_attribute("w:val") = "distribute";
-        }
-        
-        writeParagraphProperties(w_lvl.append_child("w:pPr"), lvl);
-        writeRichTextProperties(w_lvl.append_child("w:rPr"), lvl);
+        writeNumberingLevel(w_abstractNum, lvl, count++);
       }
     }
 
@@ -1096,7 +1737,13 @@ namespace MINIDOCX_NAMESPACE
       pugi::xml_node w_num = root.append_child("w:num");
       w_num.append_attribute("w:numId") = numDef.first;
       w_num.append_child("w:abstractNumId").append_attribute("w:val") = numDef.second.id_;
-      // TODO: writes numbering level overrides
+      for (const auto& levelOverride : numDef.second.levelOverrides_) {
+        const auto ilvl = static_cast<size_t>(levelOverride.first);
+        pugi::xml_node w_lvlOverride = w_num.append_child("w:lvlOverride");
+        w_lvlOverride.append_attribute("w:ilvl") = ilvl;
+        w_lvlOverride.append_child("w:startOverride").append_attribute("w:val") = levelOverride.second.numStart_;
+        writeNumberingLevel(w_lvlOverride, levelOverride.second, ilvl);
+      }
     }
 
     writePart(numPart_, doc);
