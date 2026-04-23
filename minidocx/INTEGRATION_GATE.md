@@ -99,5 +99,5 @@ The following remain out of scope:
 
 ## Change Policy
 
-PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19 are validation/process and optional-provider hardening only.
+PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR21 are validation/process and optional-provider hardening only.
 Do not use this gate document to introduce unsupported engine capability claims.

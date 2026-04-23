@@ -12,36 +12,9 @@ import traceback
 import zipfile
 from typing import Dict, List, Optional, Set, Tuple
 
+from provider_registry import PROVIDER_REGISTRY, provider_capabilities
+
 PROTOCOL_VERSION = "1"
-
-ALLOWED_PROVIDERS = {
-    "system": {"probe"},
-    "smoke": {"ping"},
-    "mammoth": {"docx_to_html"},
-    "mammoth_semantic": {"export_html", "extract_raw_text"},
-    "docxcompose": {"compose_append"},
-    "lxml": {"xpath_query", "xslt_transform"},
-    "schematron": {"validate_part"},
-    "ocr": {"extract_text"},
-    "pypdf": {"extract_text"},
-    "pdfminer": {"extract_text", "extract_layout"},
-    "docxtpl": {"render_template"},
-    "python_docx": {"style_audit"},
-}
-
-PROVIDER_CAPABILITIES = {
-    "smoke": ["ping"],
-    "mammoth": ["docx_to_html"],
-    "mammoth_semantic": ["export_html", "extract_raw_text"],
-    "docxcompose": ["compose_append"],
-    "lxml": ["xpath_query", "xslt_transform"],
-    "schematron": ["validate_part"],
-    "ocr": ["extract_text"],
-    "pypdf": ["extract_text"],
-    "pdfminer": ["extract_text", "extract_layout"],
-    "docxtpl": ["render_template"],
-    "python_docx": ["style_audit"],
-}
 
 LXML_ALLOWED_PARTS = {
     "word/document.xml",
@@ -139,28 +112,28 @@ def mammoth_messages_to_warning_text(messages: List[object]) -> str:
 def provider_probe() -> Dict[str, str]:
     providers: List[Tuple[str, bool, str, List[str], str]] = []
 
-    providers.append(("smoke", True, "builtin", PROVIDER_CAPABILITIES["smoke"], "available"))
+    providers.append(("smoke", True, "builtin", provider_capabilities("smoke"), "available"))
 
     ok, ver, msg = module_version("mammoth")
-    providers.append(("mammoth", ok, ver, PROVIDER_CAPABILITIES["mammoth"], "available" if ok else msg))
-    providers.append(("mammoth_semantic", ok, ver, PROVIDER_CAPABILITIES["mammoth_semantic"], "available" if ok else msg))
+    providers.append(("mammoth", ok, ver, provider_capabilities("mammoth"), "available" if ok else msg))
+    providers.append(("mammoth_semantic", ok, ver, provider_capabilities("mammoth_semantic"), "available" if ok else msg))
 
     okc, verc, msgc = module_version("docxcompose")
-    providers.append(("docxcompose", okc, verc, PROVIDER_CAPABILITIES["docxcompose"], "available" if okc else msgc))
+    providers.append(("docxcompose", okc, verc, provider_capabilities("docxcompose"), "available" if okc else msgc))
 
     okl, verl, msgl = module_version("lxml")
-    providers.append(("lxml", okl, verl, PROVIDER_CAPABILITIES["lxml"], "available" if okl else msgl))
+    providers.append(("lxml", okl, verl, provider_capabilities("lxml"), "available" if okl else msgl))
 
     if okl:
         try:
             from lxml import isoschematron  # type: ignore
 
             _ = isoschematron.Schematron
-            providers.append(("schematron", True, verl, PROVIDER_CAPABILITIES["schematron"], "available"))
+            providers.append(("schematron", True, verl, provider_capabilities("schematron"), "available"))
         except Exception as ex:
-            providers.append(("schematron", False, verl, PROVIDER_CAPABILITIES["schematron"], str(ex)))
+            providers.append(("schematron", False, verl, provider_capabilities("schematron"), str(ex)))
     else:
-        providers.append(("schematron", False, "", PROVIDER_CAPABILITIES["schematron"], msgl))
+        providers.append(("schematron", False, "", provider_capabilities("schematron"), msgl))
 
     oko, vero, msgo = module_version("pytesseract")
     if oko:
@@ -168,23 +141,23 @@ def provider_probe() -> Dict[str, str]:
             import pytesseract  # type: ignore
 
             _ = pytesseract.get_tesseract_version()
-            providers.append(("ocr", True, vero, PROVIDER_CAPABILITIES["ocr"], "available"))
+            providers.append(("ocr", True, vero, provider_capabilities("ocr"), "available"))
         except Exception as ex:
-            providers.append(("ocr", False, vero, PROVIDER_CAPABILITIES["ocr"], str(ex)))
+            providers.append(("ocr", False, vero, provider_capabilities("ocr"), str(ex)))
     else:
-        providers.append(("ocr", False, "", PROVIDER_CAPABILITIES["ocr"], msgo))
+        providers.append(("ocr", False, "", provider_capabilities("ocr"), msgo))
 
     okp, verp, msgp = module_version("pypdf")
-    providers.append(("pypdf", okp, verp, PROVIDER_CAPABILITIES["pypdf"], "available" if okp else msgp))
+    providers.append(("pypdf", okp, verp, provider_capabilities("pypdf"), "available" if okp else msgp))
 
     okm, verm, msgm = module_version("pdfminer")
-    providers.append(("pdfminer", okm, verm, PROVIDER_CAPABILITIES["pdfminer"], "available" if okm else msgm))
+    providers.append(("pdfminer", okm, verm, provider_capabilities("pdfminer"), "available" if okm else msgm))
 
     okt, vert, msqt = module_version("docxtpl")
-    providers.append(("docxtpl", okt, vert, PROVIDER_CAPABILITIES["docxtpl"], "available" if okt else msqt))
+    providers.append(("docxtpl", okt, vert, provider_capabilities("docxtpl"), "available" if okt else msqt))
 
     okd, verd, msgd = module_version("docx")
-    providers.append(("python_docx", okd, verd, PROVIDER_CAPABILITIES["python_docx"], "available" if okd else msgd))
+    providers.append(("python_docx", okd, verd, provider_capabilities("python_docx"), "available" if okd else msgd))
 
     return {
         "code": "ok",
@@ -1139,9 +1112,9 @@ def validate_request(values: Dict[str, str]) -> Tuple[bool, Dict[str, str]]:
     provider = unescape(values.get("provider", ""))
     operation = unescape(values.get("operation", ""))
 
-    if provider not in ALLOWED_PROVIDERS:
+    if provider not in PROVIDER_REGISTRY:
         return False, error("invalid_request", f"provider not allowed: {provider}")
-    if operation not in ALLOWED_PROVIDERS[provider]:
+    if operation not in PROVIDER_REGISTRY[provider]:
         return False, error("invalid_request", f"operation not allowed: {provider}.{operation}")
 
     return True, {}
