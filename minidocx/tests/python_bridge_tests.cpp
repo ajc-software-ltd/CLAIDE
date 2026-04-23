@@ -239,6 +239,54 @@ int main()
             "invalid xslt should normalize to invalid request");
   }
 
+  // PR17: Schematron validation provider for allowlisted DOCX XML parts.
+  PythonProviderRequest schematronPass;
+  schematronPass.provider = "schematron";
+  schematronPass.operation = "validate_part";
+  schematronPass.inputPath = templatePath;
+  schematronPass.payload =
+      R"({"part":"word/document.xml","store_report":true,"schema_text":"<sch:schema xmlns:sch=\"http://purl.oclc.org/dsdl/schematron\" queryBinding=\"xslt\"><sch:ns prefix=\"w\" uri=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"/><sch:pattern id=\"p1\"><sch:rule context=\"w:document\"><sch:assert test=\"count(//w:p) &gt;= 1\">document should have at least one paragraph</sch:assert></sch:rule></sch:pattern></sch:schema>"})";
+  const auto schematronPassResult = invokePythonProvider(cfg, schematronPass);
+  if (providerAvailable(probe.providers, "schematron")) {
+    require(schematronPassResult.code == PythonBridgeCode::Ok, "schematron pass case should succeed");
+    require(schematronPassResult.text.find("\"operation\": \"validate_part\"") != std::string::npos,
+            "schematron result should include operation metadata");
+    require(schematronPassResult.text.find("\"valid\": true") != std::string::npos,
+            "schematron pass case should report valid true");
+  } else {
+    require(schematronPassResult.code == PythonBridgeCode::ProviderUnavailable,
+            "schematron should return provider-unavailable when dependency is missing");
+  }
+
+  PythonProviderRequest schematronFail = schematronPass;
+  schematronFail.payload =
+      R"({"part":"word/document.xml","store_report":true,"schema_text":"<sch:schema xmlns:sch=\"http://purl.oclc.org/dsdl/schematron\" queryBinding=\"xslt\"><sch:ns prefix=\"w\" uri=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"/><sch:pattern id=\"p2\"><sch:rule context=\"w:document\"><sch:assert test=\"count(//w:p) = 0\">document should have zero paragraphs</sch:assert></sch:rule></sch:pattern></sch:schema>"})";
+  const auto schematronFailResult = invokePythonProvider(cfg, schematronFail);
+  if (providerAvailable(probe.providers, "schematron")) {
+    require(schematronFailResult.code == PythonBridgeCode::Ok, "schematron fail case should still execute");
+    require(schematronFailResult.text.find("\"valid\": false") != std::string::npos,
+            "schematron fail case should report valid false");
+    require(schematronFailResult.text.find("failed_asserts") != std::string::npos,
+            "schematron fail case should expose failed asserts");
+  }
+
+  PythonProviderRequest schematronDisallowed = schematronPass;
+  schematronDisallowed.payload =
+      R"({"part":"word/comments.xml","schema_text":"<sch:schema xmlns:sch=\"http://purl.oclc.org/dsdl/schematron\"><sch:pattern id=\"p\"><sch:rule context=\"*\"><sch:assert test=\"true()\">ok</sch:assert></sch:rule></sch:pattern></sch:schema>"})";
+  const auto schematronDisallowedResult = invokePythonProvider(cfg, schematronDisallowed);
+  if (providerAvailable(probe.providers, "schematron")) {
+    require(schematronDisallowedResult.code == PythonBridgeCode::InvalidRequest,
+            "schematron disallowed part should normalize to invalid request");
+  }
+
+  PythonProviderRequest schematronInvalid = schematronPass;
+  schematronInvalid.payload = R"({"part":"word/document.xml","schema_text":"<sch:schema>"})";
+  const auto schematronInvalidResult = invokePythonProvider(cfg, schematronInvalid);
+  if (providerAvailable(probe.providers, "schematron")) {
+    require(schematronInvalidResult.code == PythonBridgeCode::InvalidRequest,
+            "malformed schematron input should normalize to invalid request");
+  }
+
   // PR16: OCR provider (pytesseract + Tesseract runtime).
   PythonProviderRequest ocrRequest;
   ocrRequest.provider = "ocr";

@@ -111,6 +111,16 @@ Both providers return explicit provenance through the PR12 bridge contract and d
 This does **not** imply native minidocx OCR support, full scanned-document workflows, PDF OCR pipelines, or
 document-intelligence features.
 
+## Python Provider: Schematron Validation (PR17)
+
+`schematron.validate_part` is optional expert validation tooling backed by `lxml.isoschematron`:
+
+- validate one allowlisted DOCX XML part per request
+- schema supplied as text or file path (optional phase)
+- structured validation result with `valid` plus normalized failed-assert/report data
+
+This remains companion-only and does not mutate the minidocx native model automatically.
+
 ## Validation & Readiness Gate (PR10)
 
 `minidocx` now defines a branch-local readiness contract.
@@ -165,3 +175,7 @@ A static library is built by default. To build shared, set `BUILD_SHARED=ON`.
 - [User Guide](./guide.md)
 - [Branch Status](./BRANCH_STATUS.md)
 - [Integration Gate](./INTEGRATION_GATE.md)
+  - optional Schematron validation via `schematron.validate_part` (lxml.isoschematron)
+    - validation restricted to allowlisted DOCX XML parts
+    - schema input by text or file path, optional phase support
+    - structured pass/fail + failed-assert/report payloads

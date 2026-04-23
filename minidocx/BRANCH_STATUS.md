@@ -13,6 +13,7 @@ _Last updated: 2026-04-23_
 - PR13: optional template-render and style-audit providers via hardened Python bridge.
 - PR15: optional expert `lxml` provider surface for allowlisted DOCX-part XPath and XSLT workflows.
 - PR16: optional OCR provider via pytesseract/Tesseract for image text extraction.
+- PR17: optional Schematron validation provider for allowlisted DOCX XML parts.
 
 ## Public Usage Contract (Current)
 
@@ -31,7 +32,7 @@ _Last updated: 2026-04-23_
 - Bridge model: out-of-process Python worker with explicit request/response payloads
 - Build default: disabled (`MINIDOCX_ENABLE_PYTHON_BRIDGE=OFF`)
 - Companion providers: smoke, mammoth export, docxcompose append, optional allowlisted-part lxml expert workflows,
-  optional OCR extract-text via Tesseract, docxtpl template rendering, python-docx style audit
+  optional OCR extract-text via Tesseract, optional Schematron validation, docxtpl template rendering, python-docx style audit
 - Core C++ engine remains authoritative when bridge is disabled or unavailable
 
 - Normal branch health validation target: `minidocx_validate`
@@ -78,7 +79,7 @@ _Last updated: 2026-04-23_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR16)
+## Next Likely Chunks (After PR17)
 
 - Continue module-scoped tests and docs hardening around existing surfaces
 - Keep contract language consistent across headers/docs/examples as APIs evolve

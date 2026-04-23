@@ -10,7 +10,7 @@ import os
 import tempfile
 import traceback
 import zipfile
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 PROTOCOL_VERSION = "1"
 
@@ -21,6 +21,7 @@ ALLOWED_PROVIDERS = {
     "mammoth_semantic": {"export_html", "extract_raw_text"},
     "docxcompose": {"compose_append"},
     "lxml": {"xpath_query", "xslt_transform"},
+    "schematron": {"validate_part"},
     "ocr": {"extract_text"},
     "docxtpl": {"render_template"},
     "python_docx": {"style_audit"},
@@ -32,12 +33,22 @@ PROVIDER_CAPABILITIES = {
     "mammoth_semantic": ["export_html", "extract_raw_text"],
     "docxcompose": ["compose_append"],
     "lxml": ["xpath_query", "xslt_transform"],
+    "schematron": ["validate_part"],
     "ocr": ["extract_text"],
     "docxtpl": ["render_template"],
     "python_docx": ["style_audit"],
 }
 
 LXML_ALLOWED_PARTS = {
+    "word/document.xml",
+    "word/styles.xml",
+    "word/numbering.xml",
+    "_rels/.rels",
+    "word/_rels/document.xml.rels",
+    "[Content_Types].xml",
+}
+
+SCHEMATRON_ALLOWED_PARTS = {
     "word/document.xml",
     "word/styles.xml",
     "word/numbering.xml",
@@ -135,6 +146,17 @@ def provider_probe() -> Dict[str, str]:
 
     okl, verl, msgl = module_version("lxml")
     providers.append(("lxml", okl, verl, PROVIDER_CAPABILITIES["lxml"], "available" if okl else msgl))
+
+    if okl:
+        try:
+            from lxml import isoschematron  # type: ignore
+
+            _ = isoschematron.Schematron
+            providers.append(("schematron", True, verl, PROVIDER_CAPABILITIES["schematron"], "available"))
+        except Exception as ex:
+            providers.append(("schematron", False, verl, PROVIDER_CAPABILITIES["schematron"], str(ex)))
+    else:
+        providers.append(("schematron", False, "", PROVIDER_CAPABILITIES["schematron"], msgl))
 
     oko, vero, msgo = module_version("pytesseract")
     if oko:
@@ -291,10 +313,10 @@ def provider_lxml_xpath_query(input_path: str, xpath_expr: str) -> Dict[str, str
     return provider_lxml_xpath_query_structured(input_path, xpath_expr)
 
 
-def _read_docx_part_xml(docx_path: str, part_path: str) -> Tuple[bool, str, str]:
+def _read_docx_part_xml_allowlisted(docx_path: str, part_path: str, allowed_parts: Set[str]) -> Tuple[bool, str, str]:
     if not docx_path or not os.path.exists(docx_path):
-        return False, "", "input_path for lxml provider is required"
-    if part_path not in LXML_ALLOWED_PARTS:
+        return False, "", "input_path is required"
+    if part_path not in allowed_parts:
         return False, "", f"part not allowed: {part_path}"
 
     try:
@@ -349,7 +371,7 @@ def provider_lxml_xpath_query_structured(input_path: str, payload_json: str) -> 
     if not isinstance(namespaces, dict):
         return error("invalid_request", "payload.namespaces must be an object when provided")
 
-    ok, xml_text, read_error = _read_docx_part_xml(input_path, part)
+    ok, xml_text, read_error = _read_docx_part_xml_allowlisted(input_path, part, LXML_ALLOWED_PARTS)
     if not ok:
         return error("invalid_request", read_error)
 
@@ -441,7 +463,7 @@ def provider_lxml_xslt_transform_structured(input_path: str, payload_json: str) 
     if not isinstance(params, dict):
         return error("invalid_request", "payload.params must be an object when provided")
 
-    ok, xml_text, read_error = _read_docx_part_xml(input_path, part)
+    ok, xml_text, read_error = _read_docx_part_xml_allowlisted(input_path, part, LXML_ALLOWED_PARTS)
     if not ok:
         return error("invalid_request", read_error)
 
@@ -479,6 +501,125 @@ def provider_lxml_xslt_transform_structured(input_path: str, payload_json: str) 
     return {
         "code": "ok",
         "message": "xslt transform complete",
+        "provider_version": _lxml_version(),
+        "provenance": "python_provider",
+        "text_b64": encode_text(json.dumps(result_payload, ensure_ascii=False)),
+    }
+
+
+def provider_schematron_validate_part(input_path: str, payload_json: str) -> Dict[str, str]:
+    try:
+        from lxml import etree  # type: ignore
+        from lxml import isoschematron  # type: ignore
+    except Exception as ex:
+        return error("provider_unavailable", f"lxml/isoschematron unavailable: {ex}")
+
+    if not payload_json:
+        return error("invalid_request", "schematron validate_part payload is required")
+    try:
+        payload = json.loads(payload_json)
+    except Exception as ex:
+        return error("invalid_request", f"invalid schematron payload JSON: {ex}")
+    if not isinstance(payload, dict):
+        return error("invalid_request", "schematron payload must be a JSON object")
+
+    part = str(payload.get("part", ""))
+    schema_text = payload.get("schema_text")
+    schema_path = payload.get("schema_path")
+    phase = payload.get("phase")
+    store_report = bool(payload.get("store_report", True))
+
+    if not part:
+        return error("invalid_request", "schematron validate_part requires payload.part")
+    if bool(schema_text) == bool(schema_path):
+        return error("invalid_request", "provide exactly one of payload.schema_text or payload.schema_path")
+    if schema_text is not None and not isinstance(schema_text, str):
+        return error("invalid_request", "payload.schema_text must be a string when provided")
+    if schema_path is not None and not isinstance(schema_path, str):
+        return error("invalid_request", "payload.schema_path must be a string when provided")
+    if phase is not None and not isinstance(phase, str):
+        return error("invalid_request", "payload.phase must be a string when provided")
+
+    ok, xml_text, read_error = _read_docx_part_xml_allowlisted(input_path, part, SCHEMATRON_ALLOWED_PARTS)
+    if not ok:
+        return error("invalid_request", read_error)
+
+    try:
+        target_doc = etree.parse(io.BytesIO(xml_text.encode("utf-8")))
+    except Exception as ex:
+        return error("execution_failed", f"failed to parse selected XML part: {ex}")
+
+    try:
+        if schema_text:
+            schema_doc = etree.parse(io.BytesIO(str(schema_text).encode("utf-8")))
+            schema_source = "text"
+        else:
+            if not os.path.exists(str(schema_path)):
+                return error("invalid_request", f"schematron schema file not found: {schema_path}")
+            schema_doc = etree.parse(str(schema_path))
+            schema_source = "file"
+    except Exception as ex:
+        return error("invalid_request", f"invalid schematron schema input: {ex}")
+
+    try:
+        validator = isoschematron.Schematron(schema_doc, store_report=store_report, phase=phase)
+    except Exception as ex:
+        return error("invalid_request", f"failed to compile schematron schema: {ex}")
+
+    try:
+        valid = bool(validator.validate(target_doc))
+    except Exception as ex:
+        return error("execution_failed", f"schematron validation failed: {ex}")
+
+    failed_asserts: List[Dict[str, str]] = []
+    report_entries: List[Dict[str, str]] = []
+    report_xml = ""
+    try:
+        report = getattr(validator, "validation_report", None)
+        if report is not None:
+            report_xml = etree.tostring(report, encoding="unicode")
+            ns = {"svrl": "http://purl.oclc.org/dsdl/svrl"}
+            for node in report.xpath("//svrl:failed-assert", namespaces=ns):
+                text_nodes = node.xpath("./svrl:text/text()", namespaces=ns)
+                failed_asserts.append(
+                    {
+                        "location": str(node.get("location", "")),
+                        "test": str(node.get("test", "")),
+                        "text": str(text_nodes[0]) if text_nodes else "",
+                    }
+                )
+            for node in report.xpath("//svrl:successful-report", namespaces=ns):
+                text_nodes = node.xpath("./svrl:text/text()", namespaces=ns)
+                report_entries.append(
+                    {
+                        "location": str(node.get("location", "")),
+                        "test": str(node.get("test", "")),
+                        "text": str(text_nodes[0]) if text_nodes else "",
+                    }
+                )
+    except Exception:
+        pass
+
+    result_payload = {
+        "provider": "schematron",
+        "provider_version": _lxml_version(),
+        "operation": "validate_part",
+        "selected_part": part,
+        "schema_source": schema_source,
+        "phase": phase if phase is not None else "",
+        "success": True,
+        "valid": valid,
+        "failed_asserts": failed_asserts,
+        "reports": report_entries,
+        "report_xml": report_xml if store_report else "",
+        "warnings": [],
+        "errors": [],
+        "provenance": "python_provider",
+    }
+
+    return {
+        "code": "ok",
+        "message": "schematron validation complete",
         "provider_version": _lxml_version(),
         "provenance": "python_provider",
         "text_b64": encode_text(json.dumps(result_payload, ensure_ascii=False)),
@@ -702,6 +843,8 @@ def run(values: Dict[str, str]) -> Dict[str, str]:
         return provider_lxml_xpath_query(input_path, payload)
     if provider == "lxml" and operation == "xslt_transform":
         return provider_lxml_xslt_transform(input_path, payload)
+    if provider == "schematron" and operation == "validate_part":
+        return provider_schematron_validate_part(input_path, payload)
     if provider == "ocr" and operation == "extract_text":
         return provider_ocr_extract_text(input_path, payload)
     if provider == "docxtpl" and operation == "render_template":

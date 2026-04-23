@@ -50,6 +50,15 @@ int main()
   const auto xslt = providers::invokePythonProvider(cfg, xsltReq);
   std::cout << "XSLT code: " << static_cast<int>(xslt.code) << '\n';
 
+  providers::PythonProviderRequest schematronReq;
+  schematronReq.provider = "schematron";
+  schematronReq.operation = "validate_part";
+  schematronReq.inputPath = "rendered.docx";
+  schematronReq.payload =
+      R"({"part":"word/document.xml","store_report":true,"schema_text":"<sch:schema xmlns:sch=\"http://purl.oclc.org/dsdl/schematron\" queryBinding=\"xslt\"><sch:ns prefix=\"w\" uri=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"/><sch:pattern id=\"p\"><sch:rule context=\"w:document\"><sch:assert test=\"count(//w:p) &gt;= 1\">document should have at least one paragraph</sch:assert></sch:rule></sch:pattern></sch:schema>"})";
+  const auto schematron = providers::invokePythonProvider(cfg, schematronReq);
+  std::cout << "Schematron code: " << static_cast<int>(schematron.code) << '\n';
+
   providers::PythonProviderRequest ocrReq;
   ocrReq.provider = "ocr";
   ocrReq.operation = "extract_text";

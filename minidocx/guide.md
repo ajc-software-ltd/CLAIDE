@@ -43,6 +43,10 @@ The Python bridge is an optional out-of-process provider layer.
   - requires pytesseract + installed Tesseract runtime
   - supports image path input or base64 image payload
   - option surface remains constrained (`lang`, allowlisted `psm`)
+- optional Schematron validation through `schematron.validate_part`
+  - requires `lxml.isoschematron`
+  - validates only allowlisted DOCX XML parts
+  - supports schema text or schema file input, optional phase
 
 Python dependencies are discovered at runtime by the worker and reported deterministically as availability or provider-unavailable errors.
 
@@ -93,6 +97,14 @@ Both are optional provider-backed companion features and keep native minidocx en
   - optional options: `lang`, `psm` (bounded subset)
   - output: structured JSON payload containing extracted text + provider metadata/provenance
   - runtime dependency: Tesseract binary + language data must be installed
+
+### PR17 Schematron validation provider operation
+
+- `schematron.validate_part`
+  - input: DOCX `input_path` + JSON payload (`part`, `schema_text` or `schema_path`, optional `phase`, optional `store_report`)
+  - output: structured JSON validation payload containing `valid`, failed assertions, report entries, and provenance
+  - constrained to allowlisted XML parts only
+  - validation-only companion feature (no automatic mutation/fix-up behavior)
 
 Always call `probePythonProviders` before provider execution when bridge mode is enabled.
 The bridge normalizes failures into a stable error taxonomy (`BridgeUnavailable`, `WorkerLaunchFailed`, `ProviderUnavailable`, `ProtocolMismatch`, `MalformedResponse`, etc.).
