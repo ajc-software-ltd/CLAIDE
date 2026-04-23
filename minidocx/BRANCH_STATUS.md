@@ -16,8 +16,10 @@ _Last updated: 2026-04-23_
 - PR17: optional Schematron validation provider for allowlisted DOCX XML parts.
 - PR18: optional minimal PDF text-extraction provider via pypdf.
 - PR19: optional advanced PDF text/layout analysis provider via pdfminer.six.
+- PR20: provider taxonomy/docs/examples/branch-contract consolidation.
 - PR21: provider-platform maintainability consolidation (worker internals, dispatch registry hygiene, test/platform organization).
 - PR22: shared-library readiness for CLAIDE consumption (visibility/export hygiene, consumer linkage, shared-consumer smoke validation).
+- PR23: shared-library consumption validation and branch chronology cleanup.
 
 ## Public Usage Contract (Current)
 
@@ -91,7 +93,7 @@ _Last updated: 2026-04-23_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR22)
+## Next Likely Chunks (After PR23)
 
 - Continue module-scoped tests and docs hardening around existing surfaces
 - Keep contract language consistent across headers/docs/examples as APIs evolve

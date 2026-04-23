@@ -151,7 +151,7 @@ cmake --build minidocx/out/gate --target minidocx_validate
 cmake --build minidocx/out/gate --target minidocx_preintegration_gate
 ```
 
-- `minidocx_validate` runs the branch test suite (`regression`, `inspection_pipeline`, `commands`).
+- `minidocx_validate` runs the branch test suite (`regression`, `inspection_pipeline`, `commands`, `shared_consumer_smoke`, `python_bridge`).
 - `minidocx_preintegration_gate` is the explicit pre-integration readiness alias.
 
 For policy details and non-goals, see [INTEGRATION_GATE.md](./INTEGRATION_GATE.md).

@@ -31,6 +31,8 @@ All of the following must pass:
    - `minidocx.regression`
    - `minidocx.inspection_pipeline`
    - `minidocx.commands`
+   - `minidocx.shared_consumer_smoke`
+   - `minidocx.python_bridge`
 3. Public API contract remains consistent across:
    - public headers (`minidocx.hpp`, `model.hpp`, `editing.hpp`, `inspection.hpp`)
    - branch docs (`README.md`, `guide.md`, `BRANCH_STATUS.md`, this file)
@@ -110,5 +112,5 @@ The following remain out of scope:
 
 ## Change Policy
 
-PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR21/PR22 are validation/process, optional-provider hardening, and shared-library consumption-readiness only.
+PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR20/PR21/PR22/PR23 are validation/process, optional-provider hardening, and shared-library consumption-readiness only.
 Do not use this gate document to introduce unsupported engine capability claims.

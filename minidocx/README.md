@@ -155,7 +155,7 @@ PR19 is analysis-only and does not add OCR, rendering, or PDF editing workflows.
 
 `minidocx` now defines a branch-local readiness contract.
 
-- Normal engine validation: build tests and run `minidocx_validate`
+- Normal engine validation: build tests and run `minidocx_validate` (`minidocx.regression`, `minidocx.inspection_pipeline`, `minidocx.commands`, `minidocx.shared_consumer_smoke`, `minidocx.python_bridge`)
 - Pre-integration readiness check: run `minidocx_preintegration_gate`
 
 See [INTEGRATION_GATE.md](./INTEGRATION_GATE.md) for required checks and non-goals.
