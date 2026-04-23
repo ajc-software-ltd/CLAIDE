@@ -17,6 +17,7 @@ _Last updated: 2026-04-23_
 - PR18: optional minimal PDF text-extraction provider via pypdf.
 - PR19: optional advanced PDF text/layout analysis provider via pdfminer.six.
 - PR21: provider-platform maintainability consolidation (worker internals, dispatch registry hygiene, test/platform organization).
+- PR22: shared-library readiness for CLAIDE consumption (visibility/export hygiene, consumer linkage, shared-consumer smoke validation).
 
 ## Public Usage Contract (Current)
 
@@ -90,7 +91,7 @@ _Last updated: 2026-04-23_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR21)
+## Next Likely Chunks (After PR22)
 
 - Continue module-scoped tests and docs hardening around existing surfaces
 - Keep contract language consistent across headers/docs/examples as APIs evolve

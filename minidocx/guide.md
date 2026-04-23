@@ -1,6 +1,7 @@
 # User Guide
 
 This guide documents the currently supported minidocx branch capabilities.
+`minidocx` is intended to be consumed as CLAIDE's authoritative text/document engine module.
 It is intentionally branch-scoped and does not claim full Microsoft Word parity.
 
 ## Recommended Usage Style
@@ -176,7 +177,7 @@ Use the umbrella header:
 using namespace md;
 ```
 
-If you link against a shared build, define `MINIDOCX_SHARED` before including the header.
+When linking through the `minidocx` CMake target, shared/static compile definitions are provided by target usage requirements; manual source-level `MINIDOCX_SHARED` defines are not required.
 
 ## Error Handling
 

@@ -68,6 +68,17 @@ Provider taxonomy used by branch docs/gate:
 - Image OCR providers
 - PDF companion providers
 
+
+### D) Shared-library consumption readiness checks (PR22)
+
+When building with `BUILD_SHARED=ON`:
+
+1. `minidocx` shared library is produced with expected platform naming.
+2. Visibility/export behavior is explicit (`MINIDOCX_API` for shared-library import/export semantics across platforms).
+3. `minidocx.shared_consumer_smoke` passes, proving public-header + target-link consumption.
+4. `BUILD_EXAMPLES` and `BUILD_TESTS` remain optional and do not gate parent-project library usage.
+5. `MINIDOCX_ENABLE_PYTHON_BRIDGE` remains optional and off by default.
+
 ## Branch Validation Commands
 
 ```bash
@@ -99,5 +110,5 @@ The following remain out of scope:
 
 ## Change Policy
 
-PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR21 are validation/process and optional-provider hardening only.
+PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR21/PR22 are validation/process, optional-provider hardening, and shared-library consumption-readiness only.
 Do not use this gate document to introduce unsupported engine capability claims.

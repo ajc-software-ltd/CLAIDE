@@ -2,6 +2,8 @@ minidocx is a modern, free, open-source, cross-platform, lightweight C++20 libra
 
 This branch exposes a layered public surface: low-level model APIs plus higher-level command/query/style/layout APIs.
 
+`minidocx` is intended as CLAIDE's text/document engine module and is built to be consumed as a static or shared library dependency by parent projects.
+
 ## Public API Contract (PR9)
 
 - **Supported low-level workflow:** direct model mutation (`Document`/`Section`/`Paragraph`/`RichText`/etc.) for manual authoring in trusted code.
@@ -202,6 +204,12 @@ cmake --build --preset x64-win-msbuild-v143-debug
 ```
 
 A static library is built by default. To build shared, set `BUILD_SHARED=ON`.
+
+Shared-library artifact expectations:
+- Windows: `minidocx.dll` (plus import library)
+- Linux: `libminidocx.so`
+
+Examples/tests are optional consumers (`BUILD_EXAMPLES`, `BUILD_TESTS`) and are not required for parent-project library consumption.
 
 ## Documentation
 

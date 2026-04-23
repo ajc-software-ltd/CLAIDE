@@ -17,9 +17,9 @@ set(CMAKE_CONFIGURATION_TYPES Debug Release)
 set(CMAKE_VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}") # Added in version 3.27.
 set(CMAKE_DEBUGGER_WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}") # Added in version 4.0.
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin/exe")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin/lib")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin/dll")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 
 set(THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/3rdparty" CACHE PATH "3rdparty")
 set(MINIZ_DIR "${THIRD_PARTY_DIR}/miniz-3.0.2" CACHE PATH "miniz")
@@ -51,8 +51,8 @@ source_group(TREE "${PROJECT_SOURCE_DIR}/include/minidocx"
 source_group(TREE "${PROJECT_SOURCE_DIR}/src"
   PREFIX "Source Files" FILES ${sources})
 target_sources(minidocx PRIVATE ${headers} ${sources})
-target_include_directories(minidocx PRIVATE include/minidocx)
-target_include_directories(minidocx INTERFACE include)
+set_target_properties(minidocx PROPERTIES OUTPUT_NAME minidocx)
+target_include_directories(minidocx PUBLIC include include/minidocx)
 target_compile_definitions(minidocx PRIVATE
   MINIDOCX_NAMESPACE=md
   $<$<BOOL:${MINIDOCX_ENABLE_PYTHON_BRIDGE}>:MINIDOCX_ENABLE_PYTHON_BRIDGE=1>)
@@ -92,6 +92,11 @@ if(BUILD_TESTS)
   add_test(NAME minidocx.commands COMMAND minidocx_commands)
   set_target_properties(minidocx_commands PROPERTIES FOLDER tests)
 
+  add_executable(minidocx_shared_consumer_smoke tests/shared_consumer_smoke.cpp)
+  target_link_libraries(minidocx_shared_consumer_smoke PRIVATE minidocx)
+  add_test(NAME minidocx.shared_consumer_smoke COMMAND minidocx_shared_consumer_smoke)
+  set_target_properties(minidocx_shared_consumer_smoke PROPERTIES FOLDER tests)
+
   add_executable(minidocx_python_bridge tests/python_bridge_tests.cpp)
   target_link_libraries(minidocx_python_bridge PRIVATE minidocx)
   target_include_directories(minidocx_python_bridge PRIVATE include include/minidocx)
@@ -102,7 +107,7 @@ if(BUILD_TESTS)
 
   add_custom_target(minidocx_validate
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -R "minidocx\."
-    DEPENDS minidocx_regression minidocx_inspection_pipeline minidocx_commands minidocx_python_bridge
+    DEPENDS minidocx_regression minidocx_inspection_pipeline minidocx_commands minidocx_shared_consumer_smoke minidocx_python_bridge
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Running minidocx branch validation suite")
 
