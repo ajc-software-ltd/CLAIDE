@@ -51,6 +51,10 @@ The Python bridge is an optional out-of-process provider layer.
   - plain and layout extraction modes
   - text extraction only (no OCR/rendering pipeline)
   - scanned/image-only PDFs may require OCR outside this provider
+- optional advanced PDF analysis through `pdfminer.extract_text` / `pdfminer.extract_layout`
+  - page-wise text/layout summaries from `extract_pages`
+  - bounded `laparams` option subset
+  - analysis-only (no OCR/rendering/editing workflows)
 
 Python dependencies are discovered at runtime by the worker and reported deterministically as availability or provider-unavailable errors.
 
@@ -117,6 +121,17 @@ Both are optional provider-backed companion features and keep native minidocx en
   - optional mode: `plain` or `layout`
   - output: structured JSON payload containing extracted text + provider metadata/provenance
   - limitation: scanned/image-only PDFs may require OCR; this provider does not perform OCR
+
+### PR19 advanced PDF analysis provider operations
+
+- `pdfminer.extract_text`
+  - input: PDF `input_path` (or payload PDF bytes where available)
+  - optional controls: `page_numbers`, bounded `laparams`
+  - output: structured JSON payload containing extracted text + provider metadata/provenance
+- `pdfminer.extract_layout`
+  - input: PDF `input_path` (or payload PDF bytes where available)
+  - output: structured page summaries (page bbox, text boxes, line/char counts, snippets)
+  - non-goal: OCR/rendering/editing or broad PDF workflow expansion
 
 Always call `probePythonProviders` before provider execution when bridge mode is enabled.
 The bridge normalizes failures into a stable error taxonomy (`BridgeUnavailable`, `WorkerLaunchFailed`, `ProviderUnavailable`, `ProtocolMismatch`, `MalformedResponse`, etc.).

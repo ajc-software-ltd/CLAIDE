@@ -73,6 +73,10 @@ This branch exposes a layered public surface: low-level model APIs plus higher-l
     - plain mode and optional layout mode
     - text extraction only (no rendering/OCR/advanced PDF analysis)
     - scanned/image-only PDFs may require OCR in a separate workflow
+  - optional advanced PDF analysis via `pdfminer.extract_text` / `pdfminer.extract_layout`
+    - structured page/layout summaries (text boxes/lines/chars counts)
+    - limited allowlisted LAParams controls
+    - analysis-only (no OCR/rendering/editing workflows)
 
 Bridge failures are surfaced as explicit response codes; missing Python/provider dependencies do not break core engine use.
 
@@ -135,6 +139,16 @@ This remains companion-only and does not mutate the minidocx native model automa
 
 If a PDF is scanned/image-only, extracted text may be empty/minimal and OCR may be required.
 PR18 does not add OCR fallback, rendering, or advanced PDF analysis.
+
+## Python Provider: Advanced PDF Text and Layout Analysis (PR19)
+
+`pdfminer.extract_text` / `pdfminer.extract_layout` provide optional advanced analysis capabilities:
+
+- high-level text extraction with optional page subset + bounded LAParams controls
+- page-wise layout summaries from `extract_pages` (text box/line/char-level counts and snippets)
+- structured payloads with explicit provenance and normalized warnings/errors
+
+PR19 is analysis-only and does not add OCR, rendering, or PDF editing workflows.
 
 ## Validation & Readiness Gate (PR10)
 

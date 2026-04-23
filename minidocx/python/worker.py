@@ -10,7 +10,7 @@ import os
 import tempfile
 import traceback
 import zipfile
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 PROTOCOL_VERSION = "1"
 
@@ -24,6 +24,7 @@ ALLOWED_PROVIDERS = {
     "schematron": {"validate_part"},
     "ocr": {"extract_text"},
     "pypdf": {"extract_text"},
+    "pdfminer": {"extract_text", "extract_layout"},
     "docxtpl": {"render_template"},
     "python_docx": {"style_audit"},
 }
@@ -37,6 +38,7 @@ PROVIDER_CAPABILITIES = {
     "schematron": ["validate_part"],
     "ocr": ["extract_text"],
     "pypdf": ["extract_text"],
+    "pdfminer": ["extract_text", "extract_layout"],
     "docxtpl": ["render_template"],
     "python_docx": ["style_audit"],
 }
@@ -174,6 +176,9 @@ def provider_probe() -> Dict[str, str]:
 
     okp, verp, msgp = module_version("pypdf")
     providers.append(("pypdf", okp, verp, PROVIDER_CAPABILITIES["pypdf"], "available" if okp else msgp))
+
+    okm, verm, msgm = module_version("pdfminer")
+    providers.append(("pdfminer", okm, verm, PROVIDER_CAPABILITIES["pdfminer"], "available" if okm else msgm))
 
     okt, vert, msqt = module_version("docxtpl")
     providers.append(("docxtpl", okt, vert, PROVIDER_CAPABILITIES["docxtpl"], "available" if okt else msqt))
@@ -823,6 +828,236 @@ def provider_pypdf_extract_text(input_path: str, payload_json: str) -> Dict[str,
     return out
 
 
+def _decode_pdf_source(input_path: str, payload: Dict[str, object]) -> Tuple[str, str, Optional[Dict[str, str]]]:
+    pdf_b64 = payload.get("pdf_b64")
+    if pdf_b64 is not None and not isinstance(pdf_b64, str):
+        return "", "", error("invalid_request", "payload.pdf_b64 must be a base64 string when provided")
+
+    pdf_path = input_path
+    temp_pdf_path = ""
+    if pdf_b64:
+        try:
+            pdf_bytes = base64.b64decode(pdf_b64.encode("utf-8"))
+        except Exception as ex:
+            return "", "", error("invalid_request", f"invalid payload.pdf_b64 value: {ex}")
+        with tempfile.NamedTemporaryFile(prefix="minidocx_pdfminer_", suffix=".pdf", delete=False) as tmp:
+            tmp.write(pdf_bytes)
+            temp_pdf_path = tmp.name
+            pdf_path = temp_pdf_path
+
+    if not pdf_path or not os.path.exists(pdf_path):
+        if temp_pdf_path:
+            try:
+                os.remove(temp_pdf_path)
+            except Exception:
+                pass
+        return "", "", error("invalid_request", "pdfminer operation requires input_path or payload.pdf_b64")
+    return pdf_path, temp_pdf_path, None
+
+
+def _cleanup_temp_pdf(path: str) -> None:
+    if path:
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+
+
+def _parse_laparams_subset(
+    payload: Dict[str, object],
+    laparams_cls: object,
+) -> Tuple[Optional[object], Dict[str, object], Optional[Dict[str, str]]]:
+    raw = payload.get("laparams")
+    if raw is None:
+        return None, {}, None
+    if not isinstance(raw, dict):
+        return None, {}, error("invalid_request", "payload.laparams must be an object when provided")
+
+    allowed_keys = {"char_margin", "word_margin", "line_margin", "boxes_flow"}
+    for key in raw.keys():
+        if key not in allowed_keys:
+            return None, {}, error("invalid_request", f"unsupported laparams key: {key}")
+
+    kwargs: Dict[str, object] = {}
+    for key in allowed_keys:
+        if key in raw:
+            value = raw[key]
+            if not isinstance(value, (int, float)):
+                return None, {}, error("invalid_request", f"laparams.{key} must be numeric")
+            kwargs[key] = float(value)
+    return laparams_cls(**kwargs), kwargs, None
+
+
+def provider_pdfminer_extract_text(input_path: str, payload_json: str) -> Dict[str, str]:
+    try:
+        from pdfminer.high_level import extract_text  # type: ignore
+        from pdfminer.layout import LAParams  # type: ignore
+        import pdfminer  # type: ignore
+    except Exception as ex:
+        return error("provider_unavailable", f"pdfminer unavailable: {ex}")
+
+    payload: Dict[str, object] = {}
+    if payload_json:
+        try:
+            parsed = json.loads(payload_json)
+        except Exception as ex:
+            return error("invalid_request", f"invalid pdfminer payload JSON: {ex}")
+        if not isinstance(parsed, dict):
+            return error("invalid_request", "pdfminer payload must be a JSON object")
+        payload = parsed
+
+    page_numbers_raw = payload.get("page_numbers")
+    page_numbers = None
+    if page_numbers_raw is not None:
+        if not isinstance(page_numbers_raw, list) or not all(isinstance(v, int) and v >= 0 for v in page_numbers_raw):
+            return error("invalid_request", "payload.page_numbers must be an array of non-negative integers")
+        page_numbers = [int(v) for v in page_numbers_raw]
+
+    laparams, laparams_kwargs, lap_err = _parse_laparams_subset(payload, LAParams)
+    if lap_err is not None:
+        return lap_err
+
+    pdf_path, temp_pdf_path, source_err = _decode_pdf_source(input_path, payload)
+    if source_err is not None:
+        return source_err
+
+    warnings: List[str] = []
+    try:
+        text = extract_text(pdf_path, page_numbers=page_numbers, laparams=laparams)
+    except Exception as ex:
+        _cleanup_temp_pdf(temp_pdf_path)
+        return error("execution_failed", f"pdfminer extract_text failed: {ex}")
+    _cleanup_temp_pdf(temp_pdf_path)
+
+    if not text.strip():
+        warnings.append("PDF text extraction returned empty/minimal text; scanned/image-only PDFs may require OCR.")
+
+    result_payload = {
+        "provider": "pdfminer",
+        "provider_version": getattr(pdfminer, "__version__", "unknown"),
+        "operation": "extract_text",
+        "page_numbers": page_numbers if page_numbers is not None else [],
+        "laparams": laparams_kwargs,
+        "success": True,
+        "warnings": warnings,
+        "errors": [],
+        "provenance": "python_provider",
+        "text": text,
+    }
+
+    out = {
+        "code": "ok",
+        "message": "pdfminer text extraction complete",
+        "provider_version": getattr(pdfminer, "__version__", "unknown"),
+        "provenance": "python_provider",
+        "text_b64": encode_text(json.dumps(result_payload, ensure_ascii=False)),
+    }
+    if warnings:
+        out["warnings_b64"] = encode_text("\n".join(warnings))
+    return out
+
+
+def provider_pdfminer_extract_layout(input_path: str, payload_json: str) -> Dict[str, str]:
+    try:
+        from pdfminer.high_level import extract_pages  # type: ignore
+        from pdfminer.layout import LAParams, LTChar, LTTextBox, LTTextLine  # type: ignore
+        import pdfminer  # type: ignore
+    except Exception as ex:
+        return error("provider_unavailable", f"pdfminer unavailable: {ex}")
+
+    payload: Dict[str, object] = {}
+    if payload_json:
+        try:
+            parsed = json.loads(payload_json)
+        except Exception as ex:
+            return error("invalid_request", f"invalid pdfminer payload JSON: {ex}")
+        if not isinstance(parsed, dict):
+            return error("invalid_request", "pdfminer payload must be a JSON object")
+        payload = parsed
+
+    page_numbers_raw = payload.get("page_numbers")
+    page_numbers = None
+    if page_numbers_raw is not None:
+        if not isinstance(page_numbers_raw, list) or not all(isinstance(v, int) and v >= 0 for v in page_numbers_raw):
+            return error("invalid_request", "payload.page_numbers must be an array of non-negative integers")
+        page_numbers = [int(v) for v in page_numbers_raw]
+
+    laparams, laparams_kwargs, lap_err = _parse_laparams_subset(payload, LAParams)
+    if lap_err is not None:
+        return lap_err
+
+    pdf_path, temp_pdf_path, source_err = _decode_pdf_source(input_path, payload)
+    if source_err is not None:
+        return source_err
+
+    page_summaries: List[Dict[str, object]] = []
+    warnings: List[str] = []
+    try:
+        for page_index, page_layout in enumerate(extract_pages(pdf_path, page_numbers=page_numbers, laparams=laparams)):
+            text_boxes = []
+            line_count = 0
+            char_count = 0
+            for element in page_layout:
+                if isinstance(element, LTTextBox):
+                    snippet = element.get_text().strip().replace("\n", " ")
+                    if len(snippet) > 120:
+                        snippet = snippet[:120]
+                    text_boxes.append(
+                        {
+                            "bbox": [element.x0, element.y0, element.x1, element.y1],
+                            "text": snippet,
+                        }
+                    )
+                    for line in element:
+                        if isinstance(line, LTTextLine):
+                            line_count += 1
+                            for ch in line:
+                                if isinstance(ch, LTChar):
+                                    char_count += 1
+            page_summaries.append(
+                {
+                    "page_index": page_index,
+                    "bbox": [page_layout.x0, page_layout.y0, page_layout.x1, page_layout.y1],
+                    "text_box_count": len(text_boxes),
+                    "text_line_count": line_count,
+                    "char_count": char_count,
+                    "text_boxes": text_boxes,
+                }
+            )
+    except Exception as ex:
+        _cleanup_temp_pdf(temp_pdf_path)
+        return error("execution_failed", f"pdfminer extract_layout failed: {ex}")
+    _cleanup_temp_pdf(temp_pdf_path)
+
+    if not page_summaries:
+        warnings.append("No pages were analyzed from the PDF input.")
+
+    result_payload = {
+        "provider": "pdfminer",
+        "provider_version": getattr(pdfminer, "__version__", "unknown"),
+        "operation": "extract_layout",
+        "page_numbers": page_numbers if page_numbers is not None else [],
+        "laparams": laparams_kwargs,
+        "page_count": len(page_summaries),
+        "success": True,
+        "warnings": warnings,
+        "errors": [],
+        "provenance": "python_provider",
+        "pages": page_summaries,
+    }
+
+    out = {
+        "code": "ok",
+        "message": "pdfminer layout extraction complete",
+        "provider_version": getattr(pdfminer, "__version__", "unknown"),
+        "provenance": "python_provider",
+        "text_b64": encode_text(json.dumps(result_payload, ensure_ascii=False)),
+    }
+    if warnings:
+        out["warnings_b64"] = encode_text("\n".join(warnings))
+    return out
+
+
 def provider_docxtpl_render_template(template_path: str, context_json: str, output_path: str) -> Dict[str, str]:
     try:
         from docxtpl import DocxTemplate  # type: ignore
@@ -945,6 +1180,10 @@ def run(values: Dict[str, str]) -> Dict[str, str]:
         return provider_ocr_extract_text(input_path, payload)
     if provider == "pypdf" and operation == "extract_text":
         return provider_pypdf_extract_text(input_path, payload)
+    if provider == "pdfminer" and operation == "extract_text":
+        return provider_pdfminer_extract_text(input_path, payload)
+    if provider == "pdfminer" and operation == "extract_layout":
+        return provider_pdfminer_extract_layout(input_path, payload)
     if provider == "docxtpl" and operation == "render_template":
         return provider_docxtpl_render_template(input_path, payload, output_path)
     if provider == "python_docx" and operation == "style_audit":

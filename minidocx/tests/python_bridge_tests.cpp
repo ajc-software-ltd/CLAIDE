@@ -416,6 +416,46 @@ int main()
             "pypdf empty-text extraction should include OCR limitation warning");
   }
 
+  // PR19: advanced PDF analysis provider via pdfminer.six.
+  PythonProviderRequest pdfminerTextRequest;
+  pdfminerTextRequest.provider = "pdfminer";
+  pdfminerTextRequest.operation = "extract_text";
+  pdfminerTextRequest.inputPath = pdfPath.string();
+  pdfminerTextRequest.payload = R"({"page_numbers":[0]})";
+  const auto pdfminerTextResult = invokePythonProvider(cfg, pdfminerTextRequest);
+  if (providerAvailable(probe.providers, "pdfminer")) {
+    require(pdfminerTextResult.code == PythonBridgeCode::Ok, "pdfminer extract_text should succeed");
+    require(pdfminerTextResult.text.find("\"operation\": \"extract_text\"") != std::string::npos,
+            "pdfminer text result should include operation metadata");
+    require(pdfminerTextResult.text.find("Hello PDF") != std::string::npos,
+            "pdfminer text extraction should include extracted text");
+  } else {
+    require(pdfminerTextResult.code == PythonBridgeCode::ProviderUnavailable,
+            "pdfminer should return provider-unavailable when dependency is missing");
+  }
+
+  PythonProviderRequest pdfminerLayoutRequest;
+  pdfminerLayoutRequest.provider = "pdfminer";
+  pdfminerLayoutRequest.operation = "extract_layout";
+  pdfminerLayoutRequest.inputPath = pdfPath.string();
+  pdfminerLayoutRequest.payload = R"({"page_numbers":[0],"laparams":{"char_margin":2.0}})";
+  const auto pdfminerLayoutResult = invokePythonProvider(cfg, pdfminerLayoutRequest);
+  if (providerAvailable(probe.providers, "pdfminer")) {
+    require(pdfminerLayoutResult.code == PythonBridgeCode::Ok, "pdfminer extract_layout should succeed");
+    require(pdfminerLayoutResult.text.find("\"operation\": \"extract_layout\"") != std::string::npos,
+            "pdfminer layout result should include operation metadata");
+    require(pdfminerLayoutResult.text.find("text_box_count") != std::string::npos,
+            "pdfminer layout result should include text box summary");
+  }
+
+  PythonProviderRequest pdfminerInvalidOption = pdfminerLayoutRequest;
+  pdfminerInvalidOption.payload = R"({"laparams":{"all_texts":1}})";
+  const auto pdfminerInvalidOptionResult = invokePythonProvider(cfg, pdfminerInvalidOption);
+  if (providerAvailable(probe.providers, "pdfminer")) {
+    require(pdfminerInvalidOptionResult.code == PythonBridgeCode::InvalidRequest,
+            "pdfminer unsupported laparams should normalize to invalid request");
+  }
+
 #ifndef _WIN32
   {
     PythonBridgeConfig fakeCfg;

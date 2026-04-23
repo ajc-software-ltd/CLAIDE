@@ -75,5 +75,21 @@ int main()
   const auto pdf = providers::invokePythonProvider(cfg, pdfReq);
   std::cout << "PDF extract code: " << static_cast<int>(pdf.code) << '\n';
 
+  providers::PythonProviderRequest pdfminerTextReq;
+  pdfminerTextReq.provider = "pdfminer";
+  pdfminerTextReq.operation = "extract_text";
+  pdfminerTextReq.inputPath = "sample.pdf";
+  pdfminerTextReq.payload = R"({"page_numbers":[0]})";
+  const auto pdfminerText = providers::invokePythonProvider(cfg, pdfminerTextReq);
+  std::cout << "PDFMiner text code: " << static_cast<int>(pdfminerText.code) << '\n';
+
+  providers::PythonProviderRequest pdfminerLayoutReq;
+  pdfminerLayoutReq.provider = "pdfminer";
+  pdfminerLayoutReq.operation = "extract_layout";
+  pdfminerLayoutReq.inputPath = "sample.pdf";
+  pdfminerLayoutReq.payload = R"({"page_numbers":[0],"laparams":{"char_margin":2.0}})";
+  const auto pdfminerLayout = providers::invokePythonProvider(cfg, pdfminerLayoutReq);
+  std::cout << "PDFMiner layout code: " << static_cast<int>(pdfminerLayout.code) << '\n';
+
   return 0;
 }
