@@ -205,7 +205,7 @@ int main()
   xpathRequest.operation = "xpath_query";
   xpathRequest.inputPath = templatePath;
   xpathRequest.payload =
-      R"({"part":"word/document.xml","xpath":"count(//w:p)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"xpath"})";
+      R"json({"part":"word/document.xml","xpath":"count(//w:p)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"xpath"})json";
 
   const auto xpathResult = invokePythonProvider(cfg, xpathRequest);
   if (providerAvailable(probe.providers, "lxml")) {
@@ -221,7 +221,7 @@ int main()
 
   PythonProviderRequest stylesXPath = xpathRequest;
   stylesXPath.payload =
-      R"({"part":"word/styles.xml","xpath":"count(//w:style)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"compiled_xpath"})";
+      R"json({"part":"word/styles.xml","xpath":"count(//w:style)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"compiled_xpath"})json";
   const auto stylesXPathResult = invokePythonProvider(cfg, stylesXPath);
   if (providerAvailable(probe.providers, "lxml")) {
     require(stylesXPathResult.code == PythonBridgeCode::Ok, "lxml styles xpath should succeed");
@@ -229,7 +229,7 @@ int main()
 
   PythonProviderRequest numberingXPath = xpathRequest;
   numberingXPath.payload =
-      R"({"part":"word/numbering.xml","xpath":"count(//w:num)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"evaluator"})";
+      R"json({"part":"word/numbering.xml","xpath":"count(//w:num)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"evaluator"})json";
   const auto numberingXPathResult = invokePythonProvider(cfg, numberingXPath);
   if (providerAvailable(probe.providers, "lxml")) {
     require(numberingXPathResult.code == PythonBridgeCode::Ok, "lxml numbering xpath should succeed");

@@ -22,6 +22,7 @@ _Last updated: 2026-04-23_
 - PR23: shared-library consumption validation and branch chronology cleanup.
 - PR24: feature-complete freeze and merge-readiness audit for main-branch integration.
 - PR25: main-branch sync, drift reconciliation, and merge-conflict readiness verification.
+- PR26: python-bridge compile blocker fix and readiness gate restoration.
 
 
 ## Feature Freeze Phase (PR24)
@@ -102,7 +103,7 @@ _Last updated: 2026-04-23_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR25)
+## Next Likely Chunks (After PR26)
 
 - Continue module-scoped tests and docs hardening around existing surfaces
 - Keep contract language consistent across headers/docs/examples as APIs evolve

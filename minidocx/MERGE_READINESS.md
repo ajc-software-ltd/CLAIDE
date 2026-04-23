@@ -71,4 +71,4 @@ _Last updated: 2026-04-23_
 
 - `main` was synced into `minidocx` and drift conflicts were resolved without expanding frozen scope.
 - Validation surface contract remained unchanged (`minidocx.regression`, `minidocx.inspection_pipeline`, `minidocx.commands`, `minidocx.shared_consumer_smoke`, `minidocx.python_bridge`, `minidocx_validate`, `minidocx_preintegration_gate`).
-- Remaining blockers: `minidocx.python_bridge` currently fails to compile (`tests/python_bridge_tests.cpp` raw-string payload quoting break around lxml xpath JSON payload blocks), which blocks `minidocx_validate`/`minidocx_preintegration_gate` until corrected in follow-up.
+- Remaining blockers: none. PR26 resolved the python-bridge compile blocker and restored green readiness gates (`minidocx_validate` and `minidocx_preintegration_gate`).
