@@ -239,6 +239,43 @@ int main()
             "invalid xslt should normalize to invalid request");
   }
 
+  // PR16: OCR provider (pytesseract + Tesseract runtime).
+  PythonProviderRequest ocrRequest;
+  ocrRequest.provider = "ocr";
+  ocrRequest.operation = "extract_text";
+  ocrRequest.payload =
+      R"({"image_b64":"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7Zf6sAAAAASUVORK5CYII=","image_format":"png","lang":"eng","psm":6})";
+  const auto ocrResult = invokePythonProvider(cfg, ocrRequest);
+  if (providerAvailable(probe.providers, "ocr")) {
+    require(ocrResult.code == PythonBridgeCode::Ok, "ocr extract_text should succeed when provider is available");
+    require(ocrResult.text.find("\"operation\": \"extract_text\"") != std::string::npos,
+            "ocr result should include structured operation metadata");
+  } else {
+    require(ocrResult.code == PythonBridgeCode::ProviderUnavailable,
+            "ocr provider should return provider-unavailable when dependency/runtime is missing");
+  }
+
+  PythonProviderRequest ocrMissingInput;
+  ocrMissingInput.provider = "ocr";
+  ocrMissingInput.operation = "extract_text";
+  ocrMissingInput.inputPath = "missing-image.png";
+  const auto ocrMissingResult = invokePythonProvider(cfg, ocrMissingInput);
+  if (providerAvailable(probe.providers, "ocr")) {
+    require(ocrMissingResult.code == PythonBridgeCode::InvalidRequest,
+            "ocr missing image input should normalize to invalid request");
+  }
+
+  PythonProviderRequest ocrMissingLang = ocrRequest;
+  ocrMissingLang.payload =
+      R"({"image_b64":"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7Zf6sAAAAASUVORK5CYII=","image_format":"png","lang":"zzzz","psm":6})";
+  const auto ocrMissingLangResult = invokePythonProvider(cfg, ocrMissingLang);
+  if (providerAvailable(probe.providers, "ocr")) {
+    require(
+        ocrMissingLangResult.code == PythonBridgeCode::InvalidRequest ||
+            ocrMissingLangResult.code == PythonBridgeCode::ExecutionFailed,
+        "ocr missing language data should normalize deterministically");
+  }
+
 #ifndef _WIN32
   {
     PythonBridgeConfig fakeCfg;

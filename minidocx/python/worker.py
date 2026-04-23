@@ -7,6 +7,7 @@ import importlib
 import io
 import json
 import os
+import tempfile
 import traceback
 import zipfile
 from typing import Dict, List, Tuple
@@ -20,6 +21,7 @@ ALLOWED_PROVIDERS = {
     "mammoth_semantic": {"export_html", "extract_raw_text"},
     "docxcompose": {"compose_append"},
     "lxml": {"xpath_query", "xslt_transform"},
+    "ocr": {"extract_text"},
     "docxtpl": {"render_template"},
     "python_docx": {"style_audit"},
 }
@@ -30,6 +32,7 @@ PROVIDER_CAPABILITIES = {
     "mammoth_semantic": ["export_html", "extract_raw_text"],
     "docxcompose": ["compose_append"],
     "lxml": ["xpath_query", "xslt_transform"],
+    "ocr": ["extract_text"],
     "docxtpl": ["render_template"],
     "python_docx": ["style_audit"],
 }
@@ -132,6 +135,18 @@ def provider_probe() -> Dict[str, str]:
 
     okl, verl, msgl = module_version("lxml")
     providers.append(("lxml", okl, verl, PROVIDER_CAPABILITIES["lxml"], "available" if okl else msgl))
+
+    oko, vero, msgo = module_version("pytesseract")
+    if oko:
+        try:
+            import pytesseract  # type: ignore
+
+            _ = pytesseract.get_tesseract_version()
+            providers.append(("ocr", True, vero, PROVIDER_CAPABILITIES["ocr"], "available"))
+        except Exception as ex:
+            providers.append(("ocr", False, vero, PROVIDER_CAPABILITIES["ocr"], str(ex)))
+    else:
+        providers.append(("ocr", False, "", PROVIDER_CAPABILITIES["ocr"], msgo))
 
     okt, vert, msqt = module_version("docxtpl")
     providers.append(("docxtpl", okt, vert, PROVIDER_CAPABILITIES["docxtpl"], "available" if okt else msqt))
@@ -470,6 +485,107 @@ def provider_lxml_xslt_transform_structured(input_path: str, payload_json: str) 
     }
 
 
+def provider_ocr_extract_text(input_path: str, payload_json: str) -> Dict[str, str]:
+    try:
+        import pytesseract  # type: ignore
+    except Exception as ex:
+        return error("provider_unavailable", f"pytesseract unavailable: {ex}")
+
+    try:
+        from PIL import Image  # type: ignore
+    except Exception as ex:
+        return error("provider_unavailable", f"Pillow unavailable: {ex}")
+
+    try:
+        _ = pytesseract.get_tesseract_version()
+    except Exception as ex:
+        return error("provider_unavailable", f"tesseract runtime unavailable: {ex}")
+
+    payload: Dict[str, object] = {}
+    if payload_json:
+        try:
+            parsed = json.loads(payload_json)
+        except Exception as ex:
+            return error("invalid_request", f"invalid ocr payload JSON: {ex}")
+        if not isinstance(parsed, dict):
+            return error("invalid_request", "ocr payload must be a JSON object")
+        payload = parsed
+
+    lang = str(payload.get("lang", "eng"))
+    psm = payload.get("psm")
+    image_b64 = payload.get("image_b64")
+    image_format = str(payload.get("image_format", "png")).lower()
+
+    if psm is not None and psm not in {3, 6, 11}:
+        return error("invalid_request", "unsupported psm value; allowed values are 3, 6, 11")
+    if image_b64 is not None and not isinstance(image_b64, str):
+        return error("invalid_request", "image_b64 must be a base64 string when provided")
+
+    temp_image_path = ""
+    target_image_path = input_path
+    if image_b64:
+        try:
+            image_bytes = base64.b64decode(image_b64.encode("utf-8"))
+        except Exception as ex:
+            return error("invalid_request", f"invalid image_b64 payload: {ex}")
+        suffix = f".{image_format}" if image_format in {"png", "jpg", "jpeg", "bmp", "tif", "tiff"} else ".png"
+        with tempfile.NamedTemporaryFile(prefix="minidocx_ocr_", suffix=suffix, delete=False) as tmp:
+            tmp.write(image_bytes)
+            temp_image_path = tmp.name
+            target_image_path = temp_image_path
+
+    if not target_image_path or not os.path.exists(target_image_path):
+        if temp_image_path:
+            try:
+                os.remove(temp_image_path)
+            except Exception:
+                pass
+        return error("invalid_request", "ocr requires input_path or payload.image_b64 with valid image data")
+
+    config_chunks = []
+    if psm is not None:
+        config_chunks.extend(["--psm", str(psm)])
+    config = " ".join(config_chunks).strip()
+
+    try:
+        with Image.open(target_image_path) as image:
+            text = pytesseract.image_to_string(image, lang=lang, config=config)
+    except pytesseract.TesseractNotFoundError as ex:  # type: ignore[attr-defined]
+        return error("provider_unavailable", f"tesseract executable not found: {ex}")
+    except Exception as ex:
+        message = str(ex)
+        if "Error opening data file" in message or "Failed loading language" in message:
+            return error("invalid_request", f"ocr language data unavailable: {message}")
+        return error("execution_failed", f"ocr extraction failed: {message}")
+    finally:
+        if temp_image_path:
+            try:
+                os.remove(temp_image_path)
+            except Exception:
+                pass
+
+    result_payload = {
+        "provider": "ocr",
+        "provider_version": getattr(pytesseract, "__version__", "unknown"),
+        "engine": "tesseract",
+        "operation": "extract_text",
+        "success": True,
+        "warnings": [],
+        "errors": [],
+        "provenance": "python_provider",
+        "options": {"lang": lang, "psm": psm},
+        "text": text,
+    }
+
+    return {
+        "code": "ok",
+        "message": "ocr extraction complete",
+        "provider_version": getattr(pytesseract, "__version__", "unknown"),
+        "provenance": "python_provider",
+        "text_b64": encode_text(json.dumps(result_payload, ensure_ascii=False)),
+    }
+
+
 def provider_docxtpl_render_template(template_path: str, context_json: str, output_path: str) -> Dict[str, str]:
     try:
         from docxtpl import DocxTemplate  # type: ignore
@@ -586,6 +702,8 @@ def run(values: Dict[str, str]) -> Dict[str, str]:
         return provider_lxml_xpath_query(input_path, payload)
     if provider == "lxml" and operation == "xslt_transform":
         return provider_lxml_xslt_transform(input_path, payload)
+    if provider == "ocr" and operation == "extract_text":
+        return provider_ocr_extract_text(input_path, payload)
     if provider == "docxtpl" and operation == "render_template":
         return provider_docxtpl_render_template(input_path, payload, output_path)
     if provider == "python_docx" and operation == "style_audit":

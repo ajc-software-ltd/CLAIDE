@@ -50,5 +50,13 @@ int main()
   const auto xslt = providers::invokePythonProvider(cfg, xsltReq);
   std::cout << "XSLT code: " << static_cast<int>(xslt.code) << '\n';
 
+  providers::PythonProviderRequest ocrReq;
+  ocrReq.provider = "ocr";
+  ocrReq.operation = "extract_text";
+  ocrReq.payload =
+      R"({"image_b64":"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7Zf6sAAAAASUVORK5CYII=","image_format":"png","lang":"eng","psm":6})";
+  const auto ocr = providers::invokePythonProvider(cfg, ocrReq);
+  std::cout << "OCR code: " << static_cast<int>(ocr.code) << '\n';
+
   return 0;
 }

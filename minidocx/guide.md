@@ -39,6 +39,10 @@ The Python bridge is an optional out-of-process provider layer.
   - bounded to allowlisted DOCX package parts only
   - explicit JSON payload contract (`part`, operation-specific fields, optional params)
   - structured JSON output payload with provenance + normalized warnings/errors
+- optional OCR image-text extraction through `ocr.extract_text`
+  - requires pytesseract + installed Tesseract runtime
+  - supports image path input or base64 image payload
+  - option surface remains constrained (`lang`, allowlisted `psm`)
 
 Python dependencies are discovered at runtime by the worker and reported deterministically as availability or provider-unavailable errors.
 
@@ -81,6 +85,14 @@ Both are optional provider-backed companion features and keep native minidocx en
 - `lxml.xslt_transform`
   - input: DOCX path + JSON payload (`part`, `xslt`, optional `params`, `output_mode`)
   - output: structured JSON transform payload with provenance and normalized errors
+
+### PR16 OCR provider operation
+
+- `ocr.extract_text`
+  - input: image path (`input_path`) or JSON payload image (`image_b64`)
+  - optional options: `lang`, `psm` (bounded subset)
+  - output: structured JSON payload containing extracted text + provider metadata/provenance
+  - runtime dependency: Tesseract binary + language data must be installed
 
 Always call `probePythonProviders` before provider execution when bridge mode is enabled.
 The bridge normalizes failures into a stable error taxonomy (`BridgeUnavailable`, `WorkerLaunchFailed`, `ProviderUnavailable`, `ProtocolMismatch`, `MalformedResponse`, etc.).

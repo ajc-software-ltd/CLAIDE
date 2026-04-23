@@ -65,6 +65,10 @@ This branch exposes a layered public surface: low-level model APIs plus higher-l
       `_rels/.rels`, `word/_rels/document.xml.rels`, `[Content_Types].xml`
     - explicit JSON request contract with operation + part + output mode
     - structured JSON result payload with provenance and normalized warnings/errors
+  - optional OCR image text extraction via `ocr.extract_text` (pytesseract + Tesseract runtime)
+    - image input path or base64 image payload
+    - constrained option surface (`lang`, allowlisted `psm`)
+    - explicit normalized provider errors for missing runtime/language data
 
 Bridge failures are surfaced as explicit response codes; missing Python/provider dependencies do not break core engine use.
 
@@ -95,6 +99,17 @@ Both providers return explicit provenance through the PR12 bridge contract and d
 - `lxml.xpath_query`: run XPath against an allowlisted DOCX XML part
 - `lxml.xslt_transform`: run controlled XSLT transform against an allowlisted DOCX XML part
 - not a general scripting surface and not a replacement for native minidocx editing/inspection semantics
+
+## Python Provider: OCR Image Text Extraction (PR16)
+
+`ocr.extract_text` is optional, companion-only OCR support backed by `pytesseract` and Tesseract:
+
+- image in (path or base64 payload) -> extracted text out
+- explicit provider availability/runtime dependency reporting
+- normalized bridge error contract for missing engine/language/runtime data
+
+This does **not** imply native minidocx OCR support, full scanned-document workflows, PDF OCR pipelines, or
+document-intelligence features.
 
 ## Validation & Readiness Gate (PR10)
 
