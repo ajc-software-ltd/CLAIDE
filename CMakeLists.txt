@@ -15,6 +15,7 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "Disable minidocx examples from CLAIDE build" 
 set(BUILD_TESTS OFF CACHE BOOL "Disable minidocx tests from CLAIDE build" FORCE)
 set(MINIDOCX_ENABLE_PYTHON_BRIDGE OFF CACHE BOOL "Disable minidocx python bridge for CLAIDE build" FORCE)
 add_subdirectory(minidocx)
+add_subdirectory(miniexcelx)
 
 # Find dependencies
 find_package(wxWidgets 3.2 REQUIRED COMPONENTS core base aui)
