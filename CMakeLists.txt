@@ -11,6 +11,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Options
 option(ENABLE_SANITIZERS "Enable AddressSanitizer and UBSan in debug builds" ON)
 
+set(BUILD_EXAMPLES OFF CACHE BOOL "Disable minidocx examples from CLAIDE build" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "Disable minidocx tests from CLAIDE build" FORCE)
+set(MINIDOCX_ENABLE_PYTHON_BRIDGE OFF CACHE BOOL "Disable minidocx python bridge for CLAIDE build" FORCE)
+add_subdirectory(minidocx)
+
 # Find dependencies
 find_package(wxWidgets 3.2 REQUIRED COMPONENTS core base aui)
 find_package(spdlog 1.11 REQUIRED)
@@ -55,6 +60,8 @@ set(SOURCES
     src/core/CrashHandler.cpp
     src/core/ShaderCompiler.cpp
     src/core/VulkanRuntimeLoader.cpp
+    src/core/office/MinidocxAdapter.cpp
+    src/core/office/OfficeDocumentService.cpp
     src/core/runtime/VulkanRenderHost.cpp
     src/render/Canvas.cpp
     src/render/CanvasDocument.cpp
@@ -96,6 +103,8 @@ set(HEADERS
     src/core/CrashHandler.hpp
     src/core/ShaderCompiler.hpp
     src/core/VulkanRuntimeLoader.hpp
+    src/core/office/MinidocxAdapter.hpp
+    src/core/office/OfficeDocumentService.hpp
     src/core/runtime/RenderHost.hpp
     src/core/runtime/VulkanRenderHost.hpp
     src/render/Canvas.hpp
@@ -159,6 +168,7 @@ target_compile_definitions(CLAIDE PRIVATE
 )
 target_link_libraries(CLAIDE PRIVATE ${wxWidgets_LIBRARIES} spdlog::spdlog ${ImageMagick_LIBRARIES})
 target_link_libraries(CLAIDE PRIVATE VulkanAI)
+target_link_libraries(CLAIDE PRIVATE minidocx)
 
 target_include_directories(VulkanAI PRIVATE src include)
 target_compile_definitions(VulkanAI PRIVATE
@@ -209,6 +219,7 @@ if(Catch2_FOUND)
         tests/CanvasCoreTests.cpp
         tests/RendererFoundationTests.cpp
         tests/VulkanRuntimeFoundationTests.cpp
+        tests/OfficeDocumentServiceTests.cpp
     )
 
     add_executable(CLAIDETests
@@ -223,6 +234,8 @@ if(Catch2_FOUND)
         src/core/TileCache.cpp
         src/core/MipmapGenerator.cpp
         src/core/VulkanRuntimeLoader.cpp
+        src/core/office/MinidocxAdapter.cpp
+        src/core/office/OfficeDocumentService.cpp
         src/core/runtime/VulkanRenderHost.cpp
         src/render/Canvas.cpp
         src/render/CanvasDocument.cpp
@@ -237,7 +250,7 @@ if(Catch2_FOUND)
         src/platform/PlatformPaths.cpp
     )
     target_include_directories(CLAIDETests PRIVATE src include ${ImageMagick_INCLUDE_DIRS})
-    target_link_libraries(CLAIDETests PRIVATE spdlog::spdlog Catch2::Catch2WithMain ${ImageMagick_LIBRARIES})
+    target_link_libraries(CLAIDETests PRIVATE spdlog::spdlog Catch2::Catch2WithMain ${ImageMagick_LIBRARIES} minidocx)
     target_compile_definitions(CLAIDETests PRIVATE
         MAGICKCORE_QUANTUM_DEPTH=16
         MAGICKCORE_HDRI_ENABLE=1
