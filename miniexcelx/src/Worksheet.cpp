@@ -4,19 +4,22 @@
 
 namespace miniexcelx {
 
-Worksheet::Worksheet(std::string name) : m_name(std::move(name)) {
+Worksheet::Worksheet(std::string name, std::size_t index, std::string partTarget)
+    : m_name(std::move(name)),
+      m_index(index),
+      m_partTarget(std::move(partTarget)) {
 }
 
 std::string_view Worksheet::name() const noexcept {
     return m_name;
 }
 
-std::size_t Worksheet::rowCount() const noexcept {
-    return 0;
+std::size_t Worksheet::index() const noexcept {
+    return m_index;
 }
 
-std::size_t Worksheet::columnCount() const noexcept {
-    return 0;
+std::string_view Worksheet::partTarget() const noexcept {
+    return m_partTarget;
 }
 
 } // namespace miniexcelx
