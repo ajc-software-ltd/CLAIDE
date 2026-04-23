@@ -1,6 +1,6 @@
 # minidocx Branch Status
 
-_Last updated: 2026-04-22_
+_Last updated: 2026-04-23_
 
 ## Branch Contract Snapshot
 
@@ -11,6 +11,7 @@ _Last updated: 2026-04-22_
 - PR11: optional out-of-process Python provider bridge (companion layer, not core replacement).
 - PR12: Python bridge hardening (explicit pathing, probing, protocol validation, normalized errors, provenance).
 - PR13: optional template-render and style-audit providers via hardened Python bridge.
+- PR15: optional expert `lxml` provider surface for allowlisted DOCX-part XPath and XSLT workflows.
 
 ## Public Usage Contract (Current)
 
@@ -28,7 +29,7 @@ _Last updated: 2026-04-22_
 - Bridge hardening: explicit launch config, capability probing, versioned protocol validation, normalized errors
 - Bridge model: out-of-process Python worker with explicit request/response payloads
 - Build default: disabled (`MINIDOCX_ENABLE_PYTHON_BRIDGE=OFF`)
-- Companion providers: smoke, mammoth export, docxcompose append, optional lxml expert workflows, docxtpl template rendering, python-docx style audit
+- Companion providers: smoke, mammoth export, docxcompose append, optional allowlisted-part lxml expert workflows, docxtpl template rendering, python-docx style audit
 - Core C++ engine remains authoritative when bridge is disabled or unavailable
 
 - Normal branch health validation target: `minidocx_validate`

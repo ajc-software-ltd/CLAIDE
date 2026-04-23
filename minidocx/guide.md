@@ -36,6 +36,9 @@ The Python bridge is an optional out-of-process provider layer.
 - `mammoth.docx_to_html` -> semantic HTML export helper
 - `docxcompose.compose_append` -> append/compose DOCX output
 - optional expert XML operations through `lxml.xpath_query` and `lxml.xslt_transform`
+  - bounded to allowlisted DOCX package parts only
+  - explicit JSON payload contract (`part`, operation-specific fields, optional params)
+  - structured JSON output payload with provenance + normalized warnings/errors
 
 Python dependencies are discovered at runtime by the worker and reported deterministically as availability or provider-unavailable errors.
 
@@ -62,6 +65,22 @@ No implicit current-working-directory or hidden fallback scanning is part of the
   - output: structured style inventory/report JSON
 
 Both are optional provider-backed companion features and keep native minidocx engine responsibilities unchanged.
+
+### PR15 expert XML provider operations
+
+- `lxml.xpath_query`
+  - input: DOCX path + JSON payload (`part`, `xpath`, optional `namespaces`, optional `mode`)
+  - part must be one of:
+    - `word/document.xml`
+    - `word/styles.xml`
+    - `word/numbering.xml`
+    - `_rels/.rels`
+    - `word/_rels/document.xml.rels`
+    - `[Content_Types].xml`
+  - output: structured JSON result payload (provider metadata, selected part, normalized matches)
+- `lxml.xslt_transform`
+  - input: DOCX path + JSON payload (`part`, `xslt`, optional `params`, `output_mode`)
+  - output: structured JSON transform payload with provenance and normalized errors
 
 Always call `probePythonProviders` before provider execution when bridge mode is enabled.
 The bridge normalizes failures into a stable error taxonomy (`BridgeUnavailable`, `WorkerLaunchFailed`, `ProviderUnavailable`, `ProtocolMismatch`, `MalformedResponse`, etc.).

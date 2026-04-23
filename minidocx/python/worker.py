@@ -8,6 +8,7 @@ import io
 import json
 import os
 import traceback
+import zipfile
 from typing import Dict, List, Tuple
 
 PROTOCOL_VERSION = "1"
@@ -31,6 +32,15 @@ PROVIDER_CAPABILITIES = {
     "lxml": ["xpath_query", "xslt_transform"],
     "docxtpl": ["render_template"],
     "python_docx": ["style_audit"],
+}
+
+LXML_ALLOWED_PARTS = {
+    "word/document.xml",
+    "word/styles.xml",
+    "word/numbering.xml",
+    "_rels/.rels",
+    "word/_rels/document.xml.rels",
+    "[Content_Types].xml",
 }
 
 
@@ -263,42 +273,200 @@ def provider_docxcompose_append(base_path: str, append_path: str, output_path: s
 
 
 def provider_lxml_xpath_query(input_path: str, xpath_expr: str) -> Dict[str, str]:
+    return provider_lxml_xpath_query_structured(input_path, xpath_expr)
+
+
+def _read_docx_part_xml(docx_path: str, part_path: str) -> Tuple[bool, str, str]:
+    if not docx_path or not os.path.exists(docx_path):
+        return False, "", "input_path for lxml provider is required"
+    if part_path not in LXML_ALLOWED_PARTS:
+        return False, "", f"part not allowed: {part_path}"
+
+    try:
+        with zipfile.ZipFile(docx_path, "r") as zf:
+            with zf.open(part_path, "r") as part:
+                raw = part.read()
+    except KeyError:
+        return False, "", f"requested part not found in DOCX: {part_path}"
+    except Exception as ex:
+        return False, "", f"failed to read DOCX part: {ex}"
+
+    try:
+        return True, raw.decode("utf-8"), ""
+    except Exception as ex:
+        return False, "", f"failed to decode XML part as utf-8: {ex}"
+
+
+def _lxml_version() -> str:
+    try:
+        import lxml  # type: ignore
+
+        return str(getattr(lxml, "__version__", "unknown"))
+    except Exception:
+        return "unknown"
+
+
+def provider_lxml_xpath_query_structured(input_path: str, payload_json: str) -> Dict[str, str]:
     try:
         from lxml import etree  # type: ignore
     except Exception as ex:
         return error("provider_unavailable", f"lxml unavailable: {ex}")
 
-    if not input_path or not xpath_expr or not os.path.exists(input_path):
-        return error("invalid_request", "input_path and xpath expression are required")
+    if not payload_json:
+        return error("invalid_request", "lxml xpath_query payload is required")
 
-    tree = etree.parse(input_path)
-    result = tree.xpath(xpath_expr)
+    try:
+        payload = json.loads(payload_json)
+    except Exception as ex:
+        return error("invalid_request", f"invalid lxml xpath payload JSON: {ex}")
+    if not isinstance(payload, dict):
+        return error("invalid_request", "lxml xpath payload must be a JSON object")
+
+    part = str(payload.get("part", ""))
+    xpath_expr = str(payload.get("xpath", ""))
+    mode = str(payload.get("mode", "xpath"))
+    namespaces = payload.get("namespaces", {})
+
+    if not part or not xpath_expr:
+        return error("invalid_request", "lxml xpath requires payload.part and payload.xpath")
+    if mode not in {"xpath", "compiled_xpath", "evaluator"}:
+        return error("invalid_request", "unsupported xpath mode; expected xpath|compiled_xpath|evaluator")
+    if not isinstance(namespaces, dict):
+        return error("invalid_request", "payload.namespaces must be an object when provided")
+
+    ok, xml_text, read_error = _read_docx_part_xml(input_path, part)
+    if not ok:
+        return error("invalid_request", read_error)
+
+    try:
+        root = etree.fromstring(xml_text.encode("utf-8"))
+    except Exception as ex:
+        return error("execution_failed", f"failed to parse selected XML part: {ex}")
+
+    try:
+        if mode == "compiled_xpath":
+            evaluator = etree.XPath(xpath_expr, namespaces=namespaces)
+            result = evaluator(root)
+        elif mode == "evaluator":
+            evaluator = etree.XPathElementEvaluator(root, namespaces=namespaces)
+            result = evaluator(xpath_expr)
+        else:
+            result = root.xpath(xpath_expr, namespaces=namespaces)
+    except Exception as ex:
+        return error("invalid_request", f"invalid xpath expression or evaluation failed: {ex}")
+
+    normalized_items = []
+    for item in result if isinstance(result, list) else [result]:
+        item_type = type(item).__name__
+        item_value = ""
+        item_path = ""
+        if hasattr(item, "getroottree") and hasattr(item, "tag"):
+            try:
+                item_path = item.getroottree().getpath(item)
+            except Exception:
+                item_path = ""
+            try:
+                item_value = etree.tostring(item, encoding="unicode")
+            except Exception:
+                item_value = str(item)
+        else:
+            item_value = str(item)
+        normalized_items.append({"type": item_type, "value": item_value, "path": item_path})
+
+    result_payload = {
+        "provider": "lxml",
+        "provider_version": _lxml_version(),
+        "operation": "xpath_query",
+        "selected_part": part,
+        "xpath_mode": mode,
+        "success": True,
+        "warnings": [],
+        "errors": [],
+        "provenance": "python_provider",
+        "result": normalized_items,
+    }
+
     return {
         "code": "ok",
         "message": "xpath query complete",
+        "provider_version": _lxml_version(),
         "provenance": "python_provider",
-        "text_b64": encode_text("\n".join([str(item) for item in result])),
+        "text_b64": encode_text(json.dumps(result_payload, ensure_ascii=False)),
     }
 
 
 def provider_lxml_xslt_transform(input_path: str, xslt_text: str) -> Dict[str, str]:
+    return provider_lxml_xslt_transform_structured(input_path, xslt_text)
+
+
+def provider_lxml_xslt_transform_structured(input_path: str, payload_json: str) -> Dict[str, str]:
     try:
         from lxml import etree  # type: ignore
     except Exception as ex:
         return error("provider_unavailable", f"lxml unavailable: {ex}")
 
-    if not input_path or not xslt_text or not os.path.exists(input_path):
-        return error("invalid_request", "input_path and xslt payload are required")
+    if not payload_json:
+        return error("invalid_request", "lxml xslt_transform payload is required")
 
-    xml_doc = etree.parse(input_path)
-    xslt_doc = etree.parse(io.BytesIO(xslt_text.encode("utf-8")))
-    output = etree.XSLT(xslt_doc)(xml_doc)
+    try:
+        payload = json.loads(payload_json)
+    except Exception as ex:
+        return error("invalid_request", f"invalid lxml xslt payload JSON: {ex}")
+    if not isinstance(payload, dict):
+        return error("invalid_request", "lxml xslt payload must be a JSON object")
+
+    part = str(payload.get("part", ""))
+    xslt_text = str(payload.get("xslt", ""))
+    params = payload.get("params", {})
+    output_mode = str(payload.get("output_mode", "xml"))
+    if not part or not xslt_text:
+        return error("invalid_request", "lxml xslt requires payload.part and payload.xslt")
+    if output_mode not in {"xml", "text"}:
+        return error("invalid_request", "unsupported output_mode; expected xml|text")
+    if not isinstance(params, dict):
+        return error("invalid_request", "payload.params must be an object when provided")
+
+    ok, xml_text, read_error = _read_docx_part_xml(input_path, part)
+    if not ok:
+        return error("invalid_request", read_error)
+
+    try:
+        xml_doc = etree.parse(io.BytesIO(xml_text.encode("utf-8")))
+    except Exception as ex:
+        return error("execution_failed", f"failed to parse selected XML part: {ex}")
+
+    try:
+        xslt_doc = etree.parse(io.BytesIO(xslt_text.encode("utf-8")))
+        transform = etree.XSLT(xslt_doc)
+    except Exception as ex:
+        return error("invalid_request", f"invalid xslt stylesheet: {ex}")
+
+    try:
+        xslt_params = {k: etree.XSLT.strparam(str(v)) for k, v in params.items()}
+        output = transform(xml_doc, **xslt_params)
+    except Exception as ex:
+        return error("execution_failed", f"xslt transform failed: {ex}")
+
+    transformed = str(output) if output_mode == "xml" else str(output)
+    result_payload = {
+        "provider": "lxml",
+        "provider_version": _lxml_version(),
+        "operation": "xslt_transform",
+        "selected_part": part,
+        "output_mode": output_mode,
+        "success": True,
+        "warnings": [],
+        "errors": [],
+        "provenance": "python_provider",
+        "result": transformed,
+    }
 
     return {
         "code": "ok",
         "message": "xslt transform complete",
+        "provider_version": _lxml_version(),
         "provenance": "python_provider",
-        "text_b64": encode_text(str(output)),
+        "text_b64": encode_text(json.dumps(result_payload, ensure_ascii=False)),
     }
 
 

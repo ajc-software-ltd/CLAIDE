@@ -162,6 +162,83 @@ int main()
             "python-docx provider should return provider-unavailable when dependency is missing");
   }
 
+  // PR15: lxml expert XML/XPath/XSLT provider with allowlisted part contract.
+  PythonProviderRequest xpathRequest;
+  xpathRequest.provider = "lxml";
+  xpathRequest.operation = "xpath_query";
+  xpathRequest.inputPath = templatePath;
+  xpathRequest.payload =
+      R"({"part":"word/document.xml","xpath":"count(//w:p)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"xpath"})";
+
+  const auto xpathResult = invokePythonProvider(cfg, xpathRequest);
+  if (providerAvailable(probe.providers, "lxml")) {
+    require(xpathResult.code == PythonBridgeCode::Ok, "lxml xpath query should succeed when provider is available");
+    require(xpathResult.text.find("\"operation\": \"xpath_query\"") != std::string::npos,
+            "lxml xpath response should contain structured operation metadata");
+    require(xpathResult.text.find("\"selected_part\": \"word/document.xml\"") != std::string::npos,
+            "lxml xpath response should include selected part");
+  } else {
+    require(xpathResult.code == PythonBridgeCode::ProviderUnavailable,
+            "lxml xpath should return provider-unavailable when dependency is missing");
+  }
+
+  PythonProviderRequest stylesXPath = xpathRequest;
+  stylesXPath.payload =
+      R"({"part":"word/styles.xml","xpath":"count(//w:style)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"compiled_xpath"})";
+  const auto stylesXPathResult = invokePythonProvider(cfg, stylesXPath);
+  if (providerAvailable(probe.providers, "lxml")) {
+    require(stylesXPathResult.code == PythonBridgeCode::Ok, "lxml styles xpath should succeed");
+  }
+
+  PythonProviderRequest numberingXPath = xpathRequest;
+  numberingXPath.payload =
+      R"({"part":"word/numbering.xml","xpath":"count(//w:num)","namespaces":{"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"},"mode":"evaluator"})";
+  const auto numberingXPathResult = invokePythonProvider(cfg, numberingXPath);
+  if (providerAvailable(probe.providers, "lxml")) {
+    require(numberingXPathResult.code == PythonBridgeCode::Ok, "lxml numbering xpath should succeed");
+  }
+
+  PythonProviderRequest disallowedPart = xpathRequest;
+  disallowedPart.payload = R"({"part":"word/comments.xml","xpath":"//*"})";
+  const auto disallowedPartResult = invokePythonProvider(cfg, disallowedPart);
+  if (providerAvailable(probe.providers, "lxml")) {
+    require(disallowedPartResult.code == PythonBridgeCode::InvalidRequest,
+            "disallowed XML part should normalize to invalid request");
+  }
+
+  PythonProviderRequest invalidXPath = xpathRequest;
+  invalidXPath.payload =
+      R"({"part":"word/document.xml","xpath":"//*["})";
+  const auto invalidXPathResult = invokePythonProvider(cfg, invalidXPath);
+  if (providerAvailable(probe.providers, "lxml")) {
+    require(invalidXPathResult.code == PythonBridgeCode::InvalidRequest,
+            "invalid xpath should normalize to invalid request");
+  }
+
+  PythonProviderRequest xsltRequest;
+  xsltRequest.provider = "lxml";
+  xsltRequest.operation = "xslt_transform";
+  xsltRequest.inputPath = templatePath;
+  xsltRequest.payload =
+      R"({"part":"word/document.xml","output_mode":"text","params":{"prefix":"P:"},"xslt":"<?xml version=\"1.0\" encoding=\"UTF-8\"?><xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><xsl:param name=\"prefix\"/><xsl:output method=\"text\"/><xsl:template match=\"/\"><xsl:value-of select=\"$prefix\"/><xsl:value-of select=\"count(//w:p)\"/></xsl:template></xsl:stylesheet>"})";
+  const auto xsltResult = invokePythonProvider(cfg, xsltRequest);
+  if (providerAvailable(probe.providers, "lxml")) {
+    require(xsltResult.code == PythonBridgeCode::Ok, "lxml xslt transform should succeed");
+    require(xsltResult.text.find("\"operation\": \"xslt_transform\"") != std::string::npos,
+            "lxml xslt response should contain operation metadata");
+  } else {
+    require(xsltResult.code == PythonBridgeCode::ProviderUnavailable,
+            "lxml xslt should return provider-unavailable when dependency is missing");
+  }
+
+  PythonProviderRequest invalidXslt = xsltRequest;
+  invalidXslt.payload = R"({"part":"word/document.xml","xslt":"<xsl:stylesheet>","output_mode":"xml"})";
+  const auto invalidXsltResult = invokePythonProvider(cfg, invalidXslt);
+  if (providerAvailable(probe.providers, "lxml")) {
+    require(invalidXsltResult.code == PythonBridgeCode::InvalidRequest,
+            "invalid xslt should normalize to invalid request");
+  }
+
 #ifndef _WIN32
   {
     PythonBridgeConfig fakeCfg;

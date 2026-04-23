@@ -54,7 +54,9 @@ When building with `MINIDOCX_ENABLE_PYTHON_BRIDGE=ON`:
 3. Missing third-party Python dependencies must return actionable provider-unavailable errors (not crashes).
 4. Protocol version/schema validation failures must return deterministic bridge errors.
 5. Provenance for provider-backed responses must be explicit.
-6. PR13 provider operations remain bounded (single-template render + style-audit only, no mail-merge expansion).
+6. PR13/PR15 provider operations remain bounded:
+   - PR13: single-template render + style-audit only (no mail-merge expansion)
+   - PR15: allowlisted DOCX XML-part XPath/XSLT only (no unrestricted archive traversal/scripting)
 
 ## Branch Validation Commands
 
@@ -87,5 +89,5 @@ The following remain out of scope:
 
 ## Change Policy
 
-PR10/PR11/PR12/PR13 are validation/process and optional-provider hardening only.
+PR10/PR11/PR12/PR13/PR15 are validation/process and optional-provider hardening only.
 Do not use this gate document to introduce unsupported engine capability claims.

@@ -60,7 +60,11 @@ This branch exposes a layered public surface: low-level model APIs plus higher-l
   - `smoke.ping` (bridge health check)
   - `mammoth.docx_to_html` (semantic DOCX -> HTML export helper)
   - `docxcompose.compose_append` (append one DOCX into another)
-  - optional expert workflows via `lxml.xpath_query` / `lxml.xslt_transform`
+  - optional expert XML workflows via `lxml.xpath_query` / `lxml.xslt_transform`
+    - allowlisted parts only: `word/document.xml`, `word/styles.xml`, `word/numbering.xml`,
+      `_rels/.rels`, `word/_rels/document.xml.rels`, `[Content_Types].xml`
+    - explicit JSON request contract with operation + part + output mode
+    - structured JSON result payload with provenance and normalized warnings/errors
 
 Bridge failures are surfaced as explicit response codes; missing Python/provider dependencies do not break core engine use.
 
@@ -83,6 +87,14 @@ Added optional second-wave providers (still companion-only):
   - style inventory/reporting helper for diagnostics and compatibility checks
 
 Both providers return explicit provenance through the PR12 bridge contract and do not replace native minidocx model/editing/inspection behavior.
+
+## Python Provider: Expert XML/XPath/XSLT (PR15)
+
+`lxml` support is intentionally expert/advanced and companion-only:
+
+- `lxml.xpath_query`: run XPath against an allowlisted DOCX XML part
+- `lxml.xslt_transform`: run controlled XSLT transform against an allowlisted DOCX XML part
+- not a general scripting surface and not a replacement for native minidocx editing/inspection semantics
 
 ## Validation & Readiness Gate (PR10)
 
