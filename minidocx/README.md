@@ -214,6 +214,8 @@ Examples/tests are optional consumers (`BUILD_EXAMPLES`, `BUILD_TESTS`) and are 
 
 ## Feature Freeze and Merge-Readiness (PR24)
 
+PR25 sync note: branch has been updated with current `main` state for merge-conflict readiness while preserving the frozen minidocx contract.
+
 `minidocx` is now in a feature-complete freeze phase for the current branch scope.
 
 - No new engine/provider capability expansion is intended during this phase unless required by a merge blocker.

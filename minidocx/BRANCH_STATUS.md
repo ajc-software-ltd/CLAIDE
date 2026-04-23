@@ -21,6 +21,7 @@ _Last updated: 2026-04-23_
 - PR22: shared-library readiness for CLAIDE consumption (visibility/export hygiene, consumer linkage, shared-consumer smoke validation).
 - PR23: shared-library consumption validation and branch chronology cleanup.
 - PR24: feature-complete freeze and merge-readiness audit for main-branch integration.
+- PR25: main-branch sync, drift reconciliation, and merge-conflict readiness verification.
 
 
 ## Feature Freeze Phase (PR24)
@@ -101,7 +102,7 @@ _Last updated: 2026-04-23_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR24)
+## Next Likely Chunks (After PR25)
 
 - Continue module-scoped tests and docs hardening around existing surfaces
 - Keep contract language consistent across headers/docs/examples as APIs evolve

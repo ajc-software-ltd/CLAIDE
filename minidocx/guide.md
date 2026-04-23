@@ -7,6 +7,8 @@ It is intentionally branch-scoped and does not claim full Microsoft Word parity.
 
 ## Feature Freeze and Merge-Readiness (PR24)
 
+PR25 sync note: merge-conflict readiness was verified after syncing current `main` into this branch without adding new minidocx capabilities.
+
 The current branch scope is now in feature-freeze mode for merge preparation.
 
 - Do not add new engine/provider capabilities in this phase unless required by a documented merge blocker.

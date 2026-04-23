@@ -65,3 +65,10 @@ _Last updated: 2026-04-23_
 - Broad refactors for style/polish only
 - CLAIDE-side integration code
 - Actual main sync/rebase/merge execution
+
+
+## PR25 Sync Audit Result
+
+- `main` was synced into `minidocx` and drift conflicts were resolved without expanding frozen scope.
+- Validation surface contract remained unchanged (`minidocx.regression`, `minidocx.inspection_pipeline`, `minidocx.commands`, `minidocx.shared_consumer_smoke`, `minidocx.python_bridge`, `minidocx_validate`, `minidocx_preintegration_gate`).
+- Remaining blockers: `minidocx.python_bridge` currently fails to compile (`tests/python_bridge_tests.cpp` raw-string payload quoting break around lxml xpath JSON payload blocks), which blocks `minidocx_validate`/`minidocx_preintegration_gate` until corrected in follow-up.

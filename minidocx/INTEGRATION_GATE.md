@@ -91,6 +91,15 @@ When building with `BUILD_SHARED=ON`:
 4. `BUILD_EXAMPLES` and `BUILD_TESTS` remain optional and do not gate parent-project library usage.
 5. `MINIDOCX_ENABLE_PYTHON_BRIDGE` remains optional and off by default.
 
+
+### E) Main-branch sync readiness checks (PR25)
+
+After syncing `main` into `minidocx`:
+
+1. Validation targets (`minidocx_validate`, `minidocx_preintegration_gate`) still pass.
+2. Frozen contract remains unchanged (no new engine/provider features introduced by sync work).
+3. Readiness docs (`BRANCH_STATUS.md`, `INTEGRATION_GATE.md`, `MERGE_READINESS.md`, `README.md`, `guide.md`) remain internally consistent.
+
 ## Branch Validation Commands
 
 ```bash
@@ -122,5 +131,5 @@ The following remain out of scope:
 
 ## Change Policy
 
-PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR20/PR21/PR22/PR23/PR24 are validation/process, optional-provider hardening, shared-library consumption-readiness, and merge-readiness-audit only.
+PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR20/PR21/PR22/PR23/PR24/PR25 are validation/process, optional-provider hardening, shared-library consumption-readiness, merge-readiness-audit, and main-sync-readiness only.
 Do not use this gate document to introduce unsupported engine capability claims.
