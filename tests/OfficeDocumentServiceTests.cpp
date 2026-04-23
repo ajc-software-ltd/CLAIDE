@@ -9,7 +9,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
 
-#include <minidocx/word/main/document.hpp>
+#include <minidocx/model.hpp>
 
 #include "core/office/OfficeDocumentService.hpp"
 

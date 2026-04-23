@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(CLAIDE VERSION 0.0.140 LANGUAGES CXX)
+project(CLAIDE VERSION 0.0.174 LANGUAGES CXX)
 
-set(CLAIDE_VERSION_STRING "0.0.144-dev")
+set(CLAIDE_VERSION_STRING "0.0.174-dev")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -62,6 +62,7 @@ set(SOURCES
     src/core/VulkanRuntimeLoader.cpp
     src/core/office/MinidocxAdapter.cpp
     src/core/office/OfficeDocumentService.cpp
+    src/core/office/OfficeLayoutBridge.cpp
     src/core/runtime/VulkanRenderHost.cpp
     src/render/Canvas.cpp
     src/render/CanvasDocument.cpp
@@ -105,6 +106,7 @@ set(HEADERS
     src/core/VulkanRuntimeLoader.hpp
     src/core/office/MinidocxAdapter.hpp
     src/core/office/OfficeDocumentService.hpp
+    src/core/office/OfficeLayoutBridge.hpp
     src/core/runtime/RenderHost.hpp
     src/core/runtime/VulkanRenderHost.hpp
     src/render/Canvas.hpp
@@ -220,6 +222,7 @@ if(Catch2_FOUND)
         tests/RendererFoundationTests.cpp
         tests/VulkanRuntimeFoundationTests.cpp
         tests/OfficeDocumentServiceTests.cpp
+        tests/OfficeLayoutBridgeTests.cpp
     )
 
     add_executable(CLAIDETests
@@ -236,6 +239,7 @@ if(Catch2_FOUND)
         src/core/VulkanRuntimeLoader.cpp
         src/core/office/MinidocxAdapter.cpp
         src/core/office/OfficeDocumentService.cpp
+        src/core/office/OfficeLayoutBridge.cpp
         src/core/runtime/VulkanRenderHost.cpp
         src/render/Canvas.cpp
         src/render/CanvasDocument.cpp
