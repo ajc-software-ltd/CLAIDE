@@ -24,6 +24,7 @@ _Last updated: 2026-04-23_
 - PR25: main-branch sync, drift reconciliation, and merge-conflict readiness verification.
 - PR26: python-bridge compile blocker fix and readiness gate restoration.
 - PR27: final main sync and zero-blocker merge-readiness confirmation.
+- PR28: merged into `main`; branch-phase readiness workflow closed.
 
 
 ## Feature Freeze Phase (PR24)
@@ -104,7 +105,7 @@ _Last updated: 2026-04-23_
   - equations
   - mail merge
 
-## Next Likely Chunks (After PR27)
+## Next Likely Chunks (Post-PR28 Merge)
 
-- Execute final merge preparation and merge workflow into `main` in the next PR.
-- Keep integration concerns (CLAIDE adapter/render/UI/AI) explicitly out of minidocx branch-contract PRs until separately scoped.
+- Begin post-merge CLAIDE-side adapter/service integration in dedicated follow-up PRs.
+- Keep provider/engine scope changes explicitly separated from integration plumbing work.

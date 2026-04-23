@@ -131,5 +131,5 @@ The following remain out of scope:
 
 ## Change Policy
 
-PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR20/PR21/PR22/PR23/PR24/PR25/PR26/PR27 are validation/process, optional-provider hardening, shared-library consumption-readiness, merge-readiness-audit, main-sync-readiness, blocker-resolution, and final-candidate confirmation only.
+PR10/PR11/PR12/PR13/PR15/PR16/PR17/PR18/PR19/PR20/PR21/PR22/PR23/PR24/PR25/PR26/PR27/PR28 are validation/process, optional-provider hardening, shared-library consumption-readiness, merge-readiness-audit, main-sync-readiness, blocker-resolution, final-candidate confirmation, and merge-execution closure only.
 Do not use this gate document to introduce unsupported engine capability claims.

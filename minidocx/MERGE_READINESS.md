@@ -87,3 +87,10 @@ _Last updated: 2026-04-23_
   - `minidocx_preintegration_gate`
 - Remaining blockers after final sync: none.
 - Branch is ready for actual merge execution in the next PR.
+
+
+## PR28 Merge Execution Closure
+
+- Merge of `minidocx` into `main` completed.
+- Branch-phase readiness workflow is closed for this stream.
+- Post-merge work should proceed in dedicated integration-phase PRs (adapter/service/UI wiring out of scope here).
