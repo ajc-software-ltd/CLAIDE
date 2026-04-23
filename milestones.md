@@ -14,13 +14,13 @@ After each milestone is complete:
 3. `git tag v0.0.<commit_count>-dev`
 4. `git push origin main --tags`
 
-Current versioning baseline: `v0.0.106-dev` (commit-count based).
+Current versioning baseline: `v0.0.174-dev` (commit-count based).
 
 | Milestone | Status |
 |-----------|--------|
 | 1: Core IDE Shell | ✅ Complete |
 | 2: Vulkan Canvas (Universal Render Layer) | ✅ Complete |
-| 3: M3.x Document Pipeline (minidocx-first) | ⏳ In Planning/Execution |
+| 3: M3.x Document Pipeline (minidocx-first) | ⏳ Post-merge integration phase |
 | 4: Image Processing (AVIM: Image) | ⏳ Planned |
 | 5: Video Player (AVIM: Video) | ⏳ Planned |
 | 6: 3D Model Viewer (AVIM: Model) | ⏳ Planned |
@@ -140,12 +140,12 @@ src/
 
 ## Milestone 3: M3.x Document Pipeline (minidocx-first)
 
-**Tag range:** `v0.0.144-dev` onward
-**Status:** In Planning/Execution
+**Tag range:** `v0.0.144-dev` onward (current checkpoint target: `v0.0.174-dev`)
+**Status:** Post-merge integration phase (engine merged, CLAIDE integration pending)
 
 ### M3.x split
-- **M3.1** minidocx-first integration using `minidocx` as baseline in repo root (`/minidocx`).
-- **M3.2** XLSX implementation (deferred until M3.1 is stable).
+- **M3.1** minidocx baseline engine merged into `main`; next is CLAIDE-side adapter/service/render integration.
+- **M3.2** MiniExcelX/XLSX sibling engine stream (after M3.1 post-merge integration work).
 - **M3.3** SVG read/import/display.
 - **M3.4** TTF font pipeline (system/import/Google Fonts usage).
 - **M3.5+** PDF/AI interoperability and release hardening.
@@ -160,7 +160,7 @@ All document outputs must be viewable via the Vulkan Canvas render surface.
 - Document/render contract for Vulkan canvas visibility.
 
 ### Checkpoint
-- M3.1 planning/docs complete before implementation commits.
+- Post-merge integration planning/docs aligned; implementation proceeds in dedicated CLAIDE-side PRs.
 
 ---
 

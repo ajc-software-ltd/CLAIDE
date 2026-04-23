@@ -1,4 +1,4 @@
-# minidocx Merge Readiness Checklist (PR24)
+# minidocx Merge Readiness Checklist (Historical Record)
 
 _Last updated: 2026-04-23_
 
@@ -7,7 +7,7 @@ _Last updated: 2026-04-23_
 `minidocx` is in a **feature-complete freeze** phase for the current branch scope.
 
 - No new engine/provider features during this phase unless required by a merge blocker.
-- This document defines what must be true before merge into `main` is attempted.
+- This document is retained as historical evidence of what was required before merge into `main`.
 
 ## Frozen Branch Contract
 

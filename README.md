@@ -8,9 +8,9 @@ A cross-platform C++23 AIO IDE for code, media creation, and AI-powered content 
 
 ## Versioning
 
-- Current build version: **`0.0.144-dev`**
+- Current build version: **`0.0.174-dev`**
 - Tag format from this point forward: **`v0.0.<commit_count>-dev`**
-- Example for current state: **`v0.0.144-dev`**
+- Example for current state: **`v0.0.174-dev`**
 
 ## Repository Rename Readiness
 
@@ -44,7 +44,7 @@ The roadmap is currently being executed in milestone phases focused on core stab
 |-----------|-------|--------|
 | **Milestone 1** | Core IDE Shell | ✅ Complete |
 | **Milestone 2** | Vulkan Canvas (universal render layer) | ✅ Complete |
-| **Milestone 3** | M3.x Document Pipeline (minidocx) | ⏳ In Planning/Execution |
+| **Milestone 3** | M3.x Document Pipeline (minidocx) | ⏳ Post-merge integration phase |
 | **Milestone 4** | Image processing | ⏳ Planned |
 | **Milestone 5** | Video player | ⏳ Planned |
 | **Milestone 6** | 3D model viewer | ⏳ Planned |
@@ -55,13 +55,13 @@ The roadmap is currently being executed in milestone phases focused on core stab
 ### Current stream status (at this time)
 - ✅ **Core IDE Shell** is complete (Milestone 1).
 - ✅ **Vulkan Canvas** milestone is complete with runtime + canvas integration baseline.
-- ⏳ Feature tracks (text/image/video/3D/AI) build on the unified render surface roadmap.
+- ⏳ M3.1 engine merge is complete; CLAIDE-side adapter/service/render integration is the active next phase.
 
 See `milestones.md` for the canonical milestone breakdown and checkpoint workflow.
 
 ### M3.x direction
-- **M3.1**: minidocx integration using local `minidocx/` baseline + CLAIDE adapters.
-- **M3.2**: XLSX implementation (deferred until M3.1 stabilizes).
+- **M3.1**: minidocx baseline engine is merged in `main`; CLAIDE adapters/service/render wiring is next.
+- **M3.2**: MiniExcelX/XLSX sibling engine stream (starts after M3.1 post-merge cleanup).
 - **M3.3+**: SVG/TTF/PDF/AI workflow layers aligned to canvas-first architecture.
 - All document output must remain viewable through the Vulkan render surface.
 

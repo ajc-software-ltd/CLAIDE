@@ -29,7 +29,7 @@ _Last updated: 2026-04-23_
 
 ## Feature Freeze Phase (PR24)
 
-- Branch status: **feature-complete freeze** for the current minidocx scope.
+- Branch status: **merged into `main` (historical branch-phase snapshot)**.
 - During freeze: no new engine/provider features unless a merge blocker requires a targeted fix.
 - Merge-readiness checklist and blocker tracking: [MERGE_READINESS.md](./MERGE_READINESS.md).
 
@@ -41,7 +41,7 @@ _Last updated: 2026-04-23_
 - Future adapter-style integration should build on `editing` + `inspection` first, using model APIs as foundational support.
 
 
-## Readiness Gate (Current)
+## Readiness Gate (Historical)
 
 
 ## Optional Provider Bridge (Current)

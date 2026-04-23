@@ -1,11 +1,11 @@
-# minidocx Pre-Integration Readiness Gate (PR10/PR11)
+# minidocx Pre-Integration Readiness Gate (Historical Record)
 
 _Last updated: 2026-04-22_
 
 ## Purpose
 
 This document defines the branch-local validation contract for `minidocx`.
-It establishes what “healthy branch state” means and what must pass before any future CLAIDE integration phase is allowed to begin.
+It captures the historical branch validation contract that was required before CLAIDE integration work could begin.
 
 This is a minidocx-stream gate, not a CLAIDE-wide CI policy.
 
@@ -21,7 +21,7 @@ The current branch guarantees, for the implemented subset:
 - deterministic branch regression/inspection/commands test coverage
 
 
-## Feature Freeze and Merge-Readiness Phase (PR24)
+## Feature Freeze and Merge-Readiness Phase (Historical)
 
 For the current branch scope, `minidocx` is now in **feature-freeze** mode while merge readiness is audited.
 
