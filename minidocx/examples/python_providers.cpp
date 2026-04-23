@@ -67,5 +67,13 @@ int main()
   const auto ocr = providers::invokePythonProvider(cfg, ocrReq);
   std::cout << "OCR code: " << static_cast<int>(ocr.code) << '\n';
 
+  providers::PythonProviderRequest pdfReq;
+  pdfReq.provider = "pypdf";
+  pdfReq.operation = "extract_text";
+  pdfReq.inputPath = "sample.pdf";
+  pdfReq.payload = R"({"mode":"plain"})";
+  const auto pdf = providers::invokePythonProvider(cfg, pdfReq);
+  std::cout << "PDF extract code: " << static_cast<int>(pdf.code) << '\n';
+
   return 0;
 }

@@ -47,6 +47,10 @@ The Python bridge is an optional out-of-process provider layer.
   - requires `lxml.isoschematron`
   - validates only allowlisted DOCX XML parts
   - supports schema text or schema file input, optional phase
+- optional minimal PDF text extraction through `pypdf.extract_text`
+  - plain and layout extraction modes
+  - text extraction only (no OCR/rendering pipeline)
+  - scanned/image-only PDFs may require OCR outside this provider
 
 Python dependencies are discovered at runtime by the worker and reported deterministically as availability or provider-unavailable errors.
 
@@ -105,6 +109,14 @@ Both are optional provider-backed companion features and keep native minidocx en
   - output: structured JSON validation payload containing `valid`, failed assertions, report entries, and provenance
   - constrained to allowlisted XML parts only
   - validation-only companion feature (no automatic mutation/fix-up behavior)
+
+### PR18 minimal PDF extraction provider operation
+
+- `pypdf.extract_text`
+  - input: PDF `input_path` (or payload PDF bytes where available)
+  - optional mode: `plain` or `layout`
+  - output: structured JSON payload containing extracted text + provider metadata/provenance
+  - limitation: scanned/image-only PDFs may require OCR; this provider does not perform OCR
 
 Always call `probePythonProviders` before provider execution when bridge mode is enabled.
 The bridge normalizes failures into a stable error taxonomy (`BridgeUnavailable`, `WorkerLaunchFailed`, `ProviderUnavailable`, `ProtocolMismatch`, `MalformedResponse`, etc.).

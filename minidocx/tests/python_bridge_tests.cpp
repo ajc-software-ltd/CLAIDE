@@ -3,8 +3,10 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -39,6 +41,41 @@ bool providerAvailable(
       return p.available;
   }
   return false;
+}
+
+void writeSimplePdfWithText(const std::filesystem::path& path, const std::string& text)
+{
+  std::ofstream os(path, std::ios::binary);
+  if (!os)
+    throw std::runtime_error("failed to open pdf output path");
+
+  const std::string stream = "BT\n/F1 18 Tf\n40 120 Td\n(" + text + ") Tj\nET\n";
+
+  std::vector<std::string> objects;
+  objects.emplace_back("<< /Type /Catalog /Pages 2 0 R >>");
+  objects.emplace_back("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+  objects.emplace_back("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>");
+  objects.emplace_back("<< /Length " + std::to_string(stream.size()) + " >>\nstream\n" + stream + "endstream");
+  objects.emplace_back("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+
+  os << "%PDF-1.4\n";
+
+  std::vector<long> offsets;
+  offsets.push_back(0);
+  for (size_t i = 0; i < objects.size(); ++i) {
+    offsets.push_back(static_cast<long>(os.tellp()));
+    os << (i + 1) << " 0 obj\n" << objects[i] << "\nendobj\n";
+  }
+
+  const long xrefOffset = static_cast<long>(os.tellp());
+  os << "xref\n";
+  os << "0 " << (objects.size() + 1) << "\n";
+  os << "0000000000 65535 f \n";
+  for (size_t i = 1; i < offsets.size(); ++i) {
+    os << std::setw(10) << std::setfill('0') << offsets[i] << " 00000 n \n";
+  }
+  os << "trailer\n<< /Size " << (objects.size() + 1) << " /Root 1 0 R >>\n";
+  os << "startxref\n" << xrefOffset << "\n%%EOF\n";
 }
 
 #ifndef _WIN32
@@ -324,6 +361,61 @@ int main()
         "ocr missing language data should normalize deterministically");
   }
 
+  // PR18: minimal PDF text extraction provider via pypdf.
+  const auto pdfPath = (tempDir / "minidocx_pdf_sample.pdf");
+  writeSimplePdfWithText(pdfPath, "Hello PDF");
+
+  PythonProviderRequest pypdfRequest;
+  pypdfRequest.provider = "pypdf";
+  pypdfRequest.operation = "extract_text";
+  pypdfRequest.inputPath = pdfPath.string();
+  pypdfRequest.payload = R"({"mode":"plain"})";
+  const auto pypdfResult = invokePythonProvider(cfg, pypdfRequest);
+  if (providerAvailable(probe.providers, "pypdf")) {
+    require(pypdfResult.code == PythonBridgeCode::Ok, "pypdf plain extraction should succeed");
+    require(pypdfResult.text.find("\"operation\": \"extract_text\"") != std::string::npos,
+            "pypdf response should include operation metadata");
+    require(pypdfResult.text.find("Hello PDF") != std::string::npos,
+            "pypdf plain extraction should include extracted text");
+  } else {
+    require(pypdfResult.code == PythonBridgeCode::ProviderUnavailable,
+            "pypdf provider should return provider-unavailable when dependency is missing");
+  }
+
+  PythonProviderRequest pypdfLayout = pypdfRequest;
+  pypdfLayout.payload = R"({"mode":"layout"})";
+  const auto pypdfLayoutResult = invokePythonProvider(cfg, pypdfLayout);
+  if (providerAvailable(probe.providers, "pypdf")) {
+    require(pypdfLayoutResult.code == PythonBridgeCode::Ok, "pypdf layout extraction should succeed");
+    require(pypdfLayoutResult.text.find("\"extraction_mode\": \"layout\"") != std::string::npos,
+            "pypdf layout extraction should report layout mode");
+  }
+
+  PythonProviderRequest pypdfMissingInput;
+  pypdfMissingInput.provider = "pypdf";
+  pypdfMissingInput.operation = "extract_text";
+  pypdfMissingInput.inputPath = "missing.pdf";
+  const auto pypdfMissingInputResult = invokePythonProvider(cfg, pypdfMissingInput);
+  if (providerAvailable(probe.providers, "pypdf")) {
+    require(pypdfMissingInputResult.code == PythonBridgeCode::InvalidRequest,
+            "pypdf missing input should normalize to invalid request");
+  }
+
+  const auto emptyPdfPath = (tempDir / "minidocx_pdf_empty.pdf");
+  writeSimplePdfWithText(emptyPdfPath, "");
+  PythonProviderRequest pypdfScannedHint;
+  pypdfScannedHint.provider = "pypdf";
+  pypdfScannedHint.operation = "extract_text";
+  pypdfScannedHint.inputPath = emptyPdfPath.string();
+  pypdfScannedHint.payload = R"({"mode":"plain"})";
+  const auto pypdfScannedHintResult = invokePythonProvider(cfg, pypdfScannedHint);
+  if (providerAvailable(probe.providers, "pypdf")) {
+    require(pypdfScannedHintResult.code == PythonBridgeCode::Ok,
+            "pypdf empty-text extraction should still complete");
+    require(pypdfScannedHintResult.text.find("may require OCR") != std::string::npos,
+            "pypdf empty-text extraction should include OCR limitation warning");
+  }
+
 #ifndef _WIN32
   {
     PythonBridgeConfig fakeCfg;
@@ -350,5 +442,7 @@ int main()
 
   std::filesystem::remove(templatePath);
   std::filesystem::remove(renderedPath);
+  std::filesystem::remove(pdfPath);
+  std::filesystem::remove(emptyPdfPath);
   return 0;
 }

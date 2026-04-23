@@ -23,6 +23,7 @@ ALLOWED_PROVIDERS = {
     "lxml": {"xpath_query", "xslt_transform"},
     "schematron": {"validate_part"},
     "ocr": {"extract_text"},
+    "pypdf": {"extract_text"},
     "docxtpl": {"render_template"},
     "python_docx": {"style_audit"},
 }
@@ -35,6 +36,7 @@ PROVIDER_CAPABILITIES = {
     "lxml": ["xpath_query", "xslt_transform"],
     "schematron": ["validate_part"],
     "ocr": ["extract_text"],
+    "pypdf": ["extract_text"],
     "docxtpl": ["render_template"],
     "python_docx": ["style_audit"],
 }
@@ -169,6 +171,9 @@ def provider_probe() -> Dict[str, str]:
             providers.append(("ocr", False, vero, PROVIDER_CAPABILITIES["ocr"], str(ex)))
     else:
         providers.append(("ocr", False, "", PROVIDER_CAPABILITIES["ocr"], msgo))
+
+    okp, verp, msgp = module_version("pypdf")
+    providers.append(("pypdf", okp, verp, PROVIDER_CAPABILITIES["pypdf"], "available" if okp else msgp))
 
     okt, vert, msqt = module_version("docxtpl")
     providers.append(("docxtpl", okt, vert, PROVIDER_CAPABILITIES["docxtpl"], "available" if okt else msqt))
@@ -727,6 +732,97 @@ def provider_ocr_extract_text(input_path: str, payload_json: str) -> Dict[str, s
     }
 
 
+def provider_pypdf_extract_text(input_path: str, payload_json: str) -> Dict[str, str]:
+    try:
+        from pypdf import PdfReader  # type: ignore
+        import pypdf  # type: ignore
+    except Exception as ex:
+        return error("provider_unavailable", f"pypdf unavailable: {ex}")
+
+    payload: Dict[str, object] = {}
+    if payload_json:
+        try:
+            parsed = json.loads(payload_json)
+        except Exception as ex:
+            return error("invalid_request", f"invalid pypdf payload JSON: {ex}")
+        if not isinstance(parsed, dict):
+            return error("invalid_request", "pypdf payload must be a JSON object")
+        payload = parsed
+
+    extraction_mode = str(payload.get("mode", "plain")).strip().lower()
+    pdf_b64 = payload.get("pdf_b64")
+    if extraction_mode not in {"plain", "layout"}:
+        return error("invalid_request", "pypdf mode must be one of: plain, layout")
+    if pdf_b64 is not None and not isinstance(pdf_b64, str):
+        return error("invalid_request", "payload.pdf_b64 must be a base64 string when provided")
+
+    pdf_path = input_path
+    temp_pdf_path = ""
+    if pdf_b64:
+        try:
+            pdf_bytes = base64.b64decode(pdf_b64.encode("utf-8"))
+        except Exception as ex:
+            return error("invalid_request", f"invalid payload.pdf_b64 value: {ex}")
+        with tempfile.NamedTemporaryFile(prefix="minidocx_pdf_", suffix=".pdf", delete=False) as tmp:
+            tmp.write(pdf_bytes)
+            temp_pdf_path = tmp.name
+            pdf_path = temp_pdf_path
+
+    if not pdf_path or not os.path.exists(pdf_path):
+        if temp_pdf_path:
+            try:
+                os.remove(temp_pdf_path)
+            except Exception:
+                pass
+        return error("invalid_request", "pypdf extract_text requires input_path or payload.pdf_b64")
+
+    warnings: List[str] = []
+    extracted_pages: List[str] = []
+    try:
+        reader = PdfReader(pdf_path)
+        for page in reader.pages:
+            if extraction_mode == "layout":
+                text = page.extract_text(extraction_mode="layout")
+            else:
+                text = page.extract_text()
+            extracted_pages.append(text or "")
+    except Exception as ex:
+        return error("execution_failed", f"pypdf extraction failed: {ex}")
+    finally:
+        if temp_pdf_path:
+            try:
+                os.remove(temp_pdf_path)
+            except Exception:
+                pass
+
+    output_text = "\n".join(extracted_pages)
+    if not output_text.strip():
+        warnings.append("PDF text extraction returned empty/minimal text; scanned/image-only PDFs may require OCR.")
+
+    result_payload = {
+        "provider": "pypdf",
+        "provider_version": getattr(pypdf, "__version__", "unknown"),
+        "operation": "extract_text",
+        "extraction_mode": extraction_mode,
+        "page_count": len(extracted_pages),
+        "success": True,
+        "warnings": warnings,
+        "errors": [],
+        "provenance": "python_provider",
+        "text": output_text,
+    }
+    out = {
+        "code": "ok",
+        "message": "pypdf extraction complete",
+        "provider_version": getattr(pypdf, "__version__", "unknown"),
+        "provenance": "python_provider",
+        "text_b64": encode_text(json.dumps(result_payload, ensure_ascii=False)),
+    }
+    if warnings:
+        out["warnings_b64"] = encode_text("\n".join(warnings))
+    return out
+
+
 def provider_docxtpl_render_template(template_path: str, context_json: str, output_path: str) -> Dict[str, str]:
     try:
         from docxtpl import DocxTemplate  # type: ignore
@@ -847,6 +943,8 @@ def run(values: Dict[str, str]) -> Dict[str, str]:
         return provider_schematron_validate_part(input_path, payload)
     if provider == "ocr" and operation == "extract_text":
         return provider_ocr_extract_text(input_path, payload)
+    if provider == "pypdf" and operation == "extract_text":
+        return provider_pypdf_extract_text(input_path, payload)
     if provider == "docxtpl" and operation == "render_template":
         return provider_docxtpl_render_template(input_path, payload, output_path)
     if provider == "python_docx" and operation == "style_audit":

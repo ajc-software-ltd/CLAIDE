@@ -69,6 +69,10 @@ This branch exposes a layered public surface: low-level model APIs plus higher-l
     - image input path or base64 image payload
     - constrained option surface (`lang`, allowlisted `psm`)
     - explicit normalized provider errors for missing runtime/language data
+  - optional minimal PDF extraction via `pypdf.extract_text`
+    - plain mode and optional layout mode
+    - text extraction only (no rendering/OCR/advanced PDF analysis)
+    - scanned/image-only PDFs may require OCR in a separate workflow
 
 Bridge failures are surfaced as explicit response codes; missing Python/provider dependencies do not break core engine use.
 
@@ -120,6 +124,17 @@ document-intelligence features.
 - structured validation result with `valid` plus normalized failed-assert/report data
 
 This remains companion-only and does not mutate the minidocx native model automatically.
+
+## Python Provider: Minimal PDF Text Extraction (PR18)
+
+`pypdf.extract_text` is an optional companion provider for lightweight PDF text extraction:
+
+- input: PDF path (and optional payload-based PDF bytes)
+- modes: `plain` (default) and `layout`
+- output: structured text extraction payload with provenance and normalized warnings/errors
+
+If a PDF is scanned/image-only, extracted text may be empty/minimal and OCR may be required.
+PR18 does not add OCR fallback, rendering, or advanced PDF analysis.
 
 ## Validation & Readiness Gate (PR10)
 
